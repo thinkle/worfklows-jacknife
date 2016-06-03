@@ -39,7 +39,7 @@ function preFillApprovalForm (params) {
       isNumber = true;
     }
     if (go_on) {
-      //Logger.log('Working with '+item.getType()+item.getTitle())
+      Logger.log('Working with '+item.getType()+item.getTitle())
       itemTitle = item.getTitle()      
       if (params.field2field.hasOwnProperty(itemTitle)) {        
         sourceKey = params.field2field[itemTitle]
@@ -54,8 +54,9 @@ function preFillApprovalForm (params) {
         }
           //Logger.log('Creating response with value '+JSON.stringify(value));
           try {
-              itemResponse = item.createResponse(value); // Create a response
-              formResponse.withItemResponse(itemResponse);
+            itemResponse = item.createResponse(value); // Create a response
+            formResponse.withItemResponse(itemResponse);
+						Logger.log('Created response to item '+itemTitle+': '+value);
           }
           catch (exception) {
             Logger.log('Skipping itemResponse '+value+' exception:'+exception);
@@ -80,6 +81,7 @@ function preFillApprovalForm (params) {
   var lastRespNo = allResponses.length - 1;
   var lastResp = allResponses[lastRespNo]
   var newEditUrl = lastResp.getEditResponseUrl();
+	edit_url = newEditUrl; // ARRRGHH -- work around broken google crap
   Logger.log('preFill2=>'+newEditUrl);
   
   //Debug...
@@ -126,7 +128,10 @@ function getResponseItems (resp) {
   resp.getItemResponses().forEach(function (itemResp) {
     responseItems[itemResp.getItem().getTitle()]=itemResp.getResponse();
   }) // end forEach itemResp
-  return responseItems
+	responseItems['Timestamp'] = resp.getTimestamp();
+	responseItems['Username'] = resp.getRespondentEmail();
+	logNormal('ResponseItems: '+JSON.stringify(responseItems));
+  return responseItems;
 }
 
 triggerActions = {
@@ -147,29 +152,29 @@ triggerActions = {
     var f2f = getApprovalFormToMasterLookup(actionRow)
     Logger.log('Got f2f'+JSON.stringify(f2f));
     if (actionRow['Config1'].table) {
-    var targetForm = FormApp.openById(actionRow['Config1'].table['Approval Form ID'])
-    var editUrl = preFillApprovalForm({'targetForm':targetForm,
-                     'responseItems':responses,
-                     'field2field':f2f})
+			var targetForm = FormApp.openById(actionRow['Config1'].table['Approval Form ID'])
+			var editUrl = preFillApprovalForm({'targetForm':targetForm,
+																				 'responseItems':responses,
+																				 'field2field':f2f})
     }
     else {
       Logger.log('Did not find approval form to master :(');
       Logger.log('actionRow: '+JSON.stringify(actionRow));
     }
-    if (actionRow['Config2'].table && actionRow['Config3'].table) {
+    //if (actionRow['Config2'].table && actionRow['Config3'].table) {
       var templateSettings = actionRow['Config2'].table
-      var lookupSettings = actionRow['Config3'].table
-      generateApprovalEmail(
-        {subject:templateSettings.Subject,
-         body:templateSettings.Body,
-         responseItems:responses,
-         editUrl:editUrl}
-        )
-    }
-    else {
-      Logger.log('Did not find email settings for approval :(');
-      Logger.log('actionRow: '+JSON.stringify(actionRow));
-    }
+    var lookupSettings = actionRow['Config3'].table
+		responses['link'] = editUrl;
+      sendFormResultEmail(
+				responses,
+				templateSettings,
+				lookupSettings
+      );
+    //}
+    //else {
+    //  Logger.log('Did not find email settings for approval :(');
+    //  Logger.log('actionRow: '+JSON.stringify(actionRow));
+    //}
     
   }, // end Approval Form Trigger
 
@@ -225,10 +230,14 @@ function testPrefillForm () {
 
 function cleanupSheets () {
   var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
-  var sheet = ssApp.getSheetByName('Approval Response Received')
+  var sheet = ssApp.getSheetByName('Approval Response Received')  
+  if (sheet) {ssApp.deleteSheet(sheet)};
+  var sheet = ssApp.getSheetByName('Approval Response Received Here is the Edit URL')
   if (sheet) {ssApp.deleteSheet(sheet)};
   for (var i=1; i<200; i++) {
     var sheet = ssApp.getSheetByName('Approval Response Received-'+i);
+    if (sheet) {ssApp.deleteSheet(sheet) }
+    var sheet = ssApp.getSheetByName('Approval Response Received Here is the Edit URL-'+i)
     if (sheet) {ssApp.deleteSheet(sheet) }
   }
 }
@@ -239,13 +248,14 @@ function testTrigger () {
   var formResponse = form.createResponse()
   items = form.getItems();  
   items.forEach(function (item) {
-    var value = "Foo";
+    var value = "English";
     try {
       itemResponse = item.createResponse(value); // Create a response
       formResponse.withItemResponse(itemResponse);
     }
     catch (err) {
       Logger.log('Oh well, no response for: '+JSON.stringify(item));
+			Logger.log('Error: '+err);
     }
   }) // end forEach
   formResponse.submit();
@@ -253,4 +263,10 @@ function testTrigger () {
   //Logger.log('There are '+items
 }
                 
+
+function testGetConfigsForId () {
+	var masterSheet = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+	Logger.log('GOT Configs: '+JSON.stringify(getMasterConfig(masterSheet).getConfigsForId('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4')));
+}
+
 
