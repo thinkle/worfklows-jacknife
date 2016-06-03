@@ -52,23 +52,23 @@ function preFillApprovalForm (params) {
         if (isNumber) {
           value = Number(value);
         }
-          //Logger.log('Creating response with value '+JSON.stringify(value));
-          try {
-            itemResponse = item.createResponse(value); // Create a response
-            formResponse.withItemResponse(itemResponse);
-						Logger.log('Created response to item '+itemTitle+': '+value);
-          }
-          catch (exception) {
-            Logger.log('Skipping itemResponse '+value+' exception:'+exception);
-            msg = 'Error with itemResponse: '+itemResponse+' value: '+value
-            msg += '<br>Exception: '+exception
-            sendEmail('thinkle@innovationcharter.org','Error in Budget Script',msg)
-          }
+        //Logger.log('Creating response with value '+JSON.stringify(value));
+        try {
+          itemResponse = item.createResponse(value); // Create a response
+          formResponse.withItemResponse(itemResponse);
+					Logger.log('Created response to item '+itemTitle+': '+value);
         }
-        else {
-          Logger.log('No response to create: value'+JSON.stringify(value))
-          Logger.log('Field was: '+itemTitle);
-        }          
+        catch (exception) {
+          Logger.log('Skipping itemResponse '+value+' exception:'+exception);
+          msg = 'Error with itemResponse: '+itemResponse+' value: '+value
+          msg += '<br>Exception: '+exception
+          sendEmail('thinkle@innovationcharter.org','Error in Budget Script',msg)
+        }
+      }
+      else {
+        Logger.log('No response to create: value'+JSON.stringify(value))
+        Logger.log('Field was: '+itemTitle);
+      }          
     }
     else {
       Logger.log('Ignoring item of type =>'+item.getType());
@@ -88,9 +88,9 @@ function preFillApprovalForm (params) {
   var masterSheet = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
 
   createConfigurationSheet(masterSheet,
-                               'Approval Response Received Here is the Edit URL',
+                           'Approval Response Received Here is the Edit URL',
                            {'editUrl':edit_url,'second_edit_url':newEditUrl,'this is':'a test'});          
-    
+  
   // End debug...
   
   return edit_url
@@ -102,15 +102,15 @@ function getApprovalFormToMasterLookup (actionRow) {
   var conf = actionRow['Config1'].table
   if (conf) {
     if (conf.toFields){
-    // Now we build out our array in a bit of a strange way...
-    for (var i=0; i<conf.toFields.length; i++) {
-      if (conf.fromFields.length > i) {
-        var fromField = conf.fromFields[i];
-        if (fromField) {
-          f2f[conf.toFields[i]] = fromField
-        }
-      }
-    } // end for loop...
+			// Now we build out our array in a bit of a strange way...
+			for (var i=0; i<conf.toFields.length; i++) {
+				if (conf.fromFields.length > i) {
+					var fromField = conf.fromFields[i];
+					if (fromField) {
+						f2f[conf.toFields[i]] = fromField
+					}
+				}
+			} // end for loop...
     }}
   else {
     Logger.log('No conf ?');
@@ -135,17 +135,27 @@ function getResponseItems (resp) {
 }
 
 triggerActions = {
+  'Email' : function (event, masterSheet, actionRow) {
+    responses = getResponseItems(event.response)
+    templateSettings = actionRow['Config1'].table
+    lookupSettings = actionRow['Config2'].table
+    sendFormResultEmail(
+      responses,
+      templateSettings,
+      lookupSettings
+    );
+  },
   'Approval': function (event, masterSheet, actionRow) {
     responses = getResponseItems(event.response)
     // DEBUG 
-    try {
-      createConfigurationSheet(masterSheet,
-                               'Approval Response Received',
-                               responses);          
-    }
-    catch (err) {
-      Logger.log('Error creating debug sheet '+err);
-    }    
+		//    try {
+		//      createConfigurationSheet(masterSheet,
+		//                               'Approval Response Received',
+		//                               responses);          
+		//    }
+		//    catch (err) {
+		//      Logger.log('Error creating debug sheet '+err);
+		//    }    
     // END DEBUG
     Logger.log('Get actionRow'+JSON.stringify(actionRow));
     Logger.log('Get actionRow[Config1]'+JSON.stringify(actionRow.Config1));
@@ -162,14 +172,14 @@ triggerActions = {
       Logger.log('actionRow: '+JSON.stringify(actionRow));
     }
     //if (actionRow['Config2'].table && actionRow['Config3'].table) {
-      var templateSettings = actionRow['Config2'].table
+    var templateSettings = actionRow['Config2'].table
     var lookupSettings = actionRow['Config3'].table
 		responses['link'] = editUrl;
-      sendFormResultEmail(
-				responses,
-				templateSettings,
-				lookupSettings
-      );
+    sendFormResultEmail(
+			responses,
+			templateSettings,
+			lookupSettings
+    );
     //}
     //else {
     //  Logger.log('Did not find email settings for approval :(');
@@ -208,7 +218,7 @@ function onFormSubmitTrigger (event) {
     var action = actionRow.Action;    
     triggerActions[action](event,masterSheet,actionRow)    
   }
-                      )// end forEach action
+                     )// end forEach action
 }
 
 function testPrefillForm () {
@@ -223,8 +233,8 @@ function testPrefillForm () {
   }
   var form = FormApp.openById("1NFtScmn241rlKBz4azHzJK4DJ3P9Un44xUDSCzKQAiE");
   var editUrl = preFillApprovalForm({'targetForm':form,
-                     'responseItems':responseItems,
-                     'field2field':f2f})
+																		 'responseItems':responseItems,
+																		 'field2field':f2f})
   Logger.log('Edit URL: '+editUrl);  
 }
 
@@ -262,7 +272,7 @@ function testTrigger () {
   //Logger.log('Looking through items=>'+JSON.stringify(items));
   //Logger.log('There are '+items
 }
-                
+
 
 function testGetConfigsForId () {
 	var masterSheet = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
