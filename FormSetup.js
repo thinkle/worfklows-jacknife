@@ -55,6 +55,17 @@ function testListFormItemTitles() {
   Logger.log('listFormItemTitles=>'+listFormItemTitles(form));
 }
 
+
+function createEmailTableTemplateForForm (form) {
+  htmlOut = '<table>'
+  form.getItems().forEach( function (item) {
+    var item = item.getTitle();
+    htmlOut += '<tr><th>'+item+'</th><td><<'+item+'>></td></tr>';
+  }) // end forEach item
+  htmlOut += '</table>';
+  return htmlOut;
+}
+
 /* newTextItems=['Approval'], convertFields={'Requester':'Username', 'Request Timestamp':'Timestamp'}, ) */
 function createApprovalForm (firstForm, params) {
   var formAsFile = DriveApp.getFileById(firstForm.getId())
@@ -127,7 +138,7 @@ function createApprovalForm (firstForm, params) {
     controlSS,
     firstForm.getTitle()+' Email Template',
     {'Subject':firstForm.getTitle()+' Approval needed',
-     'Body':'We have received your form and need your approval. <a href="<<link>>">Click here</a> to approve.'                
+     'Body':'We have received your form and need your approval. <a href="<<link>>">Click here</a> to approve.\n' + createEmailTableTemplateForForm(firstForm)                
                     }    
     ))
   configSheets.push(createConfigurationSheet(
@@ -148,12 +159,44 @@ function createApprovalForm (firstForm, params) {
     'Approval',
     configSheets
     )
+  emailConfigSheets = []
+  emailConfigSheets.push(createConfigurationSheet(
+    controlSS,
+    approvalForm.getTitle()+' Email Template',
+    {'Subject': firstForm.getTitle()+' Response',
+                         'Body':'Your request has been responded to.\n\n'+createEmailTableTemplateForForm(approvalForm)
+     }
+     ));
+  emailConfigSheets.push(createConfigurationSheet(
+    controlSS,
+    approvalForm.getTitle()+' Email Settings',
+    {
+    'Lookup Field':'',
+    'Value 1':'foo@bar.com',
+    'Value 2':'boo@foo.com',
+    'Default':'asdf@asdf.org',    
+    'Possible Fields':listFormItemTitles(approvalForm),
+    }
+    ));         
+  // Now write second config file...
+  masterConfig.pushConfig(
+    approvalForm,
+    'Email',
+    emailConfigSheets);
   // Now set up triggers so that the master form 
   // triggers the approval form...  
   // if we don't have one already...
+  createFormTrigger(firstForm);
+  createFormTrigger(approvalForm);
+  
+
+ return approvalForm
+}
+
+function createFormTrigger (form) {
   var alreadyHaveTrigger =  false
   ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (t.getTriggerSourceId()==firstForm.getId()) {
+    if (t.getTriggerSourceId()==form.getId()) {
       if (t.getEventType()==ScriptApp.EventType.ON_FORM_SUBMIT) {
         Logger.log('trigger already installed -- no need for another');
         alreadyHaveTrigger = true
@@ -162,12 +205,10 @@ function createApprovalForm (firstForm, params) {
   }) // end forEach trigger
   if (! alreadyHaveTrigger) {
     ScriptApp.newTrigger('onFormSubmitTrigger')
-    .forForm(firstForm)
+    .forForm(form)
     .onFormSubmit()
     .create();   
   }
-
- return approvalForm
 }
 
 function testCreateApprovalForm () {   
@@ -182,3 +223,10 @@ function testCreateApprovalForm () {
   Logger.log('Pub URL: '+approvalForm.getPublishedUrl())
   Logger.log('Edit URL: '+approvalForm.getEditUrl())
 } // end testCreateApprovalForm
+
+function clearAll () {
+  var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+  ssApp.getSheets().forEach(function (s) {
+    if (s.getSheetId()!=0) { ssApp.deleteSheet(s) }
+  });
+}
