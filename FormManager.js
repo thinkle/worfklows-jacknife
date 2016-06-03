@@ -1,0 +1,256 @@
+////////////////////////////////////////////////////
+// This file contains code that handles triggers  //
+// for forms and approvals                        //
+////////////////////////////////////////////////////
+
+
+/////////////////////////////////
+// Form2Form Stuff for Approval Forms
+///////////////////////////////////
+
+
+function preFillApprovalForm (params) {
+  // Pre-Fill Out approval form and return editUrl
+  // params.targetForm = form object
+  // params.responseItems = response items dictionary
+  // params.field2field = lookup dictionary for fields that don't map directly  
+  var formResponse = params.targetForm.createResponse()
+  items = params.targetForm.getItems();  
+  //Logger.log('Looking through items=>'+JSON.stringify(items));
+  //Logger.log('There are '+items.length+' items.');
+  for (var i=0; i < items.length; i++) {
+    item = items[i]
+    go_on = false; isNumber = false;
+    if (item.getType() == 'TEXT') {
+      item = item.asTextItem();
+      go_on = true
+    }
+    if (item.getType() == 'PARAGRAPH_TEXT') {
+      item = item.asParagraphTextItem();
+      go_on = true
+    }
+    if (item.getType() == 'MULTIPLE_CHOICE') {
+      item = item.asMultipleChoiceItem();
+      go_on = true
+    }
+    if (item.getType()== 'SCALE') {
+      item = item.asScaleItem();
+      go_on = true;
+      isNumber = true;
+    }
+    if (go_on) {
+      //Logger.log('Working with '+item.getType()+item.getTitle())
+      itemTitle = item.getTitle()      
+      if (params.field2field.hasOwnProperty(itemTitle)) {        
+        sourceKey = params.field2field[itemTitle]
+        value = params.responseItems[sourceKey]
+      }
+      else {
+        value = params.responseItems[itemTitle] // assume we can translate directly
+      }
+      if (value) {
+        if (isNumber) {
+          value = Number(value);
+        }
+          //Logger.log('Creating response with value '+JSON.stringify(value));
+          try {
+              itemResponse = item.createResponse(value); // Create a response
+              formResponse.withItemResponse(itemResponse);
+          }
+          catch (exception) {
+            Logger.log('Skipping itemResponse '+value+' exception:'+exception);
+            msg = 'Error with itemResponse: '+itemResponse+' value: '+value
+            msg += '<br>Exception: '+exception
+            sendEmail('thinkle@innovationcharter.org','Error in Budget Script',msg)
+          }
+        }
+        else {
+          Logger.log('No response to create: value'+JSON.stringify(value))
+          Logger.log('Field was: '+itemTitle);
+        }          
+    }
+    else {
+      Logger.log('Ignoring item of type =>'+item.getType());
+    }
+  }
+  submittedFormResponse = formResponse.submit()  
+  edit_url = submittedFormResponse.getEditResponseUrl();  
+  Logger.log('preFill=>'+edit_url);
+  var allResponses = params.targetForm.getResponses();
+  var lastRespNo = allResponses.length - 1;
+  var lastResp = allResponses[lastRespNo]
+  var newEditUrl = lastResp.getEditResponseUrl();
+  Logger.log('preFill2=>'+newEditUrl);
+  
+  //Debug...
+  var masterSheet = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+
+  createConfigurationSheet(masterSheet,
+                               'Approval Response Received Here is the Edit URL',
+                           {'editUrl':edit_url,'second_edit_url':newEditUrl,'this is':'a test'});          
+    
+  // End debug...
+  
+  return edit_url
+}
+
+function getApprovalFormToMasterLookup (actionRow) {
+  // We expect the first sheet to have our lookup info...
+  var f2f = {}
+  var conf = actionRow['Config1'].table
+  if (conf) {
+    if (conf.toFields){
+    // Now we build out our array in a bit of a strange way...
+    for (var i=0; i<conf.toFields.length; i++) {
+      if (conf.fromFields.length > i) {
+        var fromField = conf.fromFields[i];
+        if (fromField) {
+          f2f[conf.toFields[i]] = fromField
+        }
+      }
+    } // end for loop...
+    }}
+  else {
+    Logger.log('No conf ?');
+    Logger.log('conf: '+JSON.stringify(conf));
+  }
+  return f2f
+}
+
+
+/////////////
+// Triggers & Such
+
+function getResponseItems (resp) {
+  responseItems = {}
+  resp.getItemResponses().forEach(function (itemResp) {
+    responseItems[itemResp.getItem().getTitle()]=itemResp.getResponse();
+  }) // end forEach itemResp
+  return responseItems
+}
+
+triggerActions = {
+  'Approval': function (event, masterSheet, actionRow) {
+    responses = getResponseItems(event.response)
+    // DEBUG 
+    try {
+      createConfigurationSheet(masterSheet,
+                               'Approval Response Received',
+                               responses);          
+    }
+    catch (err) {
+      Logger.log('Error creating debug sheet '+err);
+    }    
+    // END DEBUG
+    Logger.log('Get actionRow'+JSON.stringify(actionRow));
+    Logger.log('Get actionRow[Config1]'+JSON.stringify(actionRow.Config1));
+    var f2f = getApprovalFormToMasterLookup(actionRow)
+    Logger.log('Got f2f'+JSON.stringify(f2f));
+    if (actionRow['Config1'].table) {
+    var targetForm = FormApp.openById(actionRow['Config1'].table['Approval Form ID'])
+    var editUrl = preFillApprovalForm({'targetForm':targetForm,
+                     'responseItems':responses,
+                     'field2field':f2f})
+    }
+    else {
+      Logger.log('Did not find approval form to master :(');
+      Logger.log('actionRow: '+JSON.stringify(actionRow));
+    }
+    if (actionRow['Config2'].table && actionRow['Config3'].table) {
+      var templateSettings = actionRow['Config2'].table
+      var lookupSettings = actionRow['Config3'].table
+      generateApprovalEmail(
+        {subject:templateSettings.Subject,
+         body:templateSettings.Body,
+         responseItems:responses,
+         editUrl:editUrl}
+        )
+    }
+    else {
+      Logger.log('Did not find email settings for approval :(');
+      Logger.log('actionRow: '+JSON.stringify(actionRow));
+    }
+    
+  }, // end Approval Form Trigger
+
+}
+
+function fixBrokenEvent (event) {
+  // google's event does not work as documented... Let's fix it! 
+  // Help from: comment #2 on https://code.google.com/p/google-apps-script-issues/issues/detail?id=4810 
+  if (! event.source ) {
+    var responseEditUrl = event.response.getEditResponseUrl(); //gets edit response url which includes the form url
+    var responseUrl = responseEditUrl.toString().replace(/viewform.*/,''); //returns only the form url
+    event.source = FormApp.openByUrl(responseUrl); //gets the submitted form id
+  }
+  return event
+}
+
+
+function onFormSubmitTrigger (event) {
+  Logger.log('onFormSubmitTrigger got: '+JSON.stringify(event))
+  event = fixBrokenEvent(event)  
+  var form = event.source;  
+  // can we keep this bound in the future?
+  //var masterSheet = SpreadsheetApp.getActiveSheet();
+  var masterSheet = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+  // now lookup our configuration information and do our thing...
+  var masterConfig = getMasterConfig(masterSheet);
+  var formActions = masterConfig.getConfigsForId(form.getId());
+  Logger.log('Working with formActions: '+JSON.stringify(formActions));
+  formActions.forEach(function (actionRow) {
+    Logger.log('Trying action: '+actionRow);
+    var action = actionRow.Action;    
+    triggerActions[action](event,masterSheet,actionRow)    
+  }
+                      )// end forEach action
+}
+
+function testPrefillForm () {
+  var responseItems = {
+    'color':'Yellow',
+    'Long description':'This is a long description.', 
+    'Multiple Choice Question':'Option 1',
+    'Ranking Question':'4',
+  }
+  var f2f = {
+    'What is your favorite color?':'color',
+  }
+  var form = FormApp.openById("1NFtScmn241rlKBz4azHzJK4DJ3P9Un44xUDSCzKQAiE");
+  var editUrl = preFillApprovalForm({'targetForm':form,
+                     'responseItems':responseItems,
+                     'field2field':f2f})
+  Logger.log('Edit URL: '+editUrl);  
+}
+
+function cleanupSheets () {
+  var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+  var sheet = ssApp.getSheetByName('Approval Response Received')
+  if (sheet) {ssApp.deleteSheet(sheet)};
+  for (var i=1; i<200; i++) {
+    var sheet = ssApp.getSheetByName('Approval Response Received-'+i);
+    if (sheet) {ssApp.deleteSheet(sheet) }
+  }
+}
+
+function testTrigger () {
+  // Submit a form so we can test our trigger...
+  var form = FormApp.openById('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4')
+  var formResponse = form.createResponse()
+  items = form.getItems();  
+  items.forEach(function (item) {
+    var value = "Foo";
+    try {
+      itemResponse = item.createResponse(value); // Create a response
+      formResponse.withItemResponse(itemResponse);
+    }
+    catch (err) {
+      Logger.log('Oh well, no response for: '+JSON.stringify(item));
+    }
+  }) // end forEach
+  formResponse.submit();
+  //Logger.log('Looking through items=>'+JSON.stringify(items));
+  //Logger.log('There are '+items
+}
+                
+

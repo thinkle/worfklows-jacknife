@@ -1,0 +1,43 @@
+<!DOCTYPE HTML>
+<html ng-app="formManagerApp">
+  <head>    
+    <script>
+      console.log('formManager hi!');
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.js"></script>
+    <script>
+       // controller / model
+       console.log('register app');
+       var fApp = angular.module('formManagerApp',[]);
+       console.log('created',fApp)
+       console.log('register controller');
+       fApp.controller('FormListCtrl', function () {
+          var vm = this;
+          vm.linked_forms = [
+             {'id':'asdfa12039',
+              'name':'Test 1'},
+              {'id':'asdfa1asdf1',
+              'name':'Test 2'},
+              {'id':'zxcvb12345',
+              'name':'Test 3'},
+              {'id':'lkjdfg09823',
+              'name':'Test 4'},              
+              ]              
+       });
+       
+    
+    </script>
+    
+  </head>
+  <body ng-controller="FormListCtrl as formList">
+    <div>      
+      <label>Linked Forms:</label>
+      <ul>
+        <li ng-repeat="form in formList.linked_forms">
+         <span class="form-id">{{form.id}}</span>
+         <span class="form-name">{{form.name}}</span>
+        </li>
+       </ul>
+    </div>    
+  </body>
+</html>
