@@ -14,12 +14,18 @@ function sendEmail (email, subject, htmlBody) {
              )
 }
 
-
-function sendFormResultEmail (results, configTemplate) {
+function sendFormResultEmail (results, templateSettings, addressSettings) {
+	sendEmailFromTemplate(
+		'thinkle@innovationcharter.org',
+		templateSettings.Subject, 
+		templateSettings.Body,
+		results,
+		true
+	);
 }
 
 function sendEmailFromTemplate (email, subj, template, fields, fixWhiteSpace) {
-  sendEmail(email, subj, applyTemplate(template, fields, fixWhiteSpace));
+  sendEmail(email, applyTemplate(subj, fields), applyTemplate(template, fields, fixWhiteSpace));
 }
 
 function applyTemplate (template, fields, fixWhiteSpace) {
