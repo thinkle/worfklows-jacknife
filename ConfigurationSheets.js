@@ -187,9 +187,9 @@ function ConfigurationSheet (sheet, settings) {
         var valueList = []
         for (var r=1; r<sheet.getLastRow(); r++) {
           var value = listValues[r][c]
-          if (value) {
-            valueList.push(value);
-          }
+          //if (value) {
+          valueList.push(value);
+          //}
         }
         data[header] = valueList;
       }
