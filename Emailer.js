@@ -9,18 +9,43 @@ function sendEmail (email, subject, htmlBody) {
       {to:email,
        htmlBody:htmlBody,
        subject:subject}
-      )
     )
-             )
+  )
+            )
+}
+
+function getEmail (addressSettings, results) {
+  // Given somewhat complex addressSettings config sheet, get correct
+  // email for results...
+  // Email Field => Field that maps directly to email
+  // ORRRRRR
+  // Lookup Field => Field that tells us what to look up in the other fields
+  if (addressSettings['Lookup Field']) {
+    // If we have a lookup field...
+    var fieldValue = results[addressSettings['Lookup Field']]
+    var value = addressSettings[fieldValue]
+    if (value) {
+      return value
+    }
+    else {
+      if (addressSettings['Default']) {
+        return addressSettings['Default']
+      }
+    }
+  }
+  if (addressSettings['Email Field']) {
+    return results[addressSettings['Email Field']]
+  }
 }
 
 function sendFormResultEmail (results, templateSettings, addressSettings) {
+  Logger.log('sendFormResultEmail'+JSON.stringify([results,templateSettings,addressSettings]));
 	sendEmailFromTemplate(
-		'thinkle@innovationcharter.org',
-		templateSettings.Subject, 
-		templateSettings.Body,
-		results,
-		true
+    getEmail(addressSettings, results),
+    templateSettings.Subject,
+    templateSettings.Body,
+    results,
+    true
 	);
 }
 
@@ -50,7 +75,7 @@ function testTemplateEmail () {
   }
   sendEmailFromTemplate('tmhinkle@gmail.com','Test Template Message',template, fields);
 }
-    
+
 
 function testEmail () {
   sendEmail('tmhinkle@gmail.com','This is a test message from Workflows','<b>This is bold</b><br><table><tr><td>This</td><td>is</td></tr><tr><td><i>a</i></td><td>table</td></tr></table><h3>Heading!</h3>');
