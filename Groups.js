@@ -11,18 +11,23 @@ function createEmail (params) {
 	var emailSubject = params.emailSubject ? params.emailSubject : defaultSubject;
 	var username = params.username;
 	user = params.fields ? params.fields : {}
-	if (AdminDirectory.Users.get(username)) {
-		logNormal('User '+username+' already exists')
-	}
-	else {
-		if (! user.primaryEmail) {
+  Logger.log('Username: '+username);
+  try {
+		var user = AdminDirectory.Users.get(username) 
+    logNormal('User '+username+' already exists')
+    return user
+  }
+  catch (err) {
+    logNormal('Error '+err+' likely just means we need to create user...');
+    if (! user.primaryEmail) {
 			user.primaryEmail = username;
 		}
 		if (! user.name) {
 			user.name = {givenName:first,familyName:last}
 		}
 		if (! user.password) {
-			user.password = Math.random().toString(36);
+      var pw = (Math.random()).toString(36).replace('0.','')
+      user.password = pw
 		}
 		user = AdminDirectory.Users.insert(user);
 		Logger.log('User %s created with ID %s',user.primaryEmail,user.id);
@@ -30,9 +35,9 @@ function createEmail (params) {
 			'username':username,
 			'first':first,
 			'last':last,
-			'password':user.password,
+			'password':pw,
 		}
-		informList.forEach( function (username) {
+    informList.forEach( function (username) {
 			sendEmailFromTemplate(
 				username,
 				emailSubject,
@@ -44,20 +49,24 @@ function createEmail (params) {
 
 function addToGroups (username, groupEmails) {
 	groupEmails.forEach(function (groupEmail) {
-		AdminDirectory.Members.insert(username,groupEmail);
-		logNormal('Inserted '+username+' into group '+groupEmail);
+    try {AdminDirectory.Members.insert({email:username,role:'MEMBER'},groupEmail);
+				 logNormal('Inserted '+username+' into group '+groupEmail);
+        }
+    catch (err) {
+      logNormal('Error adding user - already exists? '+err);
+    }
 	});
 }
 
 
 function testEmailAndAddToGroups () {
 	createEmail(
-		{username:'test.email@innovationcharter.org',
+		{username:'test3.email@innovationcharter.org',
 		 first:'Firstius',
 		 last:'Lasty',
 		 informList:['thinkle@innovationcharter.org,tmhinkle@gmail.com'],
 		});
-	addToGroups('test.email@innovationcharter.org',
+	addToGroups('test3.email@innovationcharter.org',
 							['hs@innovationcharter.org','all@innovationcharter.org']
 						 );
 }
