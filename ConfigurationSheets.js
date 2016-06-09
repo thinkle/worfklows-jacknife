@@ -212,15 +212,18 @@ function ConfigurationSheet (sheet, settings) {
     } // end forEach column...
     valueListHeaders.forEach(
 			function (listHeader) {
-				if (listHeader.indexOf('Key')=listHeader.length-3) {
+				if (listHeader.indexOf('Key')==listHeader.length-3) {
 					// If we have a key... look for a value
 					var rootName = listHeader.substr(0,listHeader.length-3)
 					if (data.hasOwnProperty(rootName+'Val')) {
 						// Yippee - we have values...
-						data[rootName+'Lookup'] = LookupArray(data[listHeader],data[rootName+'Val'])
-					}
-				}
-			});
+                      Object.defineProperty(data,
+                                            rootName+'Lookup',
+                                            {value:LookupArray(data[listHeader],data[rootName+'Val']),
+                        enumerable:false});
+                }
+            }
+      }); // end forEach valueListHeader...
     return data;
   } // end getConfigurationTable  
            
@@ -244,8 +247,10 @@ function ConfigurationSheet (sheet, settings) {
 } 
 
 function LookupArray (array1, array2) {
-	var lookupArray = {};
+	var lookupArray = {};      
 	array1.forEach(function (key) {
+      if (! key) {return};
+      Logger.log('Key='+key);
 		Object.defineProperty(
 			lookupArray,
 			key,
@@ -264,7 +269,8 @@ function LookupArray (array1, array2) {
 					array1.push(key)
 					array2.push(v)
 				}
-			} // end set
+			}, // end set
+             enumerable: true,
 			})
 	}) // end forEach key
 	Object.preventExtensions(lookupArray); // prevent confusion
@@ -398,6 +404,41 @@ function testReadConfigurationSheet () {
   cs.writeConfigurationTable();
   Logger.log('Edit URL: ' + cs.getSheetLink());
   Logger.log('Sheet ID: '+cs.getSheetId());
+}
+
+function testMagicDictionaryStuff () {
+  var ss = SpreadsheetApp.openById('1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk');
+  var config = createConfigurationSheet(ss, 'TestMagicDict',
+                                        {'Regular Key':123,
+                                         'Other key':'foo biz bang',
+                                         'FooKey':['Fruit','Vegetable','Protein','Grain'],
+                                         'FooVal':['Apple','Kale','Salmon','Flatbread'],
+                                         'SquaresKey':[2,4,6,8],
+                                         'SquaresVal':[4,16,36,64],
+                                         'OtherList':['a','b','c',1,2,3,'asdfasdf'],
+                                        })
+  Logger.log(JSON.stringify(config));
+  Logger.log(JSON.stringify(config['Regular Key']));
+  Logger.log(JSON.stringify(config['Other Key']));
+  Logger.log(JSON.stringify(config['SquaresKey']));
+  Logger.log(JSON.stringify(config['SquaresLookup']));
+}
+
+function testReadMagic () {
+   var cs = getConfigurationSheetById(
+    '1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk',
+    '652288327'
+    );
+  cs.loadConfigurationTable();
+  Logger.log('Config:'+JSON.stringify(cs));
+  Logger.log(JSON.stringify(cs.table['Regular Key']));
+  Logger.log(JSON.stringify(cs.table['Other Key']));
+  Logger.log(JSON.stringify(cs.table['SquaresKey']));
+  Logger.log(JSON.stringify(cs.table['SquaresLookup']));
+  Logger.log(JSON.stringify(cs.table['SquaresLookup'][6]));
+  Logger.log(JSON.stringify(cs.table['FooLookup'].Fruit));
+  cs.table['FooLookup'].Fruit = 'Banana';
+  cs.writeConfigurationTable();
 }
 
 function testInitializeConfig () {
