@@ -5,13 +5,13 @@ function createCalendarFormAndConfig (calendarIDs, form) {
 	var ret = {}
 	ret.form = createCalendarAddForm(calendarIDs,form);
 	ret.configTable = {
-		'Username':'Username',
+		'User':'User',
 		'CalendarsRead':'Calendars (Read Access)',
 		'CalendarsWrite':'Calendars (Write Access)',
-		'CalendarKeys':calendarIDs.map(function (cid) {
+		'CalendarKey':calendarIDs.map(function (cid) {
 			return CalendarApp.getCalendarById(cid).getName()
 		}),
-		'CalendarVals':calendarIDs,
+		'CalendarVal':calendarIDs,
 	} // end configTable
 	return ret; 
 } // end createCalendarFormAndConfig
@@ -20,9 +20,10 @@ function createCalendarAddForm (calendarIDs, form) {
   if (!form) {
     form = FormApp.create("Add Calendar Form");
     form.setTitle('Add Calendar Form');
+    form.collectsEmail(true);
     Logger.log('Created form: '+form.getPublishedUrl());    
     form.addTextItem()    
-    .setTitle("Username")
+    .setTitle("User")
     .setHelpText("Name of User Who Will be Added To Calendars");    
   };  
   form.addSectionHeaderItem().setTitle("Calendars");
@@ -44,18 +45,42 @@ function createCalendarAddForm (calendarIDs, form) {
   return form;
 }
 
-function addUserToCalendarFromForm (results, calConfigSettings, emailTemplateSettings) {
-	var calendarSettings = lookupField(calConfigSettings,results);
-	var cals = calendarSettings.calendars.split(',');
+function CalendarSettings (calConfigSettings, results) {
+	settings = {}
+	settings['user'] = results[calConfigSettings.User]
+	function getCal (cName) {
+		return calConfigSettings.CalendarLookup[cName];
+	}
+	settings['writeCals'] = results[calConfigSettings.CalendarsWrite].map(getCal);
+	settings['readCals'] = results[calConfigSettings.CalendarsRead].map(getCal);
+	Logger.log('CalendarSettings=>'+JSON.stringify(settings));
+	return settings
+}
+
+function addUserToCalendarFromForm (results, calConfig, informConfig, emailConfig) {
+	var calendarSettings = CalendarSettings(calConfig,results);	
 	var user = calendarSettings.user;
-	var calsAdded = [];
-	cals.forEach( function (c) {
-		var success = addUserToCalendar(user,c);
+  var calResults = {'User':user, 'CalendarsRead':[],'CalendarsWrite':[]}
+	calendarSettings.readCals.forEach( function (c) {
+		var success = addUserToCalendar(user,c,'reader');
 		if (success) {
-			calsAdded.push(c);
-		}
+			calResults.CalendarsRead.push(CalendarApp.getCalendarById(c).getName());
+        }
 	})
-	sendEmailUpdate(user,calsAdded);
+    calendarSettings.writeCals.forEach( function (c) {
+		var success = addUserToCalendar(user,c,'writer');
+		if (success) {
+			calResults.CalendarsWrite.push(
+              CalendarApp.getCalendarById(c).getName()
+              );          
+        }
+	})
+    Logger.log('Added calendars: '+JSON.stringify(calResults));
+    // Handle Emailing out update...
+    //informList = lookupField(informSettings, results);
+    informList = results.Username;
+    sendEmailFromTemplate (informList, emailConfig.Subject, emailConfig.Body, calResults) 
+	//sendEmailUpdate(user,calsAdded);
 }
 
 function addUserToCalendar (user, calendarId, role) {
@@ -68,7 +93,15 @@ function addUserToCalendar (user, calendarId, role) {
     },
     role: role
   };
+  try {
   Calendar.Acl.insert(acl, calendarId);
+  }
+  catch (err) {
+    Logger.log("Error adding calendar: "+err)
+    throw err;
+    return false
+  }
+  return true;
 }
 
 function testAddUser () {
