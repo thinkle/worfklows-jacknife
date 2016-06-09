@@ -11,6 +11,9 @@
 // t[1].Name -> Same diff
 
 function getSheetById (ss, id) {
+  if (! ss) {
+    throw "No Spreadsheet handed to getSheetById!"
+  }
   var sheets = ss.getSheets();
   for (var i=0; i<sheets.length; i++) {
     if (sheets[i].getSheetId()==id) {
