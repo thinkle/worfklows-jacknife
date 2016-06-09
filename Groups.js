@@ -15,7 +15,9 @@ function createAccountFromForm (results, fieldSettings, informSettings, emailTem
 	createAccount(params)
 }
 
+
 /* username, first, last, fields, informList, emailTemplate, emailSubject */
+
 function createAccount (params) {
 	var first = params.first; 
 	var last = params.last;
@@ -73,7 +75,7 @@ function addToGroups (username, groupEmails) {
 
 
 function testEmailAndAddToGroups () {
-	createAccount(
+	createEmail(
 		{username:'Fake.Faculty@innovationcharter.org',
 		 first:'John',
 		 last:'Doe',
@@ -83,5 +85,5 @@ function testEmailAndAddToGroups () {
 	addToGroups('Fake.Faculty@innovationcharter.org',
 							['ms@innovationcharter.org','all@innovationcharter.org']
 						 );
-};
+}
 
