@@ -14,6 +14,20 @@ function sendEmail (email, subject, htmlBody) {
             )
 }
 
+function checkSelfApproval (val, addressSettings, results) {
+	if (! addressSettings['PreventSelfApprove']) {return val}
+	// Otherwise we *are* requiring that value != self
+	if (val != results['Username']) {
+		return val
+	}
+	if (results['Default']!=results['Username']) {
+		return results['Default']
+	}
+	if (results['DefaultBackup']!=results['Username']) {
+		return results['DefaultBackup']
+	}
+}
+
 function getEmail (addressSettings, results) {
   // Given somewhat complex addressSettings config sheet, get correct
   // email for results...
@@ -25,16 +39,16 @@ function getEmail (addressSettings, results) {
     var fieldValue = results[addressSettings['Lookup Field']]
     var value = addressSettings[fieldValue]
     if (value) {
-      return value
-    }
+			return checkSelfApproval(value,addressSettings,results)
+		}
     else {
       if (addressSettings['Default']) {
-        return addressSettings['Default']
+        return checkSelfApproval(addressSettings['Default'],addressSettings,results)
       }
     }
   }
   if (addressSettings['Email Field']) {
-    return results[addressSettings['Email Field']]
+    return checkSelfApproval(results[addressSettings['Email Field']],addressSettings,results)
   }
 }
 
@@ -87,9 +101,9 @@ function testApplyTemplate () {
   assertEq(applyTemplate('foo \n<<bar>>',{bar:'yippee'},true),'foo <br>yippee') 
   assertEq(applyTemplate('foo \n<<bar>>\n<<bar>>\n',{bar:'yippee'},true),'foo <br>yippee<br>yippee<br>')
   assertEq(applyTemplate('<<first>>:<<middle>>:<<last>>',{'first':'Thomas','middle':'M','last':'Hinkle'}),
-                         'Thomas:M:Hinkle')
+           'Thomas:M:Hinkle')
 }
-  
 
-  
-  
+
+
+
