@@ -5,7 +5,7 @@ function createCalendarFormAndConfig (calendarIDs, form) {
 	var ret = {}
 	ret.form = createCalendarAddForm(calendarIDs,form);
 	ret.configTable = {
-		'User':'User',
+		'Username':'Username',
 		'CalendarsRead':'Calendars (Read Access)',
 		'CalendarsWrite':'Calendars (Write Access)',
 		'CalendarKey':calendarIDs.map(function (cid) {
@@ -23,7 +23,7 @@ function createCalendarAddForm (calendarIDs, form) {
     form.collectsEmail(true);
     Logger.log('Created form: '+form.getPublishedUrl());    
     form.addTextItem()    
-    .setTitle("User")
+    .setTitle("Username")
     .setHelpText("Name of User Who Will be Added To Calendars");    
   };  
   form.addSectionHeaderItem().setTitle("Calendars");
@@ -47,7 +47,7 @@ function createCalendarAddForm (calendarIDs, form) {
 
 function CalendarSettings (calConfigSettings, results) {
 	settings = {}
-	settings['user'] = results[calConfigSettings.User]
+	settings['user'] = results[calConfigSettings.Username]
 	function getCal (cName) {
 		return calConfigSettings.CalendarLookup[cName];
 	}
@@ -60,7 +60,7 @@ function CalendarSettings (calConfigSettings, results) {
 function addUserToCalendarFromForm (results, calConfig, informConfig, emailConfig) {
 	var calendarSettings = CalendarSettings(calConfig,results);	
 	var user = calendarSettings.user;
-  var calResults = {'User':user, 'CalendarsRead':[],'CalendarsWrite':[]}
+  var calResults = {'Username':user, 'CalendarsRead':[],'CalendarsWrite':[]}
 	calendarSettings.readCals.forEach( function (c) {
 		var success = addUserToCalendar(user,c,'reader');
 		if (success) {
@@ -78,7 +78,7 @@ function addUserToCalendarFromForm (results, calConfig, informConfig, emailConfi
     Logger.log('Added calendars: '+JSON.stringify(calResults));
     // Handle Emailing out update...
     //informList = lookupField(informSettings, results);
-    informList = results.Username;
+    informList = results.FormUser;
     sendEmailFromTemplate (informList, emailConfig.Subject, emailConfig.Body, calResults) 
 	//sendEmailUpdate(user,calsAdded);
 }

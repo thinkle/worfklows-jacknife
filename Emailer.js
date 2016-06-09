@@ -17,13 +17,13 @@ function sendEmail (email, subject, htmlBody) {
 function checkSelfApproval (val, addressSettings, results) {
 	if (! addressSettings['PreventSelfApprove']) {return val}
 	// Otherwise we *are* requiring that value != self
-	if (val != results['Username']) {
+	if (val != results['FormUser']) {
 		return val
 	}
-	if (results['Default']!=results['Username']) {
+	if (results['Default']!=results['FormUser']) {
 		return results['Default']
 	}
-	if (results['DefaultBackup']!=results['Username']) {
+	if (results['DefaultBackup']!=results['FormUser']) {
 		return results['DefaultBackup']
 	}
 }

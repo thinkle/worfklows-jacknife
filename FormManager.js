@@ -9,6 +9,7 @@
 // Quick ways to read form fields from
 // config files...
 ////////////////////////////////////////
+
 function lookupField (settings, results) {
 	if (settings['Field']) {
 		var value = results[settings['Field']]
@@ -156,10 +157,11 @@ function getResponseItems (resp) {
   responseItems = {}
   resp.getItemResponses().forEach(function (itemResp) {
     responseItems[itemResp.getItem().getTitle()]=itemResp.getResponse();
-  }) // end forEach itemResp
+    }) // end forEach itemResp
 	responseItems['Timestamp'] = resp.getTimestamp();
-	responseItems['Username'] = resp.getRespondentEmail();
-	logNormal('ResponseItems: '+JSON.stringify(responseItems));
+	responseItems['FormUser'] = resp.getRespondentEmail();
+	logNormal('ResponseItems: >>>'+JSON.stringify(responseItems)+'<<<');
+  logNormal('ResponseItems FormUser: >>>'+responseItems.FormUser);
   return responseItems;
 }
 
@@ -182,7 +184,15 @@ function getResponseItems (resp) {
       templateSettings,
       lookupSettings
     );
-  },
+  }, // end Email
+	 'Calendar': function (event, masterSheet, actionRow) {
+		 responses = getResponseItems(event.response);
+		 var calConfig = actionRow['Config1'].table;
+		 var informConfig = actionRow['Config2'].table;
+		 var emailConfig = actionRow['Config3'].table;
+		 var calendarsAdded = addUserToCalendarFromForm(responses, calConfig, informConfig, emailConfig);
+		 Logger.log('Added calendars: '+JSON.stringify(calendarsAdded));
+	 }, // end Calendar
   'Approval': function (event, masterSheet, actionRow) {
     responses = getResponseItems(event.response)
     // DEBUG 
@@ -311,6 +321,30 @@ function testTrigger () {
   //Logger.log('There are '+items
 }
 
+function testCalTrigger () {
+	var form = FormApp.openById("1a6-6MeMG0oyLpMhcv7h83cOFQ-fG21snRdmnGOolU2U")    
+	var formResp = form.createResponse();
+	items = form.getItems();
+	items.forEach(function (item) {
+      
+      var title = item.getTitle();      
+		if (item.getTitle()=='User') {          
+          formResp.withItemResponse(item.asTextItem().createResponse("Fake.Faculty@innovationcharter.org"))                   
+		}
+		else {
+			if (item.getType()=='CHECKBOX') {
+				Logger.log('Filling out multiple choice by checking all the boxes');
+                var allResponses = item.asCheckboxItem().getChoices().map(function (i) {return i.getValue()})
+                Logger.log(JSON.stringify(allResponses));
+				var resp = item.asCheckboxItem().createResponse(
+					allResponses
+				)
+				formResp.withItemResponse(resp);
+			} // end if
+		} // end else
+	}); // end forEach
+	formResp.submit();
+} // end testCallTrigger
 
 function testGetConfigsForId () {
 	var masterSheet = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');

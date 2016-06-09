@@ -2,6 +2,23 @@ defaultCreateAccountSubject = "Account Info";
 defaultCreateAccountTemplate = "This email is to inform you that a new account has been created for <<username>> with the initial password <<password>>.";
 
 
+function createGroupForm (groups, form) {
+	if (!form) {
+		form = FormApp.create("Google Groups").setTitle("Google Groups")        
+      .setCollectEmail(true);
+    form.addTextItem()
+		  .setTitle("User")
+		  .setHelpText("Name of User Who Will be Added to Groups");
+		Logger.log('createGroupForm=>'+form.getPublishedUrl());
+	}
+	form.addSectionHeaderItem()
+		.setTitle("Groups");
+	var cb = form.addCheckboxItem()
+			.setTitle('Add to Google Groups:')
+			.setChoiceValues(groups);
+	return form;
+}
+
 function createAccountFromForm (results, fieldSettings, informSettings, emailTemplateSettings) {
  	var params = {
  		informList : lookupField(informSettings, results),
@@ -87,3 +104,10 @@ function testEmailAndAddToGroups () {
 						 );
 }
 
+
+function testCreateGroupForm () {
+	createGroupForm(['hs@innovationcharter.org',
+									 'ms@innovationcharter.org',
+									 'all@innovationcharter.org',
+									 'innovator-editors@innovationcharter.org']);
+}

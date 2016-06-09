@@ -134,7 +134,12 @@ function createGroupSettings (form, params) {
   createFormTrigger(form);
 }
 
-/* newTextItems=['Approval'], convertFields={'Requester':'Username', 'Request Timestamp':'Timestamp'}, ) */
+// Create a form with the fields necessary for creating a new user
+function createUserForm (calendarIDs, groups, folderIDs) {
+
+}
+
+/* newTextItems=['Approval'], convertFields={'Requester':'FormUser', 'Request Timestamp':'Timestamp'}, ) */
 function createApprovalForm (firstForm, params) {
   var formAsFile = DriveApp.getFileById(firstForm.getId())
   var origTitle = firstForm.getTitle()
@@ -145,7 +150,7 @@ function createApprovalForm (firstForm, params) {
   var approvalFormAsFile = formAsFile.makeCopy(origName+' '+titleSuffix, params['destinationFolder'] ? params['destinationFolder'] : undefined)
   var approvalForm = FormApp.openById(approvalFormAsFile.getId());   
   approvalForm.setTitle(origTitle+' '+titleSuffix)  
-  var convertFields = params['convertFields'] ? params['convertFields'] : [{'from':'Username','to':'Requester','type':FormApp.ItemType.TEXT},
+  var convertFields = params['convertFields'] ? params['convertFields'] : [{'from':'FormUser','to':'Requester','type':FormApp.ItemType.TEXT},
                                                                            {'from':'Timestamp','to':'Request Timestamp','type':FormApp.ItemType.TEXT}
                                                                            ]
   var newSectionHeader = params['approvalHeader'] ? params['approvalHeader'] : {'title':'Approval', 'helpText':'The above information was filled out by the requester. Use the section below to indicate your approval.'}
