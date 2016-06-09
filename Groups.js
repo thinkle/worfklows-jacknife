@@ -1,14 +1,27 @@
-defaultSubject = "Account Info";
-defaultTemplate = "This email is to inform you that a new account has been created for <<username>> with the initial password <<password>>.";
+defaultCreateAccountSubject = "Account Info";
+defaultCreateAccountTemplate = "This email is to inform you that a new account has been created for <<username>> with the initial password <<password>>.";
 
-/* username, first, last, fields, informList, emailTemplate */
 
-function createEmail (params) {
+function createAccountFromForm (results, fieldSettings, informSettings, emailTemplateSettings) {
+	var params = {
+		informList : lookupField(informSettings, results)
+		emailTemplate : emailTemplateSettings.Body
+		emailSubject : emailTemplateSettings.Subject
+	}
+	var moreFields = lookupFields(extraSettings,results)
+	for (var k in  moreFields) {
+		params[k]=moreFields[k];
+	}
+	createAccount(params)
+}
+
+/* username, first, last, fields, informList, emailTemplate, emailSubject */
+function createAccount (params) {
 	var first = params.first; 
 	var last = params.last;
 	var informList = params.informList ? params.informList : [];
-	var emailTemplate = params.emailTemplate ? params.emailTemplate : defaultTemplate;
-	var emailSubject = params.emailSubject ? params.emailSubject : defaultSubject;
+	var emailTemplate = params.emailTemplate ? params.emailTemplate : defaultCreateAccountTemplate;
+	var emailSubject = params.emailSubject ? params.emailSubject : defaultCreateAccountSubject;
 	var username = params.username;
 	user = params.fields ? params.fields : {}
   Logger.log('Username: '+username);
@@ -60,14 +73,15 @@ function addToGroups (username, groupEmails) {
 
 
 function testEmailAndAddToGroups () {
-	createEmail(
-		{username:'test3.email@innovationcharter.org',
-		 first:'Firstius',
-		 last:'Lasty',
+	createAccount(
+		{username:'Fake.Faculty@innovationcharter.org',
+		 first:'John',
+		 last:'Doe',
 		 informList:['thinkle@innovationcharter.org,tmhinkle@gmail.com'],
+		 fields:{'orgUnitPath':'/Staff',},
 		});
-	addToGroups('test3.email@innovationcharter.org',
-							['hs@innovationcharter.org','all@innovationcharter.org']
+	addToGroups('Fake.Faculty@innovationcharter.org',
+							['ms@innovationcharter.org','all@innovationcharter.org']
 						 );
-}
+};
 
