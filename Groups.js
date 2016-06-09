@@ -75,10 +75,10 @@ function addToGroups (username, groupEmails) {
 
 
 function testEmailAndAddToGroups () {
-	createEmail(
+	createAccount(
 		{username:'Fake.Faculty@innovationcharter.org',
-		 first:'John',
-		 last:'Doe',
+		 first:'Fake',
+		 last:'Faculty',
 		 informList:['thinkle@innovationcharter.org,tmhinkle@gmail.com'],
 		 fields:{'orgUnitPath':'/Staff',},
 		});
