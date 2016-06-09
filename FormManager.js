@@ -1,8 +1,37 @@
+
 ////////////////////////////////////////////////////
 // This file contains code that handles triggers  //
 // for forms and approvals                        //
 ////////////////////////////////////////////////////
 
+
+///////////////////////////////
+// Quick ways to read form fields from
+// config files...
+////////////////////////////////////////
+function lookupField (settings, results) {
+	if (settings['Field']) {
+		var value = results[settings['Field']]
+	}
+	if (settings['Lookup Field']) {
+		var fieldValue = results[settings['Lookup Field']]
+		var value = settings[fieldValue]
+	}
+	if (value) {
+		return value
+	}
+	else {
+		return settings['Default']
+	}
+}
+
+function lookupFields (settings, results) {
+	fields = {}
+	for (var settingKey in settings) {
+		fields[settingKey] = results[settings[settingKey]]
+	}
+	return fields
+}
 
 /////////////////////////////////
 // Form2Form Stuff for Approval Forms
@@ -135,10 +164,19 @@ function getResponseItems (resp) {
 }
 
 triggerActions = {
+	'NewUser' : function (event, masterSheet, actionRow) {
+    var responses = getResponseItems(event.response);
+		var usernameSettings = actionRow['Config1'].table;
+		var extraSettings = actionRow['Config2'].table;
+		createAccountFromForm(
+			usernameSettings
+			extraSettings
+		);
+	}
   'Email' : function (event, masterSheet, actionRow) {
-    responses = getResponseItems(event.response)
-    templateSettings = actionRow['Config1'].table
-    lookupSettings = actionRow['Config2'].table
+    var responses = getResponseItems(event.response);
+    var templateSettings = actionRow['Config1'].table;
+    var lookupSettings = actionRow['Config2'].table;
     sendFormResultEmail(
       responses,
       templateSettings,
