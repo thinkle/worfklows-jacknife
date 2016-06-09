@@ -2,7 +2,7 @@ defaultCreateAccountSubject = "Account Info";
 defaultCreateAccountTemplate = "This email is to inform you that a new account has been created for <<username>> with the initial password <<password>>.";
 
 
- function createAccountFromForm (results, fieldSettings, informSettings, emailTemplateSettings) {
+function createAccountFromForm (results, fieldSettings, informSettings, emailTemplateSettings) {
  	var params = {
  		informList : lookupField(informSettings, results),
  		emailTemplate : emailTemplateSettings.Body,
@@ -13,7 +13,7 @@ defaultCreateAccountTemplate = "This email is to inform you that a new account h
  		params[k]=moreFields[k];
  	}
  	createAccount(params)
- }
+}
 
 
 /* username, first, last, fields, informList, emailTemplate, emailSubject */
