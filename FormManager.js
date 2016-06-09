@@ -1,4 +1,3 @@
-
 ////////////////////////////////////////////////////
 // This file contains code that handles triggers  //
 // for forms and approvals                        //
