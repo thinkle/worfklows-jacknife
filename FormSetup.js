@@ -101,12 +101,13 @@ function createCalendarSettings (form, calConfig, params) {
 
 function createGroupSettings (form, params) {
 	var formAsFile = DriveApp.getFileById(form.getId());
-	var formTitle = firstFOrm.getTitle();
+	var formTitle = form.getTitle();
 	var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
 	var masterConfig = getMasterConfig(controlSS);
 	var configSheets = []
 	configSheets.push(
 		createConfigurationSheet( // field settings
+          controlSS, form.getTitle()+' Inform',
 			{
 				username:'',
 				first:'',
@@ -116,6 +117,7 @@ function createGroupSettings (form, params) {
 		))
 	configSheets.push(
 		createConfigurationSheet( // informSettings
+          controlSS, form.getTitle()+' Inform',
 			{'LookupField':'',
 			 'Value 1':'foo@bar.com',
 			 'Value 2':'foo@bar.com,baz@bar.com',
@@ -135,9 +137,32 @@ function createGroupSettings (form, params) {
 }
 
 // Create a form with the fields necessary for creating a new user
-function createUserForm (calendarIDs, groups, folderIDs) {
-
-}
+function createUserForm (calendarIDs, groups, folderIDs,params) {
+	form = FormApp.create('New User Form')
+	  .setTitle('New User Form');
+	form.addSectionHeaderItem()
+		.setTitle('New User Information');
+	form.addTextItem().setTitle('First')
+	form.addTextItem().setTitle('Last')
+	form.addTextItem().setTitle('Username')
+	// Calendar...
+	if (calendarIDs) {
+		var formResults = createCalendarFormAndConfig(calendarIDs,form);
+		createCalendarSettings(form,formResults.calConfig,params)
+	}
+	if (groups) {
+		// Group
+		createGroupForm(groups,form);
+		createGroupSettings(form,params);
+	}
+	if (folderIDs) {
+		//createFolderForm(folderIDs,form);
+		//createFolderSettings(form,config);
+		Logger.log('folders not yet implemented :(');
+	}
+	Logger.log('Created User Form: '+form.getPublishedUrl());
+	return form
+} // end createUserForm
 
 /* newTextItems=['Approval'], convertFields={'Requester':'FormUser', 'Request Timestamp':'Timestamp'}, ) */
 function createApprovalForm (firstForm, params) {
@@ -296,6 +321,15 @@ function testCreateApprovalForm () {
   Logger.log('Pub URL: '+approvalForm.getPublishedUrl())
   Logger.log('Edit URL: '+approvalForm.getEditUrl())
 } // end testCreateApprovalForm
+
+function testCreateUserForm () {
+	var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+    var cals = ['innovationcharter.org_4f5nt4qijeoblj11aj2q7hibdc@group.calendar.google.com','innovationcharter.org_0a0e0ddepor9shl5kfsvsvbt4c@group.calendar.google.com']
+    var groups = ['hs@innovationcharter.org','ms@innovationcharter.org','all@innovationcharter.org']
+    var folders = []
+	createUserForm(cals, groups, folders,                   
+								 {'SpreadsheetApp':ssApp});
+}
 
 function testCreateCalendarForm () {
   var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
