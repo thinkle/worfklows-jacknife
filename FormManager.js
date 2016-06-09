@@ -1,3 +1,4 @@
+
 ////////////////////////////////////////////////////
 // This file contains code that handles triggers  //
 // for forms and approvals                        //
@@ -162,16 +163,16 @@ function getResponseItems (resp) {
   return responseItems;
 }
 
-triggerActions = {
-	'NewUser' : function (event, masterSheet, actionRow) {
-    var responses = getResponseItems(event.response);
-		var usernameSettings = actionRow['Config1'].table;
-		var extraSettings = actionRow['Config2'].table;
-		createAccountFromForm(
-			usernameSettings
-			extraSettings
-		);
-	}
+ triggerActions = {
+ 	'NewUser' : function (event, masterSheet, actionRow) {
+     var responses = getResponseItems(event.response);
+ 		var usernameSettings = actionRow['Config1'].table;
+ 		var extraSettings = actionRow['Config2'].table;
+ 		createAccountFromForm(
+ 			usernameSettings,
+ 			extraSettings
+ 		);
+ 	},
   'Email' : function (event, masterSheet, actionRow) {
     var responses = getResponseItems(event.response);
     var templateSettings = actionRow['Config1'].table;
@@ -223,9 +224,9 @@ triggerActions = {
     //  Logger.log('actionRow: '+JSON.stringify(actionRow));
     //}
     
-  }, // end Approval Form Trigger
+   }, // end Approval Form Trigger
 
-}
+ }
 
 function fixBrokenEvent (event) {
   // google's event does not work as documented... Let's fix it! 
@@ -291,7 +292,7 @@ function cleanupSheets () {
 
 function testTrigger () {
   // Submit a form so we can test our trigger...
-  var form = FormApp.openById('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4')
+  var form = FormApp.openById('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4');
   var formResponse = form.createResponse()
   items = form.getItems();  
   items.forEach(function (item) {
