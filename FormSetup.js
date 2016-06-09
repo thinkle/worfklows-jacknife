@@ -66,8 +66,41 @@ function createEmailTableTemplateForForm (form) {
   return htmlOut;
 }
 
+function createCalendarSettings (form, calConfig, params) {
+	var formAsFile = DriveApp.getFileById(form.getId());
+	var formTitle = form.getTitle(); Logger.log('title='+formTitle);
+	var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
+	var masterConfig = getMasterConfig(controlSS);
+	var configSheets = []
+	configSheets.push(
+		createConfigurationSheet(
+			controlSS, formTitle+' Settings',
+			calConfig
+		));
+	configSheets.push(
+		createConfigurationSheet( // informSettings
+			controlSS, formTitle+' Inform Settings',
+			{'LookupField':'',
+			 'Value 1':'foo@bar.com',
+			 'Value 2':'foo@bar.com,baz@bar.com',
+			}
+		));
+	configSheets.push(
+		createConfigurationSheet( // email template
+			controlSS, formTitle+' Email Template',
+			{'Body':defaultCalendarBodyTemplate,
+			 'Subject':defaultCalendarSubjectTemplate,}
+		));
+	masterConfig.pushConfig(
+		form,
+		'Calendar',
+		configSheets
+	);
+    createFormTrigger(form);
+}
+
 function createGroupSettings (form, params) {
-	var formAsFile = DriveApp.getFileById(firstForm.getId());
+	var formAsFile = DriveApp.getFileById(form.getId());
 	var formTitle = firstFOrm.getTitle();
 	var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
 	var masterConfig = getMasterConfig(controlSS);
@@ -90,10 +123,15 @@ function createGroupSettings (form, params) {
 		))
 	configSheets.push(
 		createConfigurationSheet( // email template
-			controlSS, firstForm.getTitle()+' Email Template',
+			controlSS, form.getTitle()+' Email Template',
 			{'Body':defaultCreateAccountTemplate,
 			 'Subject':defaultCreateAccountSubject,}
 		));
+  masterConfig.pushConfig(
+    form,
+    'Groups',
+    configSheets);    
+  createFormTrigger(form);
 }
 
 /* newTextItems=['Approval'], convertFields={'Requester':'Username', 'Request Timestamp':'Timestamp'}, ) */
@@ -254,9 +292,18 @@ function testCreateApprovalForm () {
   Logger.log('Edit URL: '+approvalForm.getEditUrl())
 } // end testCreateApprovalForm
 
+function testCreateCalendarForm () {
+  var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+  calObj = createCalendarFormAndConfig(['innovationcharter.org_4f5nt4qijeoblj11aj2q7hibdc@group.calendar.google.com','innovationcharter.org_0a0e0ddepor9shl5kfsvsvbt4c@group.calendar.google.com']);
+  createCalendarSettings(calObj.form,calObj.configTable,
+                         {'SpreadsheetApp':ssApp});
+		
+}
+
 function clearAll () {
   var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
   ssApp.getSheets().forEach(function (s) {
     if (s.getSheetId()!=0) { ssApp.deleteSheet(s) }
   });
 }
+
