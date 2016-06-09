@@ -20,6 +20,20 @@
 // VAL |  VAL  | VAL | ...
 // VAL |  VAL  | VAL | ...
 //
+//
+// If the column names here contain Key and Value, then we create additional
+// Dictionaries with the name...
+//
+// FooKey | FooVal
+// KEY    | VAL
+// KEY    | VAL
+//
+// Will produce...
+//
+// {FooKey : [KEY, KEY, ...],
+//  FooVal : [VAL, VAL, ...],
+//  FooLookup : {KEY : VAL, KEY : VAL}
+//  }
 // 
 // The key object here is ConfigurationSheet, used as follows
 //
@@ -180,9 +194,11 @@ function ConfigurationSheet (sheet, settings) {
       data[row[0]] = row[1]
     }
     var listValues = sheet.getRange(1,3,sheet.getLastRow(),sheet.getLastColumn()).getValues();
+		var valueListHeaders = []
     for (var c=0; c<(sheet.getLastColumn()-2); c++) {
       // each column is a list of values w/ a header on top
       var header = listValues[0][c]
+			valueListHeaders.push(header)
       if (header) {
         var valueList = []
         for (var r=1; r<sheet.getLastRow(); r++) {
@@ -193,8 +209,19 @@ function ConfigurationSheet (sheet, settings) {
         }
         data[header] = valueList;
       }
-    } // end forEach column...          
-    return data
+    } // end forEach column...
+    valueListHeaders.forEach(
+			function (listHeader) {
+				if (listHeader.indexOf('Key')=listHeader.length-3) {
+					// If we have a key... look for a value
+					var rootName = listHeader.substr(0,listHeader.length-3)
+					if (data.hasOwnProperty(rootName+'Val')) {
+						// Yippee - we have values...
+						data[rootName+'Lookup'] = LookupArray(data[listHeader],data[rootName+'Val'])
+					}
+				}
+			});
+    return data;
   } // end getConfigurationTable  
            
   configurationSheet = { // object we will return
@@ -215,6 +242,36 @@ function ConfigurationSheet (sheet, settings) {
   
   return configurationSheet
 } 
+
+function LookupArray (array1, array2) {
+	var lookupArray = {};
+	array1.forEach(function (key) {
+		Object.defineProperty(
+			lookupArray,
+			key,
+			{get : function () {
+				var idx = array1.indexOf(key);
+				if (idx > -1) {
+					return array2[idx]
+				}
+			}, // end get
+			set : function (v) {
+				var idx = array1.indexOf(key);
+				if (idx > -1) {
+					array2[idx] = v
+				}
+				else {
+					array1.push(key)
+					array2.push(v)
+				}
+			} // end set
+			})
+	}) // end forEach key
+	Object.preventExtensions(lookupArray); // prevent confusion
+	return lookupArray;
+}
+
+}
 
 function createConfigurationSheet (ss, sheetName, table) {
   //ss = SpreadsheetApp.getActiveSpreadsheet()
