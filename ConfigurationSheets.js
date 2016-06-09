@@ -175,7 +175,7 @@ function ConfigurationSheet (sheet, settings) {
         var value = table[key];
         if (Array.isArray(value)) {
           listValues[key] = value;
-        }
+        }        
         else {
           keyValues[key] = value;
         }
