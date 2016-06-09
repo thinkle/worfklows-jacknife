@@ -271,7 +271,6 @@ function LookupArray (array1, array2) {
 	return lookupArray;
 }
 
-}
 
 function createConfigurationSheet (ss, sheetName, table) {
   //ss = SpreadsheetApp.getActiveSpreadsheet()
