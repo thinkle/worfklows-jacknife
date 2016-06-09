@@ -1,6 +1,25 @@
+var defaultCalendarBodyTemplate = 'We have given <<username>> read access to the following calendars: <<CalendarsRead>>\nWe have given them write access to the following calendars: <<CalendarsWrite>>'
+var defaultCalendarSubjectTemplate = 'Calendars Shared'
+
+function createCalendarFormAndConfig (calendarIDs, form) {
+	var ret = {}
+	ret.form = createCalendarAddForm(calendarIDs,form);
+	ret.configTable = {
+		'Username':'Username',
+		'CalendarsRead':'Calendars (Read Access)',
+		'CalendarsWrite':'Calendars (Write Access)',
+		'CalendarKeys':calendarIDs.map(function (cid) {
+			return CalendarApp.getCalendarById(cid).getName()
+		}),
+		'CalendarVals':calendarIDs,
+	} // end configTable
+	return ret; 
+} // end createCalendarFormAndConfig
+
 function createCalendarAddForm (calendarIDs, form) {
   if (!form) {
     form = FormApp.create("Add Calendar Form");
+    form.setTitle('Add Calendar Form');
     Logger.log('Created form: '+form.getPublishedUrl());    
     form.addTextItem()    
     .setTitle("Username")
@@ -22,7 +41,6 @@ function createCalendarAddForm (calendarIDs, form) {
   }); // end forEach calendarID
   readCB.setChoices(choices);
   writeCB.setChoices(choices);
-  
   return form;
 }
 
@@ -68,3 +86,9 @@ function testCreateForm () {
   form.get
 }
 
+function testCreateCalendarFormAndConfig () {
+	var ss = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+	createCalendarFormAndConfig(
+    ['innovationcharter.org_4f5nt4qijeoblj11aj2q7hibdc@group.calendar.google.com','innovationcharter.org_0a0e0ddepor9shl5kfsvsvbt4c@group.calendar.google.com']
+	);
+}
