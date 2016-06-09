@@ -66,6 +66,36 @@ function createEmailTableTemplateForForm (form) {
   return htmlOut;
 }
 
+function createGroupSettings (form, params) {
+	var formAsFile = DriveApp.getFileById(firstForm.getId());
+	var formTitle = firstFOrm.getTitle();
+	var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
+	var masterConfig = getMasterConfig(controlSS);
+	var configSheets = []
+	configSheets.push(
+		createConfigurationSheet( // field settings
+			{
+				username:'',
+				first:'',
+				last:'',
+				'Possible Fields':listFormItemTitles(FormApp.openById(formAsFile.getId()))
+			}
+		))
+	configSheets.push(
+		createConfigurationSheet( // informSettings
+			{'LookupField':'',
+			 'Value 1':'foo@bar.com',
+			 'Value 2':'foo@bar.com,baz@bar.com',
+			}
+		))
+	configSheets.push(
+		createConfigurationSheet( // email template
+			controlSS, firstForm.getTitle()+' Email Template',
+			{'Body':defaultCreateAccountTemplate,
+			 'Subject':defaultCreateAccountSubject,}
+		));
+}
+
 /* newTextItems=['Approval'], convertFields={'Requester':'Username', 'Request Timestamp':'Timestamp'}, ) */
 function createApprovalForm (firstForm, params) {
   var formAsFile = DriveApp.getFileById(firstForm.getId())
