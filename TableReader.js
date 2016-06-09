@@ -1,16 +1,17 @@
 // Simple interface for reading a table with headers
 //
 // TableObj(range)
-// 
+//
 // Each row of data then can be accessed via header names OR indices
 //
 // t = TableObj(range)
-// t[1]['Name'] -> returns value of 2nd row in the column with the header "Name" (first data row)
+// t[1]['Name'] -> returns value of 2nd row in
+//                    column with header "Name"
 // or
 // t[1].Name -> Same diff
 
 function getSheetById (ss, id) {
-  var sheets = ss.getSheets()
+  var sheets = ss.getSheets();
   for (var i=0; i<sheets.length; i++) {
     if (sheets[i].getSheetId()==id) {
       return sheets[i]
@@ -18,22 +19,18 @@ function getSheetById (ss, id) {
     else {
       logVerbose('Oops, '+sheets[i].getSheetId()+'!='+id);
     }
-  }  
+  }
 }
 
 function Table (range) {
-  
-  
   var values = range.getValues()
-  logVerbose('Table('+JSON.stringify(range)+')')
+  logVerbose('Table(' + JSON.stringify(range) + ')')
   var sheet = range.getSheet()
   var rowOffset = range.getRow()
   var colOffset = range.getColumn()
   var headers = values[0]
   
   logVerbose('headers=>'+JSON.stringify(headers))  
-  
-  
   
   function processRow (row) {
     //newObj = {'foo':'bar'}
@@ -48,34 +45,34 @@ function Table (range) {
 //      var rowNum = values.indexOf(row);
 //      var cell = sheet.getRange(rowOffset+rowNum, colOffset+i);
 //      cell.setValue(val);
-//      row[i] = val;             
+//      row[i] = val;
 //    } // end row.setValue
-    
+
     var rowObj = {}
     var rowNum = values.indexOf(row);
-    
+
     function buildProperties (i, h) { // for closure purposes
       logVerbose('Setting '+h+'->'+i);
       Object.defineProperty(rowObj,
                             h,
                             {
-                              'enumerable':true,
-                              'set':function (v) {                                
+                              'enumerable': true,
+                              'set': function(v) {
                                 //row[i] = v;
-                                var cell = sheet.getRange(Number(rowOffset)+Number(rowNum),Number(colOffset)+Number(i))
-                                cell.setValue(v);                                                 
+                                var cell = sheet.getRange(Number(rowOffset) + Number(rowNum),Number(colOffset) + Number(i))
+                                cell.setValue(v);
                                 row[i]=v;
                               },
-                              'get': function () {return row[i]}
-                            });                            
+                              'get': function() {return row[i]}
+                            });
       Object.defineProperty(rowObj,
                             i,
                             {
-                              'enumerable':true,
-                              'set': function (v) {row[i]=v;
-                                                  sheet.getRange(rowOffset+rowNum,colOffset+i).setValue(v);
+                              'enumerable': true,
+                              'set': function(v) {row[i] = v;
+                                                  sheet.getRange(rowOffset + rowNum,colOffset + i).setValue(v);
                                                   },
-                              'get':function () {return row[i]},
+                              'get': function() {return row[i]},
                             }
                               )        
      }      // end buildProperties
