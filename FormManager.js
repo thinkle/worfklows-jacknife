@@ -167,15 +167,21 @@ function getResponseItems (resp) {
 
  triggerActions = {
  	'NewUser' : function (event, masterSheet, actionRow) {
+      Logger.log('!!! NEW USER TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
      var responses = getResponseItems(event.response);
  		var usernameSettings = actionRow['Config1'].table;
- 		var extraSettings = actionRow['Config2'].table;
+ 		var informSettings = actionRow['Config2'].table;
+        var emailSettings = actionRow['Config3'].table;
  		createAccountFromForm(
+          //results, fieldSettings, informSettings, emailTemplateSettings
+          responses, 
  			usernameSettings,
- 			extraSettings
+ 			informSettings,
+          emailSettings
  		);
  	},
   'Email' : function (event, masterSheet, actionRow) {
+    Logger.log('!!! EMAIL TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
     var responses = getResponseItems(event.response);
     var templateSettings = actionRow['Config1'].table;
     var lookupSettings = actionRow['Config2'].table;
@@ -185,7 +191,15 @@ function getResponseItems (resp) {
       lookupSettings
     );
   }, // end Email
+	 'Group': function (event, masterSheet, actionRow) {
+       Logger.log('!!! GROUP TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
+		 responses = getResponseItems(event.response);
+		 var groupConfig = actionRow['Config1'].table;
+		 addToGroupFromForm(responses,groupConfig);
+	 },
 	 'Calendar': function (event, masterSheet, actionRow) {
+       Logger.log('!!! CALENDAR TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
+
 		 responses = getResponseItems(event.response);
 		 var calConfig = actionRow['Config1'].table;
 		 var informConfig = actionRow['Config2'].table;
@@ -194,6 +208,8 @@ function getResponseItems (resp) {
 		 Logger.log('Added calendars: '+JSON.stringify(calendarsAdded));
 	 }, // end Calendar
   'Approval': function (event, masterSheet, actionRow) {
+          Logger.log('!!! APPROVAL TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
+
     responses = getResponseItems(event.response)
     // DEBUG 
 		//    try {
@@ -264,7 +280,13 @@ function onFormSubmitTrigger (event) {
   formActions.forEach(function (actionRow) {
     Logger.log('Trying action: '+actionRow);
     var action = actionRow.Action;    
-    triggerActions[action](event,masterSheet,actionRow)    
+    try {
+      triggerActions[action](event,masterSheet,actionRow)    
+    }
+    catch (err) {
+      Logger.log('Ran into error on action %s: %s',action,err);
+      Logger.log('Blargh!');
+    }
   }
                      )// end forEach action
 }
@@ -321,6 +343,44 @@ function testTrigger () {
   //Logger.log('There are '+items
 }
 
+function testUserTrigger () {
+  var form = FormApp.openById("1jEez_bLMgxtljMrqUa_jn4AHBtDbMCT1Ko9pTvLf16w") 
+  formResp = form.createResponse();
+  items = form.getItems();
+  items.forEach(function (item) {           
+    var responded = false;
+    if (item.getTitle()=="Username") {          
+      formResp.withItemResponse(item.asTextItem().createResponse("Fake.Fake@innovationcharter.org"))                   
+      responded = true;
+    }
+    if (item.getTitle()=="First") {
+      formResp.withItemResponse(item.asTextItem().createResponse("Fake"));
+      responded = true;
+    }
+    if (item.getTitle()=="Last") {
+      formResp.withItemResponse(item.asTextItem().createResponse("Fake"));
+      responded =true;
+    }
+    if (! responded) {    
+      if (item.getType()=='CHECKBOX') {
+        Logger.log('Filling out multiple choice by checking all the boxes');
+        var allResponses = item.asCheckboxItem().getChoices().map(function (i) {return i.getValue()})
+        Logger.log(JSON.stringify(allResponses));
+        var resp = item.asCheckboxItem().createResponse(
+          allResponses
+        )
+        formResp.withItemResponse(resp);
+      } // end if
+      if (item.getType()=='TEXT') {
+        Logger.log('Filling out random form item "'+item.getTitle()+'" with Foo');
+        formResp.withItemResponse(item.asTextItem().createResponse('Foo'));
+      }
+    } // end else
+  }); // end forEach
+  formResp.submit();
+} // end testCallTrigger
+
+
 function testCalTrigger () {
 	var form = FormApp.openById("1a6-6MeMG0oyLpMhcv7h83cOFQ-fG21snRdmnGOolU2U")    
 	var formResp = form.createResponse();
@@ -328,7 +388,7 @@ function testCalTrigger () {
 	items.forEach(function (item) {
       
       var title = item.getTitle();      
-		if (item.getTitle()=='User') {          
+		if (item.getTitle()=='Username') {          
           formResp.withItemResponse(item.asTextItem().createResponse("Fake.Faculty@innovationcharter.org"))                   
 		}
 		else {
