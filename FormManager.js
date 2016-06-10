@@ -32,8 +32,11 @@ function lookupField (settings, results) {
 // key : %val (lookup %val in our results)
 // key : @val>>newfield (lookup %val in lookup table newfield in settings)
 function lookupFields (settings, results) {
+	logNormal('lookupFields(%s,%s)',settings,results);
   logVerbose('Starting with settings: %s, results: %s',JSON.stringify(settings),JSON.stringify(results));
 	fields = {}
+	if (results.FormUser) { fields.FormUser=results.FormUser }
+	if (results.Timestamp) { fields.Timestamp = results.Timestamp }
 	for (var settingKey in settings) {
 		logVerbose('lookupFields "%s"=>"%s"',settingKey,settings[settingKey]);
 		var val = settings[settingKey];
@@ -54,9 +57,17 @@ function lookupFields (settings, results) {
 					throw "Illegal settings: no lookup dict "+lookupVar+'Lookup'+' for lookup value @'+val;
 				}
 				else {
-					var fieldVal = lookupDict[initialResult]
-					if (fieldVal) {fields[settingKey]=fieldVal}
-					else {fields[settingKey]=lookupDict['Default'];}
+					function getResult (r) {
+						var fieldVal = lookupDict[r]
+						if (fieldVal) { return fieldVal }
+						else { return lookupDict['Default']}
+					}
+					if (Array.isArray(initialResult)) {
+						fields[settingKey] = initialResult.map(getResult)
+					}
+					else {
+						fields[settingKey] = getResult(initialResult)
+					}
 				}
 			}
 			else {
@@ -203,14 +214,14 @@ function getResponseItems (resp) {
       Logger.log('!!! NEW USER TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
      var responses = getResponseItems(event.response);
  		var usernameSettings = actionRow['Config1'].table;
- 		var informSettings = actionRow['Config2'].table;
-        var emailSettings = actionRow['Config3'].table;
+ 		//var informSettings = actionRow['Config2'].table;
+    //var emailSettings = actionRow['Config3'].table;
  		createAccountFromForm(
           //results, fieldSettings, informSettings, emailTemplateSettings
           responses, 
- 			usernameSettings,
- 			informSettings,
-          emailSettings
+ 			usernameSettings
+ 			//informSettings,
+        //  emailSettings
  		);
  	},
   'Email' : function (event, masterSheet, actionRow) {
@@ -235,9 +246,9 @@ function getResponseItems (resp) {
 
 		 responses = getResponseItems(event.response);
 		 var calConfig = actionRow['Config1'].table;
-		 var informConfig = actionRow['Config2'].table;
-		 var emailConfig = actionRow['Config3'].table;
-		 var calendarsAdded = addUserToCalendarFromForm(responses, calConfig, informConfig, emailConfig);
+		 //var informConfig = actionRow['Config2'].table;
+		 //var emailConfig = actionRow['Config3'].table;
+		 var calendarsAdded = addUserToCalendarFromForm(responses, calConfig)//, informConfig, emailConfig);
 		 Logger.log('Added calendars: '+JSON.stringify(calendarsAdded));
 	 }, // end Calendar
   'Approval': function (event, masterSheet, actionRow) {
@@ -377,21 +388,25 @@ function testTrigger () {
 }
 
 function testUserTrigger () {
-  var form = FormApp.openById("1jEez_bLMgxtljMrqUa_jn4AHBtDbMCT1Ko9pTvLf16w") 
+  var form = FormApp.openById("1kq-v1uyylpKRXbvBj51TpkssCTzNyMn1PJzpMLmlA14") 
   formResp = form.createResponse();
   items = form.getItems();
   items.forEach(function (item) {           
     var responded = false;
     if (item.getTitle()=="Username") {          
-      formResp.withItemResponse(item.asTextItem().createResponse("Fake.Fake@innovationcharter.org"))                   
+      formResp.withItemResponse(item.asTextItem().createResponse("Newfaker.Fake@innovationcharter.org"))                   
       responded = true;
     }
     if (item.getTitle()=="First") {
-      formResp.withItemResponse(item.asTextItem().createResponse("Fake"));
+      formResp.withItemResponse(item.asTextItem().createResponse("Newfaker"));
       responded = true;
     }
     if (item.getTitle()=="Last") {
       formResp.withItemResponse(item.asTextItem().createResponse("Fake"));
+      responded =true;
+    }
+    if (item.getTitle()=="Personal Email") {
+      formResp.withItemResponse(item.asTextItem().createResponse("tmhinkle@gmail.com"));
       responded =true;
     }
     if (! responded) {    
