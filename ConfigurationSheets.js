@@ -343,8 +343,13 @@ function getMasterConfig (ss) {
           configId = row['Config '+i+' ID']          
           if (configId) {
             logNormal('Grabbing config '+i+' from sheet '+configId)
-            row['Config'+i] = getConfigurationSheetById(sheet.getParent(), configId)
-            row['Config'+i].loadConfigurationTable();
+            try {
+              row['Config'+i] = getConfigurationSheetById(sheet.getParent(), configId)
+              row['Config'+i].loadConfigurationTable();
+            }
+            catch (err) {
+              Logger.log('Odd: unable to load Config'+i+': '+configId);
+            }
           }
           else {
             row['Config'+i] = 'FOO!'
@@ -362,7 +367,7 @@ function getMasterConfig (ss) {
 } // end getMasterConfig
 
 function testReadConfigsFromMaster () {
-  var formId = '1LRophsb8hTo1GNv8qpGp8G-dCpdLIFBboO5rx5pIfII';
+  var formId = '1FZSNYuDWpf1scB1_CvJrt7mnyIBH_-AALxXyIDUJWR0';
   var ss = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
   var masterConfig = getMasterConfig(ss)
   var configs = masterConfig.getConfigsForId(formId)
