@@ -26,13 +26,43 @@ function lookupField (settings, results) {
 	}
 }
 
+// We support three kinds of syntax
+//
+// key : val (just provide the value)
+// key : %val (lookup %val in our results)
+// key : @val>>newfield (lookup %val in lookup table newfield in settings)
 function lookupFields (settings, results) {
   logVerbose('Starting with settings: %s, results: %s',JSON.stringify(settings),JSON.stringify(results));
 	fields = {}
 	for (var settingKey in settings) {
 		logVerbose('lookupFields "%s"=>"%s"',settingKey,settings[settingKey]);
-		fields[settingKey] = results[settings[settingKey]]
-        logVerbose('fields[%s]=%s',settingKey,fields[settingKey]);
+		var val = settings[settingKey];
+		if (val[0]=='%') {
+			val = val.substr(1);
+			fields[settingKey] = results[val];
+      logVerbose('fields[%s]=%s',settingKey,fields[settingKey]);
+		}
+		else {
+			if (val[0]=='@' && val.indexOf('>>')>-1) {
+				val = val.substr(1); // Now we get the value and pass it through
+				var vals = val.split('>>');
+				var fieldKey = vals[0]
+				var lookupVar = vals[1]
+				var initialResult = results[fieldKey]
+				var lookupDict = settings[lookupVar+'Lookup'];
+				if (!lookupDict) {
+					throw "Illegal settings: no lookup dict "+lookupVar+'Lookup'+' for lookup value @'+val;
+				}
+				else {
+					var fieldVal = lookupDict[initialResult]
+					if (fieldVal) {fields[settingKey]=fieldVal}
+					else {fields[settingKey]=lookupDict['Default'];}
+				}
+			}
+			else {
+				fields[settingKey] = val;
+			}
+		}
 	}
 	return fields
 }
