@@ -411,6 +411,29 @@ function testReadConfigurationSheet () {
   Logger.log('Sheet ID: '+cs.getSheetId());
 }
 
+function testLookupFieldsStuff () {
+  var ss = SpreadsheetApp.openById('1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk');
+  var config = createConfigurationSheet(ss, 'TestMagicDict',
+                                        {'Key':'321',
+                                         'FieldKey':'%Name',
+                                         'LookupFieldKey':'@Supervisor>>Supervisor',
+																				 'Colors':'@Colors>>Color',
+                                         'SupervisorKey':['Arnold','Ringwall','Kapeckas'],
+                                         'SupervisorVal':['earnold@innovationcharter.org','cringwall@innovationcharter.org','mkapeckas@innovationcharter.org'],
+																				 'ColorKey':['Red','Blue','Green'],
+																				 'ColorVal':['#f00','#00f','0f0'],
+                                         'OtherList':['a','b','c',1,2,3,'asdfasdf'],
+                                        })
+  config.loadConfigurationTable()
+	Logger.log('Got %s',JSON.stringify(lookupFields(
+		config.table,
+		{'Name':'Harry Potter',
+		 'Supervisor':'Ringwall',
+		 'Colors':['Red','Blue','Green'],
+		}
+	)));
+}
+
 function testMagicDictionaryStuff () {
   var ss = SpreadsheetApp.openById('1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk');
   var config = createConfigurationSheet(ss, 'TestMagicDict',
