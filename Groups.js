@@ -7,7 +7,7 @@ function createGroupForm (groups, form) {
 		form = FormApp.create("Google Groups").setTitle("Google Groups")        
       .setCollectEmail(true);
     form.addTextItem()
-		  .setTitle("User")
+		  .setTitle("Username")
 		  .setHelpText("Name of User Who Will be Added to Groups");
 		Logger.log('createGroupForm=>'+form.getPublishedUrl());
 	}
@@ -19,13 +19,20 @@ function createGroupForm (groups, form) {
 	return form;
 }
 
+function addToGroupFromForm (results, groupSettings) {
+	var fields = lookupFields(groupSettings, results);
+  Logger.log('addToGroupFromForm got fields=>%s',JSON.stringify(fields));
+	addToGroups(fields.username,fields.groups);
+}
+
 function createAccountFromForm (results, fieldSettings, informSettings, emailTemplateSettings) {
  	var params = {
- 		informList : lookupField(informSettings, results),
+ 		//informList : lookupField(informSettings, results),
+      informList : ['thinkle@innovationcharter.org'],
  		emailTemplate : emailTemplateSettings.Body,
  		emailSubject : emailTemplateSettings.Subject,
  	}
- 	var moreFields = lookupFields(extraSettings,results)
+ 	var moreFields = lookupFields(fieldSettings,results)
  	for (var k in  moreFields) {
  		params[k]=moreFields[k];
  	}
@@ -52,31 +59,34 @@ function createAccount (params) {
   catch (err) {
     logNormal('Error '+err+' likely just means we need to create user...');
     if (! user.primaryEmail) {
-			user.primaryEmail = username;
-		}
-		if (! user.name) {
-			user.name = {givenName:first,familyName:last}
-		}
-		if (! user.password) {
+      user.primaryEmail = username;
+    }
+    if (! user.name) {
+      user.name = {givenName:first,familyName:last}
+    }
+    if (! user.password) {
       var pw = (Math.random()).toString(36).replace('0.','')
       user.password = pw
-		}
-		user = AdminDirectory.Users.insert(user);
-		Logger.log('User %s created with ID %s',user.primaryEmail,user.id);
-		fields = {
-			'username':username,
-			'first':first,
-			'last':last,
-			'password':pw,
-		}
-    informList.forEach( function (username) {
-			sendEmailFromTemplate(
-				username,
-				emailSubject,
-				emailTemplate,
-				fields);
-		});
-	}
+    }
+    Logger.log('Creating user: '+JSON.stringify(user));
+    user = AdminDirectory.Users.insert(user);
+    //Logger.log('User %s created with ID %s',user.primaryEmail,user.id);
+    fields = {
+      'username':username,
+      'first':first,
+      'last':last,
+      'password':pw,
+    }
+    if (informList) {
+      informList.forEach( function (username) {
+        sendEmailFromTemplate(
+          username,
+          emailSubject,
+          emailTemplate,
+          fields);
+      });
+    }
+  }
 }
 
 function addToGroups (username, groupEmails) {
