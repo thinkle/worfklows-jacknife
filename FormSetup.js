@@ -100,7 +100,6 @@ function createCalendarSettings (form, calConfig, params) {
 }
 
 function createGroupSettings (form, params) {
-	//
 	var formAsFile = DriveApp.getFileById(form.getId());
 	var formTitle = form.getTitle(); Logger.log('title='+formTitle);
 	var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
@@ -110,7 +109,7 @@ function createGroupSettings (form, params) {
 		createConfigurationSheet(
 			controlSS, formTitle+' Group Fields',
 			{'username':'Username',
-			 'groups':'Groups'}
+			 'groups':'Add to Google Groups'} // should match default value in Groups.js
 		));
 	masterConfig.pushConfig(
 		form,
