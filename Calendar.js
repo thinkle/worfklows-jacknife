@@ -9,7 +9,8 @@ function createCalendarFormAndConfig (calendarIDs, form) {
 		'CalendarsRead':'@Calendars (Read Access)>>Calendar',
 		'CalendarsWrite':'@Calendars (Write Access)>>Calendar',
 		'CalendarKey':calendarIDs.map(function (cid) {
-			return CalendarApp.getCalendarById(cid).getName()
+          return Calendar.Calendars.get(cid).summary
+          //return CalendarApp.getCalendarById(cid).getName()
 		}),
 		'CalendarVal':calendarIDs,
 		'InformFormUser':'True',
@@ -22,6 +23,8 @@ function createCalendarFormAndConfig (calendarIDs, form) {
 	} // end configTable
 	return ret; 
 } // end createCalendarFormAndConfig
+
+
 
 function createCalendarAddForm (calendarIDs, form) {
   if (!form) {
@@ -41,8 +44,15 @@ function createCalendarAddForm (calendarIDs, form) {
   writeCB.setTitle("Calendars (Write Access)");
   calendarIDs.forEach( function (calendarID) {
     Logger.log('Add calendar ID '+calendarID);
-    var cal = CalendarApp.getCalendarById(calendarID);    
-    var name = cal.getName();
+    //try {
+    //  var cal = CalendarApp.getCalendarById(calendarID);
+    //  var name = cal.getName();
+    //}
+    //catch (err) {
+    //  Logger.log('Error fetching calendar: %s: %s',calendarID, err);
+    var cal = Calendar.Calendars.get(calendarID)
+    var name = cal.summary      
+    //}
     Logger.log('Calendar: '+cal+' name:'+name);
     choices.push(readCB.createChoice(name));
     //writeCB.createChoice(name);
@@ -96,7 +106,7 @@ function addUserToCalendarFromForm (results, calConfig) { //, informConfig, emai
 	if (calendarSettings.InformFormUser) {
     informList = results.FormUser;
 	}
-  sendEmailFromTemplate (informList, calendarSettings.EmailSubject, calendarSettings.EmailBody, calResults)
+  sendEmailFromTemplate (informList, calendarSettings.EmailSubject, calendarSettings.EmailBody, calResults, true)
 	//sendEmailUpdate(user,calsAdded);
 }
 
@@ -139,6 +149,6 @@ function testCreateForm () {
 function testCreateCalendarFormAndConfig () {
 	var ss = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
 	createCalendarFormAndConfig(
-    ['innovationcharter.org_4f5nt4qijeoblj11aj2q7hibdc@group.calendar.google.com','innovationcharter.org_0a0e0ddepor9shl5kfsvsvbt4c@group.calendar.google.com']
+    ['innovationcharter.org_4f5nt4qijeoblj11aj2q7hibdc@group.calendar.google.com','innovationcharter.org_0a0e0ddepor9shl5kfsvsvbt4c@group.calendar.google.com','innovationcharter.org_f18ij5fhojmf19fnjtlkcs0gvo@group.calendar.google.com']
 	);
 }
