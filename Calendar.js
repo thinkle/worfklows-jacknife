@@ -20,7 +20,7 @@ function createCalendarAddForm (calendarIDs, form) {
   if (!form) {
     form = FormApp.create("Add Calendar Form");
     form.setTitle('Add Calendar Form');
-    form.collectsEmail(true);
+    form.setCollectEmail(true);
     Logger.log('Created form: '+form.getPublishedUrl());    
     form.addTextItem()    
     .setTitle("Username")
