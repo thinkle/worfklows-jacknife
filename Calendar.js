@@ -1,17 +1,24 @@
-var defaultCalendarBodyTemplate = 'We have given <<username>> read access to the following calendars: <<CalendarsRead>>\nWe have given them write access to the following calendars: <<CalendarsWrite>>'
+var defaultCalendarBodyTemplate = 'We have given <<Username>> read access to the following calendars: <<CalendarsRead>>\nWe have given them write access to the following calendars: <<CalendarsWrite>>'
 var defaultCalendarSubjectTemplate = 'Calendars Shared'
 
 function createCalendarFormAndConfig (calendarIDs, form) {
 	var ret = {}
 	ret.form = createCalendarAddForm(calendarIDs,form);
 	ret.configTable = {
-		'Username':'Username',
-		'CalendarsRead':'Calendars (Read Access)',
-		'CalendarsWrite':'Calendars (Write Access)',
+		'Username':'%Username',
+		'CalendarsRead':'@Calendars (Read Access)>>Calendar',
+		'CalendarsWrite':'@Calendars (Write Access)>>Calendar',
 		'CalendarKey':calendarIDs.map(function (cid) {
 			return CalendarApp.getCalendarById(cid).getName()
 		}),
 		'CalendarVal':calendarIDs,
+		'InformFormUser':'True',
+		'EmailSubject':defaultCalendarSubjectTemplate,
+		'EmailBody':defaultCalendarBodyTemplate,
+		'NeedsAuthorization':'True',
+		'Authorize':'@FormUser>>AuthorizedUser',
+		'AuthorizedUserKey':['user@foo.bar','user@boo.bang','Default'],
+		'AuthorizedUserVal':[1,1,0],
 	} // end configTable
 	return ret; 
 } // end createCalendarFormAndConfig
@@ -45,41 +52,51 @@ function createCalendarAddForm (calendarIDs, form) {
   return form;
 }
 
-function CalendarSettings (calConfigSettings, results) {
-	settings = {}
-	settings['user'] = results[calConfigSettings.Username]
-	function getCal (cName) {
-		return calConfigSettings.CalendarLookup[cName];
+function checkAuthorization (results, config) {
+	var conf = lookupFields(config,results);
+	if (! conf.NeedsAuthorization) { return true; }
+	if (conf.Authorize) {return true;}
+	else {
+		Logger.log('Form not authorized (User %s, conf %s)',conf.FormUser,conf);
+		return false
 	}
-	settings['writeCals'] = results[calConfigSettings.CalendarsWrite].map(getCal);
-	settings['readCals'] = results[calConfigSettings.CalendarsRead].map(getCal);
-	Logger.log('CalendarSettings=>'+JSON.stringify(settings));
-	return settings
 }
 
-function addUserToCalendarFromForm (results, calConfig, informConfig, emailConfig) {
-	var calendarSettings = CalendarSettings(calConfig,results);	
-	var user = calendarSettings.user;
+function addUserToCalendarFromForm (results, calConfig) { //, informConfig, emailConfig) {
+	if (! checkAuthorization(results,calConfig)) {
+		Logger.log('Unauthorized use attempted.')
+		return false;
+	}
+	var calendarSettings = lookupFields(calConfig,results);	
+	var user = calendarSettings.Username;
   var calResults = {'Username':user, 'CalendarsRead':[],'CalendarsWrite':[]}
-	calendarSettings.readCals.forEach( function (c) {
-		var success = addUserToCalendar(user,c,'reader');
-		if (success) {
-			calResults.CalendarsRead.push(CalendarApp.getCalendarById(c).getName());
-        }
-	})
-    calendarSettings.writeCals.forEach( function (c) {
-		var success = addUserToCalendar(user,c,'writer');
-		if (success) {
-			calResults.CalendarsWrite.push(
-              CalendarApp.getCalendarById(c).getName()
-              );          
-        }
-	})
-    Logger.log('Added calendars: '+JSON.stringify(calResults));
-    // Handle Emailing out update...
-    //informList = lookupField(informSettings, results);
+	if (calendarSettings.CalendarsRead) {
+		calendarSettings.CalendarsRead.forEach( function (c) {
+			logVerbose('add user %s to calendar %s',user,c)
+			var success = addUserToCalendar(user,c,'reader');
+			if (success) {
+				calResults.CalendarsRead.push(CalendarApp.getCalendarById(c).getName());
+			}
+		}) // end forEach CalendarsRead
+	}
+	if (calendarSettings.CalendarsWrite) {
+		calendarSettings.CalendarsWrite.forEach( function (c) {
+			logVerbose('add user %s to calendar %s',user,c)
+			var success = addUserToCalendar(user,c,'writer');
+			if (success) {
+				calResults.CalendarsWrite.push(
+					CalendarApp.getCalendarById(c).getName()
+				);          
+			}
+		}) // end forEach CalnedarsWrite
+	}
+  logNormal('Added calendars: ',JSON.stringify(calResults));
+  // Handle Emailing out update...
+  //informList = lookupField(informSettings, results);
+	if (calendarSettings.InformFormUser) {
     informList = results.FormUser;
-    sendEmailFromTemplate (informList, emailConfig.Subject, emailConfig.Body, calResults) 
+	}
+  sendEmailFromTemplate (informList, calendarSettings.EmailSubject, calendarSettings.EmailBody, calResults)
 	//sendEmailUpdate(user,calsAdded);
 }
 
