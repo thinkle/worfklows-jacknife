@@ -71,7 +71,7 @@ function createCalendarSettings (form, calConfig, params) {
 	var formTitle = form.getTitle(); Logger.log('title='+formTitle);
 	var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
 	var masterConfig = getMasterConfig(controlSS);
-	var configSheets = []
+	var configSheets = [];
 	configSheets.push(
 		createConfigurationSheet(
 			controlSS, formTitle+' Settings',
@@ -100,6 +100,26 @@ function createCalendarSettings (form, calConfig, params) {
 }
 
 function createGroupSettings (form, params) {
+	//
+	var formAsFile = DriveApp.getFileById(form.getId());
+	var formTitle = form.getTitle(); Logger.log('title='+formTitle);
+	var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
+	var masterConfig = getMasterConfig(controlSS);
+	var configSheets = []
+	configSheets.push(
+		createConfigurationSheet(
+			controlSS, formTitle+' Group Fields',
+			{'username':'Username',
+			 'groups':'Groups'}
+		));
+	masterConfig.pushConfig(
+		form,
+		'Group',
+		configSheets
+	);
+}
+
+function createAccountSettings (form, params) {
 	var formAsFile = DriveApp.getFileById(form.getId());
 	var formTitle = form.getTitle();
 	var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
@@ -131,10 +151,12 @@ function createGroupSettings (form, params) {
 		));
   masterConfig.pushConfig(
     form,
-    'Groups',
+    'NewUser',
     configSheets);    
   createFormTrigger(form);
 }
+
+
 
 // Create a form with the fields necessary for creating a new user
 function createUserForm (calendarIDs, groups, folderIDs,params) {
@@ -145,10 +167,11 @@ function createUserForm (calendarIDs, groups, folderIDs,params) {
 	form.addTextItem().setTitle('First')
 	form.addTextItem().setTitle('Last')
 	form.addTextItem().setTitle('Username')
+	createAccountSettings(form,params); 
 	// Calendar...
 	if (calendarIDs) {
 		var formResults = createCalendarFormAndConfig(calendarIDs,form);
-		createCalendarSettings(form,formResults.calConfig,params)
+		createCalendarSettings(form,formResults.configTable,params)
 	}
 	if (groups) {
 		// Group
