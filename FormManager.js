@@ -27,9 +27,12 @@ function lookupField (settings, results) {
 }
 
 function lookupFields (settings, results) {
+  logVerbose('Starting with settings: %s, results: %s',JSON.stringify(settings),JSON.stringify(results));
 	fields = {}
 	for (var settingKey in settings) {
+		logVerbose('lookupFields "%s"=>"%s"',settingKey,settings[settingKey]);
 		fields[settingKey] = results[settings[settingKey]]
+        logVerbose('fields[%s]=%s',settingKey,fields[settingKey]);
 	}
 	return fields
 }
