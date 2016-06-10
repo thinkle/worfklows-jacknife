@@ -1,14 +1,28 @@
 VERBOSITY = 1
 
-function doLog (verbosity, s) {
+function doLog (verbosity) {    
   if (VERBOSITY >= verbosity) {
-    Logger.log(s)
+    var args = Array.prototype.slice.call(arguments);
+    args.shift()    
+    Logger.log.apply(Logger,args)
   }
 }
 
-logVerbose = function (s) {doLog(5,s)}
-logNormal = function (s) {doLog(1,s)}
-logAlways = function (s) {doLog(-1,s)}
+logVerbose = function () {
+	args = [5]
+	args.push.apply(args,arguments)
+	doLog.apply(doLog,args)
+}
+logNormal = function () {
+	args = [1]
+	args.push.apply(args,arguments)    
+	doLog.apply(doLog,args)
+}
+logAlways = function () {
+	args = [-1]
+	args.push.apply(args,arguments)
+	doLog.apply(doLog,args)
+}
 
 function assertEq (a, b) {
   if (a==b) {
@@ -18,4 +32,14 @@ function assertEq (a, b) {
     Logger.log('ASSERTION ERROR: '+JSON.stringify(a)+'!='+JSON.stringify(b))
     throw 'AssertionError'+JSON.stringify(a)+'!='+JSON.stringify(b);
   }
+}
+
+function testLogs () {
+	[-1,1,10].forEach( function (l) {
+      VERBOSITY = l
+      Logger.log('Testing verbosity level %s',l);
+		logNormal('Log normal message - verbosity=%s',l)
+		logVerbose('Log verbose message - verbosity=%s',l)
+		logAlways('Log always message - verbosity=%s',l)
+	});
 }
