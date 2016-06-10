@@ -1,6 +1,3 @@
-defaultCreateAccountSubject = "Account Info";
-defaultCreateAccountTemplate = "This email is to inform you that a new account has been created for <<username>> with the initial password <<password>>.";
-
 function createGroupForm (groups, form) {
 	if (!form) {
 		form = FormApp.create("Google Groups").setTitle("Google Groups")        
@@ -19,6 +16,10 @@ function createGroupForm (groups, form) {
 }
 
 function addToGroupFromForm (results, groupSettings) {
+	if (! checkAuthorization(results,groupSettings)) {
+		Logger.log('Unauthorized use attempted.')
+		return false;
+	}
 	var fields = lookupFields(groupSettings, results);
   Logger.log('addToGroupFromForm got fields=>%s',JSON.stringify(fields));
 	addToGroups(fields.username,fields.groups);
