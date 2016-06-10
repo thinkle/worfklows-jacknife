@@ -14,7 +14,7 @@ function createGroupForm (groups, form) {
 	form.addSectionHeaderItem()
 		.setTitle("Groups");
 	var cb = form.addCheckboxItem()
-			.setTitle('Add to Google Groups:')
+			.setTitle('Add to Google Groups')
 			.setChoiceValues(groups);
 	return form;
 }
