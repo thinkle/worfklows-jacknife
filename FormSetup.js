@@ -68,7 +68,7 @@ function createEmailTableTemplateForForm (form) {
 
 function createCalendarSettings (form, calConfig, params) {
 	var formAsFile = DriveApp.getFileById(form.getId());
-	var formTitle = form.getTitle(); Logger.log('title='+formTitle);
+	var formTitle = form.getTitle()+' Calendar'; Logger.log('title='+formTitle);
 	var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
 	var masterConfig = getMasterConfig(controlSS);
 	var configSheets = [];
@@ -77,26 +77,12 @@ function createCalendarSettings (form, calConfig, params) {
 			controlSS, formTitle+' Settings',
 			calConfig
 		));
-	configSheets.push(
-		createConfigurationSheet( // informSettings
-			controlSS, formTitle+' Inform Settings',
-			{'LookupField':'',
-			 'Value 1':'foo@bar.com',
-			 'Value 2':'foo@bar.com,baz@bar.com',
-			}
-		));
-	configSheets.push(
-		createConfigurationSheet( // email template
-			controlSS, formTitle+' Email Template',
-			{'Body':defaultCalendarBodyTemplate,
-			 'Subject':defaultCalendarSubjectTemplate,}
-		));
 	masterConfig.pushConfig(
 		form,
 		'Calendar',
 		configSheets
 	);
-    createFormTrigger(form);
+  createFormTrigger(form);
 }
 
 function createGroupSettings (form, params) {
@@ -108,14 +94,38 @@ function createGroupSettings (form, params) {
 	configSheets.push(
 		createConfigurationSheet(
 			controlSS, formTitle+' Group Fields',
-			{'username':'Username',
-			 'groups':'Add to Google Groups'} // should match default value in Groups.js
+			{'username':'%Username',
+			 'groups':'%Add to Google Groups', // should match default value in Groups.js
+			 'NeedsAuthorization':'True',
+			 'Authorize':'@FormUser>>AuthorizedUser',
+			 'AuthorizedUserKey':['user@foo.bar','user@boo.bang','Default'],
+			 'AuthorizedUserVal':[1,1,0],
+			}
 		));
 	masterConfig.pushConfig(
 		form,
 		'Group',
 		configSheets
 	);
+}
+
+function createFolderSettings (form, config, params) {
+	var formAsFile = DriveApp.getFileById(form.getId());
+	var formTitle = form.getTitle()+' Folder'; Logger.log('title='+formTitle);
+	var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
+	var masterConfig = getMasterConfig(controlSS);
+	var configSheets = [];
+	configSheets.push(
+		createConfigurationSheet(
+			controlSS, formTitle,
+			config
+		));
+	masterConfig.pushConfig(
+		form,
+		'Folder',
+		configSheets
+	);
+  createFormTrigger(form);
 }
 
 function createAccountSettings (form, params) {
@@ -126,28 +136,34 @@ function createAccountSettings (form, params) {
 	var configSheets = []
 	configSheets.push(
 		createConfigurationSheet( // field settings
-          controlSS, form.getTitle()+' Inform',
+          controlSS, form.getTitle()+' Account Information',
 			{
-				username:'',
-				first:'',
-				last:'',
-				'Possible Fields':listFormItemTitles(FormApp.openById(formAsFile.getId()))
+				username:'%Username',
+				first:'%First',
+				last:'%Last',
+				informFormUser:1,
+				informOther:'%Personal Email',
+				emailSubject:defaultCreateAccountSubject,
+				emailTemplate:defaultCreateAccountTemplate,
+				'Possible Fields':listFormItemTitles(FormApp.openById(formAsFile.getId())),
+				'NeedsAuthorization':1,
+			 'Authorize':'@FormUser>>AuthorizedUser',
+			 'AuthorizedUserKey':['user@foo.bar','user@boo.bang','Default'],
+			 'AuthorizedUserVal':[1,1,0],
 			}
 		))
-	configSheets.push(
-		createConfigurationSheet( // informSettings
-          controlSS, form.getTitle()+' Inform',
-			{'LookupField':'',
-			 'Value 1':'foo@bar.com',
-			 'Value 2':'foo@bar.com,baz@bar.com',
-			}
-		))
-	configSheets.push(
-		createConfigurationSheet( // email template
-			controlSS, form.getTitle()+' Email Template',
-			{'Body':defaultCreateAccountTemplate,
-			 'Subject':defaultCreateAccountSubject,}
-		));
+	// configSheets.push(
+	// 	createConfigurationSheet( // informSettings
+  //         controlSS, form.getTitle()+' Account To-Inform',
+	// 		{'Field':'Personal Email',
+	// 		}
+	// 	))
+	// configSheets.push(
+	// 	createConfigurationSheet( // email template
+	// 		controlSS, form.getTitle()+' Email Template',
+	// 		{'Body':defaultCreateAccountTemplate,
+	// 		 'Subject':defaultCreateAccountSubject,}
+	// 	));
   masterConfig.pushConfig(
     form,
     'NewUser',
@@ -155,17 +171,20 @@ function createAccountSettings (form, params) {
   createFormTrigger(form);
 }
 
-
-
 // Create a form with the fields necessary for creating a new user
 function createUserForm (calendarIDs, groups, folderIDs,params) {
+  logNormal('createUserForm(%s,%s,%s,%s)',calendarIDs,groups,folderIDs,params);
 	form = FormApp.create('New User Form')
-	  .setTitle('New User Form');
+	  .setTitle('New User Form')
+	  .setCollectEmail(true);
 	form.addSectionHeaderItem()
 		.setTitle('New User Information');
 	form.addTextItem().setTitle('First')
 	form.addTextItem().setTitle('Last')
 	form.addTextItem().setTitle('Username')
+	form.addTextItem()
+		.setTitle('Personal Email')
+		.setHelpText('Email to get sent login information');
 	createAccountSettings(form,params); 
 	// Calendar...
 	if (calendarIDs) {
@@ -178,9 +197,9 @@ function createUserForm (calendarIDs, groups, folderIDs,params) {
 		createGroupSettings(form,params);
 	}
 	if (folderIDs) {
-		//createFolderForm(folderIDs,form);
-		//createFolderSettings(form,config);
-		Logger.log('folders not yet implemented :(');
+      Logger.log('folderIDs=%s',folderIDs);
+		var ret = createDriveFormAndConfig(folderIDs,form);
+		createFolderSettings(ret.form,ret.config,params);
 	}
 	Logger.log('Created User Form: '+form.getPublishedUrl());
 	return form
@@ -351,6 +370,71 @@ function testCreateUserForm () {
     var folders = []
 	createUserForm(cals, groups, folders,                   
 								 {'SpreadsheetApp':ssApp});
+}
+
+function createIACSUserForm () {	
+  	var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+
+  var cals = [
+		// All / HS / MS
+		'innovationcharter.org_4f5nt4qijeoblj11aj2q7hibdc@group.calendar.google.com', // IACS All School Public Calendar	
+		'innovationcharter.org_0a0e0ddepor9shl5kfsvsvbt4c@group.calendar.google.com', // IACS HS Staff Calendar	
+		'innovationcharter.org_v7fibqav8iaddl4qqm0hcfv6ss@group.calendar.google.com', // IACS-MS Staff
+     // Team Calendars...
+		'innovationcharter.org_l392359l62rt2c0q9vq0rsvv3s@group.calendar.google.com', // team calendar-7/8 SD	
+		'innovationcharter.org_f18ij5fhojmf19fnjtlkcs0gvo@group.calendar.google.com', // team-calendar EC
+		'innovationcharter.org_m1lnm7dpk762t9gehum57hmf04@group.calendar.google.com', // team-calendar CM
+
+		// All School Rooms
+		'innovationcharter.org_2d3438383930363839393536@resource.calendar.google.com', // Auditorium	
+		'innovationcharter.org_3738343832303233363636@resource.calendar.google.com', // IACS Van	
+
+		// HS ROOMS
+		'innovationcharter.org_3numtkcsl56p3m5ca8k2icrb60@group.calendar.google.com', // Life Sciences Lab	
+		'innovationcharter.org_2d383439333334343430@resource.calendar.google.com', // RM 306	
+		'innovationcharter.org_hpe4hslbt5heegv7t8dsiiqiro@group.calendar.google.com', // Vernier Equipment	
+		'innovationcharter.org_jddt5mqo46n16k0j9dhm14rm7k@group.calendar.google.com', // Fab Lab	
+
+		// MS ROOMS
+		'innovationcharter.org_4lmett0d94e402l1j7o9m7es9c@group.calendar.google.com', // 504 Conference Room	
+		'innovationcharter.org_gciib4u94jc92pc3dko294ho30@group.calendar.google.com', // 506 Pull out - Landberg Hall	
+		'innovationcharter.org_nhi2qmf6hcjvnffltbmtu0l7p8@group.calendar.google.com', // Landberg Hall Pullout 522	
+
+		// chromebook carts
+		'innovationcharter.org_2d32343031363330302d363633@resource.calendar.google.com', // chromebook_SD_4th	
+		'innovationcharter.org_2d34343738343938322d393932@resource.calendar.google.com', // chromebook_7/8_207	
+		'innovationcharter.org_25i0cpo3a5ghmjposk20st26pc@group.calendar.google.com', // chromebook_PS_4th
+		'innovationcharter.org_2d3437393932303539393437@resource.calendar.google.com', // BLUE (516) chromebook (was EC)	
+		'innovationcharter.org_2d35373236353337322d36@resource.calendar.google.com', // chromebook_5/6_520	
+		'innovationcharter.org_333634373034393430@resource.calendar.google.com', // GREEN (515) chromebook (was CM)	
+		'innovationcharter.org_3233353932393838333932@resource.calendar.google.com', // YELLOW (518) Chromebook Cart	
+		'innovationcharter.org_2d393338353532392d3934@resource.calendar.google.com', // Chromebook 7/8 (401) RED	
+
+  ]
+  var groups = [
+		'all@innovationcharter.org',
+		'hs@innovationcharter.org',
+		'ms_56team@innovationcharter.org',
+		'ms@innovationcharter.org',
+		'msfaculty@innovationcharter.org',
+		'56advisoryteachers@innovationcharter.org',
+		'ECTeam@innovationcharter.org',
+		'cmteam@innovationcharter.org',
+		'PSteam@innovationcharter.org',
+		'self_direction_team@innovationcharter.org',
+		'ms_78team@innovationcharter.org',
+		'78advisoryteachers@innovationcharter.org',
+		'ms_advisors@innovationcharter.org',
+  ];
+  var folders = [
+    '0B672QR9JYGbeX1FVM0xyZUJTSU0',
+    '0B672QR9JYGbeNEM3SjdYYVJTZms',
+    '0B672QR9JYGbeVkhEMmF5WHd5WmM',
+  ];
+    
+	createUserForm(cals, groups, folders,
+								 {'SpreadsheetApp':ssApp}
+								);
 }
 
 function testCreateCalendarForm () {
