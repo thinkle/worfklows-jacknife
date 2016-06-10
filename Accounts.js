@@ -1,16 +1,18 @@
 // Code for creating new accounts
 
-function createAccountFromForm (results, fieldSettings, informSettings, emailTemplateSettings) {
- 	var params = {
- 		  informList : lookupField(informSettings, results),
-      informList : ['thinkle@innovationcharter.org'],
- 		emailTemplate : emailTemplateSettings.Body,
- 		emailSubject : emailTemplateSettings.Subject,
- 	}
- 	var moreFields = lookupFields(fieldSettings,results)
- 	for (var k in  moreFields) {
- 		params[k]=moreFields[k];
- 	}
+defaultCreateAccountSubject = "Account Info";
+defaultCreateAccountTemplate = "This email is to inform you that a new account has been created for <<username>> with the initial password <<password>>.";
+
+function createAccountFromForm (results, fieldSettings) {
+	logNormal('createAccountFromForm(%s,%s)',results,fieldSettings);
+	var params = lookupFields(fieldSettings,results);
+	params.informList = []
+	if (params.informFormUser) {
+		params.informList.push(results.FormUser)
+	}
+	if (params.informOther) {
+		params.informList.push(params.informOther)
+	}
  	createAccount(params)
 }
 
@@ -18,6 +20,7 @@ function createAccountFromForm (results, fieldSettings, informSettings, emailTem
 /* username, first, last, fields, informList, emailTemplate, emailSubject */
 
 function createAccount (params) {
+	logNormal('createAccount(%s)',params);
 	var first = params.first; 
 	var last = params.last;
 	var informList = params.informList ? params.informList : [];
