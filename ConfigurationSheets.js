@@ -1,4 +1,4 @@
-// Simple interface for handling our configuration sheets.concat. 
+// Simple interface for handling our configuration sheets.
 // The configuration sheets are a bit of an unusual format. 
 //
 // The first two columns are for simple key->value pairs
