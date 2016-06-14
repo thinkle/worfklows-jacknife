@@ -12,6 +12,7 @@ function createDriveFormAndConfig (folders, form) {
 		'FolderVal':folders,
 		'EmailSubject':defaultDriveSubjectTemplate,
 		'EmailBody':defaultDriveBodyTemplate,
+      'InformFormUser':1,
 
 	};
 	return ret;
@@ -45,6 +46,7 @@ function createDriveForm (folders, form) {
 
 
 function addUserToFoldersFromForm (results, config) {
+  logNormal('addUsersToFolderFromForm(%s,%s)',results,config);
 	if (! checkAuthorization(results, config)) {
 		Logger.log('Permission denied to add folders (%s, %s)',results,config);
 		return
@@ -82,6 +84,15 @@ function addUserToFoldersFromForm (results, config) {
   }) // end forEach mode
   
 	Logger.log('Done adding folders: %s',folderResults)
+  // Handle Emailing out update...
+  //informList = lookupField(informSettings, results);
+    if (settings.InformFormUser) {
+      informList = results.FormUser;
+      if (folderResults.FoldersRead || folderResults.FoldersWrite) {
+        sendEmailFromTemplate (informList, settings.EmailSubject, settings.EmailBody, folderResults, true)
+      }
+    }
+	//sendEmailUpdate(user,calsAdded);
 }
 
 function testCreateDriveFormAndConfig () {
