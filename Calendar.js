@@ -85,7 +85,10 @@ function addUserToCalendarFromForm (results, calConfig) { //, informConfig, emai
 			logVerbose('add user %s to calendar %s',user,c)
 			var success = addUserToCalendar(user,c,'reader');
 			if (success) {
-				calResults.CalendarsRead.push(CalendarApp.getCalendarById(c).getName());
+				calResults.CalendarsRead.push(
+                  //CalendarApp.getCalendarById(c).getName()
+                  Calendar.Calendars.get(c).summary
+                );
 			}
 		}) // end forEach CalendarsRead
 	}
@@ -95,7 +98,8 @@ function addUserToCalendarFromForm (results, calConfig) { //, informConfig, emai
 			var success = addUserToCalendar(user,c,'writer');
 			if (success) {
 				calResults.CalendarsWrite.push(
-					CalendarApp.getCalendarById(c).getName()
+                  Calendar.Calendars.get(c).summary
+					//CalendarApp.getCalendarById(c).getName()
 				);          
 			}
 		}) // end forEach CalnedarsWrite
@@ -106,7 +110,9 @@ function addUserToCalendarFromForm (results, calConfig) { //, informConfig, emai
 	if (calendarSettings.InformFormUser) {
     informList = results.FormUser;
 	}
-  sendEmailFromTemplate (informList, calendarSettings.EmailSubject, calendarSettings.EmailBody, calResults, true)
+  if (calResults.CalendarsWrite || calResults.CalendarsRead) {
+    sendEmailFromTemplate (informList, calendarSettings.EmailSubject, calendarSettings.EmailBody, calResults, true)
+  }
 	//sendEmailUpdate(user,calsAdded);
 }
 
