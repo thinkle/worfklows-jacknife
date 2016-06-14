@@ -82,7 +82,7 @@ function createCalendarSettings (form, calConfig, params) {
 		'Calendar',
 		configSheets
 	);
-  createFormTrigger(form);
+  createFormTrigger(form, controlSS);
 }
 
 function createGroupSettings (form, params) {
@@ -125,7 +125,7 @@ function createFolderSettings (form, config, params) {
 		'Folder',
 		configSheets
 	);
-  createFormTrigger(form);
+  createFormTrigger(form,controlSS);
 }
 
 function createAccountSettings (form, params) {
@@ -168,7 +168,7 @@ function createAccountSettings (form, params) {
     form,
     'NewUser',
     configSheets);    
-  createFormTrigger(form);
+  createFormTrigger(form,controlSS);
 }
 
 // Create a form with the fields necessary for creating a new user
@@ -199,7 +199,7 @@ function createUserForm (calendarIDs, groups, folderIDs,params) {
 	if (folderIDs) {
       Logger.log('folderIDs=%s',folderIDs);
 		var ret = createDriveFormAndConfig(folderIDs,form);
-		createFolderSettings(ret.form,ret.config,params);
+		createFolderSettings(ret.form,ret.configTable,params);
 	}
 	Logger.log('Created User Form: '+form.getPublishedUrl());
 	return form
@@ -325,14 +325,14 @@ function createApprovalForm (firstForm, params) {
   // Now set up triggers so that the master form 
   // triggers the approval form...  
   // if we don't have one already...
-  createFormTrigger(firstForm);
-  createFormTrigger(approvalForm);
+  createFormTrigger(firstForm, controlSS);
+  createFormTrigger(approvalForm, controlSS);
   
 
  return approvalForm
 }
 
-function createFormTrigger (form) {
+function createFormTrigger (form, master) {
   var alreadyHaveTrigger =  false
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (t.getTriggerSourceId()==form.getId()) {
@@ -346,7 +346,8 @@ function createFormTrigger (form) {
     ScriptApp.newTrigger('onFormSubmitTrigger')
     .forForm(form)
     .onFormSubmit()
-    .create();   
+			.create();
+		PropertiesService.getUserProperties().setProperty(form.getId(),master.getId())
   }
 }
 
@@ -380,10 +381,12 @@ function createIACSUserForm () {
 		'innovationcharter.org_4f5nt4qijeoblj11aj2q7hibdc@group.calendar.google.com', // IACS All School Public Calendar	
 		'innovationcharter.org_0a0e0ddepor9shl5kfsvsvbt4c@group.calendar.google.com', // IACS HS Staff Calendar	
 		'innovationcharter.org_v7fibqav8iaddl4qqm0hcfv6ss@group.calendar.google.com', // IACS-MS Staff
-     // Team Calendars...
+        // Team Calendars...
+        'innovationcharter.org_2acc54qlpdhe8qgiee0l7ldbt8@group.calendar.google.com', // team-calendar-7/8 PS
 		'innovationcharter.org_l392359l62rt2c0q9vq0rsvv3s@group.calendar.google.com', // team calendar-7/8 SD	
 		'innovationcharter.org_f18ij5fhojmf19fnjtlkcs0gvo@group.calendar.google.com', // team-calendar EC
 		'innovationcharter.org_m1lnm7dpk762t9gehum57hmf04@group.calendar.google.com', // team-calendar CM
+    
 
 		// All School Rooms
 		'innovationcharter.org_2d3438383930363839393536@resource.calendar.google.com', // Auditorium	
@@ -419,7 +422,7 @@ function createIACSUserForm () {
 		'msfaculty@innovationcharter.org',
 		'56advisoryteachers@innovationcharter.org',
 		'ECTeam@innovationcharter.org',
-		'cmteam@innovationcharter.org',
+		'ms_56_community_membership@innovationcharter.org',
 		'PSteam@innovationcharter.org',
 		'self_direction_team@innovationcharter.org',
 		'ms_78team@innovationcharter.org',
