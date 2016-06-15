@@ -69,6 +69,11 @@
             "type": "server_js", 
             "id": "31e5c827-1796-42bb-b906-03aa8bef2685", 
             "name": "Drive"
+        }, 
+        {
+            "type": "server_js", 
+            "id": "720bf04d-8580-47bd-b06b-2337fc62e939", 
+            "name": "Logging"
         }
     ], 
     "id": "1kB-qfI7oDio3iWFszxwOlBG9xp4-IWisXCVgI6Ggm-i7-0dOC87amibB"
