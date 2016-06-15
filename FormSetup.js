@@ -440,6 +440,26 @@ function createIACSUserForm () {
 								);
 }
 
+// Create a log for input to form in sheet params.logSheet.
+// If logSheet is not provided, we will create a new spreadsheet.
+function createLog (form, params) {
+  var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
+	var masterConfig = getMasterConfig(controlSS);
+	var configOptions = setupLoggingSheet(form,params.logSheet);
+	var configSheets = [];
+	configSheets.push(createConfigurationSheet(controlSS,form.getTitle()+' Log',configOptions));	
+	masterConfig.pushConfig(
+		form,'Log',configSheets
+	);
+	createFormTrigger(form,controlSS);
+}
+
+function testCreateLog () {
+	var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+	var form = FormApp.openById('1s-jsFphG0dMysJivN4YUY7yBZLFY97eplYvXbbimysE');
+	createLog(form, {'SpreadsheetApp':ssApp})
+}
+
 function testCreateCalendarForm () {
   var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
   calObj = createCalendarFormAndConfig(['innovationcharter.org_4f5nt4qijeoblj11aj2q7hibdc@group.calendar.google.com','innovationcharter.org_0a0e0ddepor9shl5kfsvsvbt4c@group.calendar.google.com']);
