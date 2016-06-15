@@ -160,5 +160,6 @@ function testTable () {
   table[3]['Last']='Holy Shit It Worked'
   table.pushRow(['Jon','Churchill',42])  
   table.pushRow({'Last':'Gross','First':"Terry",'Age':'Unknown'})
+	table.pushRow({'Last':'Clifford','First':"Stephen",'Age':'42','Extra':'Stuff','What':'Happens?'})
   logVerbose('Table length is now: '+table.length)
 }
