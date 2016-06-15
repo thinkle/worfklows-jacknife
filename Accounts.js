@@ -13,7 +13,7 @@ function createAccountFromForm (results, fieldSettings) {
 	if (params.informOther) {
 		params.informList.push(params.informOther)
 	}
- 	createAccount(params)
+ 	return createAccount(params)
 }
 
 
@@ -64,6 +64,7 @@ function createAccount (params) {
           fields);
       });
     }
+		return user
   }
 }
 
