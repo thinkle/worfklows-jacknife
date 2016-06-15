@@ -10,6 +10,8 @@
 // config files...
 ////////////////////////////////////////
 
+var FAILURE = 'FAILED';
+
 function lookupField (settings, results) {
 	if (settings['Field']) {
 		var value = results[settings['Field']]
@@ -209,19 +211,22 @@ function getResponseItems (resp) {
   return responseItems;
 }
 
- triggerActions = {
+triggerActions = {
+	// Trigger Actions should return a value if successful (that can be
+	// an object with information about success for future actions to
+	// use)
  	'NewUser' : function (event, masterSheet, actionRow) {
       Logger.log('!!! NEW USER TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
      var responses = getResponseItems(event.response);
  		var usernameSettings = actionRow['Config1'].table;
  		//var informSettings = actionRow['Config2'].table;
     //var emailSettings = actionRow['Config3'].table;
- 		createAccountFromForm(
+ 		return createAccountFromForm(
           //results, fieldSettings, informSettings, emailTemplateSettings
-          responses, 
+      responses, 
  			usernameSettings
  			//informSettings,
-        //  emailSettings
+      //  emailSettings
  		);
  	},
   'Email' : function (event, masterSheet, actionRow) {
@@ -234,26 +239,33 @@ function getResponseItems (resp) {
       templateSettings,
       lookupSettings
     );
+		return true;
   }, // end Email
+   'Folder' : function (event, masterSheet, actionRow) {
+     Logger.log('!!! FOLDER TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
+		 responses = getResponseItems(event.response);
+		 var config = actionRow['Config1'].table;
+	   addUserToFoldersFromForm(responses,config);
+   }, // end Folder
 	 'Group': function (event, masterSheet, actionRow) {
-       Logger.log('!!! GROUP TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
+     Logger.log('!!! GROUP TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
 		 responses = getResponseItems(event.response);
 		 var groupConfig = actionRow['Config1'].table;
 		 addToGroupFromForm(responses,groupConfig);
+		 return true;
 	 },
 	 'Calendar': function (event, masterSheet, actionRow) {
        Logger.log('!!! CALENDAR TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
-
 		 responses = getResponseItems(event.response);
 		 var calConfig = actionRow['Config1'].table;
 		 //var informConfig = actionRow['Config2'].table;
 		 //var emailConfig = actionRow['Config3'].table;
 		 var calendarsAdded = addUserToCalendarFromForm(responses, calConfig)//, informConfig, emailConfig);
 		 Logger.log('Added calendars: '+JSON.stringify(calendarsAdded));
+		 return calendarsAdded
 	 }, // end Calendar
   'Approval': function (event, masterSheet, actionRow) {
-          Logger.log('!!! APPROVAL TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
-
+    Logger.log('!!! APPROVAL TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
     responses = getResponseItems(event.response)
     // DEBUG 
 		//    try {
@@ -293,10 +305,16 @@ function getResponseItems (resp) {
     //  Logger.log('Did not find email settings for approval :(');
     //  Logger.log('actionRow: '+JSON.stringify(actionRow));
     //}
-    
-   }, // end Approval Form Trigger
-
- }
+    return true;
+  }, // end Approval Form Trigger
+	'Log' : function (event, masterSheet, actionRow, actionResults) {
+		var settings = lookupFields(actionRow['Config1'].table)
+		handleMagicSettings(settings) // here be dragons...
+		var sheet = getSheetById(SpreadsheetApp.openById(settings.SpreadsheetId),settings.SheetId);
+		var table = Table(sheet.getDataRange())
+		table.pushRow(settings) // we just push our settings -- the set up of the table then becomes the key...
+	},
+}
 
 function fixBrokenEvent (event) {
   // google's event does not work as documented... Let's fix it! 
@@ -309,6 +327,28 @@ function fixBrokenEvent (event) {
   return event
 }
 
+function getItemByTitle (form, title) {
+  form.getItems().forEach(function (i) {
+    if (i.getTitle()==title) {
+      return i
+    }
+  }) // end forEach item
+}
+
+//function getHiddenItem (form, title) {
+//  var item  = form.getItemByTitle(title)
+//  if (item) { return item }
+//  // Create hidden item...
+//  if (! getItemByTitle('Metadata: Hide this section from user')) {
+//    form.addPageBreakItem('Metadata: Hide this section from user') {
+//      
+//    }
+//  }
+//}
+
+function writePropertyTest () {
+PropertiesService.getUserProperties().setProperty('1s-jsFphG0dMysJivN4YUY7yBZLFY97eplYvXbbimysE','1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+}
 
 function onFormSubmitTrigger (event) {
   Logger.log('onFormSubmitTrigger got: '+JSON.stringify(event))
@@ -316,18 +356,25 @@ function onFormSubmitTrigger (event) {
   var form = event.source;  
   // can we keep this bound in the future?
   //var masterSheet = SpreadsheetApp.getActiveSheet();
-  var masterSheet = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+  masterSheetId = PropertiesService.getUserProperties().getProperty(form.getId())
+  if (!masterSheetId) {
+    throw "No Master Sheet ID associated with form that triggered us ;("
+  }
+  
+  var masterSheet = SpreadsheetApp.openById(masterSheetId);
   // now lookup our configuration information and do our thing...
   var masterConfig = getMasterConfig(masterSheet);
   var formActions = masterConfig.getConfigsForId(form.getId());
   Logger.log('Working with formActions: '+JSON.stringify(formActions));
+  var actionResults = {}
   formActions.forEach(function (actionRow) {
     Logger.log('Trying action: '+actionRow);
     var action = actionRow.Action;    
     try {
-      triggerActions[action](event,masterSheet,actionRow)    
+			actionResults[action] = triggerActions[action](event,masterSheet,actionRow,actionResults);
     }
     catch (err) {
+			actionResults[action] = FAILURE;
       Logger.log('Ran into error on action %s: %s',action,err);
       Logger.log('Blargh!');
     }
