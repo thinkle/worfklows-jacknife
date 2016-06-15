@@ -61,6 +61,7 @@ function sendFormResultEmail (results, templateSettings, addressSettings) {
     results,
     true
 	);
+	return true;
 }
 
 function sendEmailFromTemplate (email, subj, template, fields, fixWhiteSpace) {
