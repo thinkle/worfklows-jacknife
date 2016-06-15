@@ -308,8 +308,14 @@ triggerActions = {
     return true;
   }, // end Approval Form Trigger
 	'Log' : function (event, masterSheet, actionRow, actionResults) {
-		var settings = lookupFields(actionRow['Config1'].table)
+		var settings = lookupFields(actionRow['Config1'].table,getResponseItems(event.response))
 		handleMagicSettings(settings) // here be dragons...
+		settings.Triggers = {}
+		for (var key in actionResults) {
+			settings[key+'Action'] = actionResults[key]
+			settings.Triggers[key] = actionResults[key]
+		}
+		settings.ResponseId = event.response.getId()
 		var sheet = getSheetById(SpreadsheetApp.openById(settings.SpreadsheetId),settings.SheetId);
 		var table = Table(sheet.getDataRange())
 		table.pushRow(settings) // we just push our settings -- the set up of the table then becomes the key...
@@ -375,7 +381,7 @@ function onFormSubmitTrigger (event) {
     }
     catch (err) {
 			actionResults[action] = FAILURE;
-      Logger.log('Ran into error on action %s: %s',action,err);
+      Logger.log('Ran into error on action %s: %s\nSTACK:%s',action,err.name,err.stack);
       Logger.log('Blargh!');
     }
   }
