@@ -143,6 +143,7 @@ function createAccountSettings (form, params) {
 				last:'%Last',
 				informFormUser:1,
 				informOther:'%Personal Email',
+				requirePasswordReset:1,
 				emailSubject:defaultCreateAccountSubject,
 				emailTemplate:defaultCreateAccountTemplate,
 				'Possible Fields':listFormItemTitles(FormApp.openById(formAsFile.getId())),
@@ -355,7 +356,7 @@ function testCreateApprovalForm () {
   //var origForm = FormApp.openById('1LRophsb8hTo1GNv8qpGp8G-dCpdLIFBboO5rx5pIfII')
   var origForm = FormApp.openById('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4')
   var origFolder = DriveApp.getFolderById('0B6UL9LRgyOtHTkJ6U1F1dVVlWkE');  
-  var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+  var ssApp = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
   var approvalForm = createApprovalForm(origForm, {'destinationFolder':origFolder,
                                                    'SpreadsheetApp':ssApp,})
   
@@ -365,7 +366,7 @@ function testCreateApprovalForm () {
 } // end testCreateApprovalForm
 
 function testCreateUserForm () {
-	var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+	var ssApp = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
     var cals = ['innovationcharter.org_4f5nt4qijeoblj11aj2q7hibdc@group.calendar.google.com','innovationcharter.org_0a0e0ddepor9shl5kfsvsvbt4c@group.calendar.google.com']
     var groups = ['hs@innovationcharter.org','ms@innovationcharter.org','all@innovationcharter.org']
     var folders = []
@@ -374,7 +375,7 @@ function testCreateUserForm () {
 }
 
 function createIACSUserForm () {	
-  	var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+  	var ssApp = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
 
   var cals = [
 		// All / HS / MS
@@ -455,13 +456,13 @@ function createLog (form, params) {
 }
 
 function testCreateLog () {
-	var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+	var ssApp = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
 	var form = FormApp.openById('1s-jsFphG0dMysJivN4YUY7yBZLFY97eplYvXbbimysE');
 	createLog(form, {'SpreadsheetApp':ssApp})
 }
 
 function testCreateCalendarForm () {
-  var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+  var ssApp = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
   calObj = createCalendarFormAndConfig(['innovationcharter.org_4f5nt4qijeoblj11aj2q7hibdc@group.calendar.google.com','innovationcharter.org_0a0e0ddepor9shl5kfsvsvbt4c@group.calendar.google.com']);
   createCalendarSettings(calObj.form,calObj.configTable,
                          {'SpreadsheetApp':ssApp});
@@ -469,7 +470,7 @@ function testCreateCalendarForm () {
 }
 
 function clearAll () {
-  var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+  var ssApp = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
   ssApp.getSheets().forEach(function (s) {
     if (s.getSheetId()!=0) { ssApp.deleteSheet(s) }
   });
