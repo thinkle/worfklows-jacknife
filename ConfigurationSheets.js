@@ -368,7 +368,7 @@ function getMasterConfig (ss) {
 
 function testReadConfigsFromMaster () {
   var formId = '1FZSNYuDWpf1scB1_CvJrt7mnyIBH_-AALxXyIDUJWR0';
-  var ss = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+  var ss = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
   var masterConfig = getMasterConfig(ss)
   var configs = masterConfig.getConfigsForId(formId)
   configs.forEach(function (cRow) {
