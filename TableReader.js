@@ -121,13 +121,13 @@ function Table (range) {
         var i = headers.indexOf(key);
         if (i > -1) {
           logVerbose('Converts to i='+i);
-          pushArray[i] = data[key] // set to the integer...          
+          pushArray[i] = spreadsheetify(data[key]) // set to the integer...          
         }
       }
       else {
         logVerbose('Numerical key: '+key);
         // Otherwise we're looking at a numerical key...
-        pushArray[key] = data[key]        
+        pushArray[key] = spreadsheetify(data[key])
       } 
     }
     } // end for    
@@ -145,6 +145,14 @@ function Table (range) {
 return table;
 }
 
+function spreadsheetify (value) {
+	if (Array.isArray(value)) {
+		return value.join(", ");
+	}
+	else {
+		return value;
+	}
+}
 
 function testTable () {
   var ss = SpreadsheetApp.openById('1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk')  
