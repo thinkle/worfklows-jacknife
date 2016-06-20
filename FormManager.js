@@ -34,6 +34,9 @@ function lookupField (settings, results) {
 // key : %val (lookup %val in our results)
 // key : @val>>newfield (lookup %val in lookup table newfield in settings)
 function lookupFields (settings, results) {
+	if (! results) {
+		logAlways('No results (%s) handed to lookupFields',results)
+	}
 	logNormal('lookupFields(%s,%s)',settings,results);
   logVerbose('Starting with settings: %s, results: %s',JSON.stringify(settings),JSON.stringify(results));
 	fields = {}
@@ -42,12 +45,36 @@ function lookupFields (settings, results) {
 	for (var settingKey in settings) {
 		logVerbose('lookupFields "%s"=>"%s"',settingKey,settings[settingKey]);
 		var val = settings[settingKey];
+		if (val[0]=='?') {
+			logNormal('Looking up action! %s',val);
+			// Syntax = +ACTION.attribute.attribute.attribute
+			var result = val.substr(1);
+			// BUILD REST OF THIS TO PARSE OUT ACTION RESULTS
+			// BASED ON MAGIC :)
+			var objectChain = result.split('.');
+			var obj = results.actionResults[objectChain.shift()]
+			while (obj && objectChain.length > 0) {
+				try {
+					var obj = obj[objectChain.shift()]
+				}
+				catch (err) {
+					logAlways('Error %s getting setting +%s, unable to read object %s',
+										err, val, obj
+									 )
+					obj = undefined
+				}
+			} // end looping through attributes
+			settings[settingKey] = obj
+			logNormal('%s settings[%s]=>%s',val,settingKey,obj);
+		}
 		if (val[0]=='%') {
+			// Syntax = %FieldnameFromForm
 			val = val.substr(1);
 			fields[settingKey] = results[val];
       logVerbose('fields[%s]=%s',settingKey,fields[settingKey]);
 		}
 		else {
+			// Syntax = @FormFieldname>>LookupFieldName
 			if (val[0]=='@' && val.indexOf('>>')>-1) {
 				val = val.substr(1); // Now we get the value and pass it through
 				var vals = val.split('>>');
@@ -77,6 +104,7 @@ function lookupFields (settings, results) {
 			}
 		}
 	}
+	logNormal('Looked up fields->%s',fields);
 	return fields
 }
 
@@ -273,8 +301,11 @@ function getApprovalFormToMasterLookup (actionRow) {
 /////////////
 // Triggers & Such
 
-function getResponseItems (resp) {
+function getResponseItems (resp, actionResults) {
+
   responseItems = {}
+	// attach action results so we can act on those as well :)
+	if (actionResults) { responseItems.actionResults = actionResults; }
   resp.getItemResponses().forEach(function (itemResp) {
     responseItems[itemResp.getItem().getTitle()]=itemResp.getResponse();
     }) // end forEach itemResp
@@ -303,32 +334,30 @@ triggerActions = {
       //  emailSettings
  		);
  	},
-  'Email' : function (event, masterSheet, actionRow) {
+  'Email' : function (event, masterSheet, actionRow, actionResults) {
     Logger.log('!!! EMAIL TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
-    var responses = getResponseItems(event.response);
+    var responses = getResponseItems(event.response,actionResults);
 		var settings = actionRow['Config1'].table
     //var templateSettings = actionRow['Config1'].table;
     //var lookupSettings = actionRow['Config2'].table;
-    sendFormResultEmail(
+    return sendFormResultEmail(
       responses,
 			settings
       //templateSettings,
       //lookupSettings
     );
-		return true;
   }, // end Email
    'Folder' : function (event, masterSheet, actionRow) {
      Logger.log('!!! FOLDER TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
 		 responses = getResponseItems(event.response);
 		 var config = actionRow['Config1'].table;
-	   addUserToFoldersFromForm(responses,config);
+	   return addUserToFoldersFromForm(responses,config);
    }, // end Folder
 	 'Group': function (event, masterSheet, actionRow) {
      Logger.log('!!! GROUP TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
 		 responses = getResponseItems(event.response);
 		 var groupConfig = actionRow['Config1'].table;
-		 addToGroupFromForm(responses,groupConfig);
-		 return true;
+		 return addToGroupFromForm(responses,groupConfig);
 	 },
 	 'Calendar': function (event, masterSheet, actionRow) {
        Logger.log('!!! CALENDAR TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
