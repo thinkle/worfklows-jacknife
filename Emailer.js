@@ -14,7 +14,7 @@ function sendEmail (email, subject, htmlBody) {
             )
 }
 
-function CheckForSelfApproval (settings) {
+function checkForSelfApproval (settings) {
 	// We are checking whether the form allows self approval or what...
 	if (! settings.allowSelfApproval) {
 		if (settings.FormUser==settings.Approver) {
@@ -29,19 +29,19 @@ function CheckForSelfApproval (settings) {
 	}
 }
 
-function checkSelfApproval (val, addressSettings, results) {
-	if (! addressSettings['PreventSelfApprove']) {return val}
-	// Otherwise we *are* requiring that value != self
-	if (val != results['FormUser']) {
-		return val
-	}
-	if (results['EmailLookup']['Default']!=results['FormUser']) {
-		return results['EmailLookup']['Default']
-	}
-	if (results['DefaultBackup']!=results['FormUser']) {
-		return results['DefaultBackup']
-	}
-}
+// function checkSelfApproval (val, addressSettings, results) {
+// 	if (! addressSettings['PreventSelfApprove']) {return val}
+// 	// Otherwise we *are* requiring that value != self
+// 	if (val != results['FormUser']) {
+// 		return val
+// 	}
+// 	if (results['EmailLookup']['Default']!=results['FormUser']) {
+// 		return results['EmailLookup']['Default']
+// 	}
+// 	if (results['DefaultBackup']!=results['FormUser']) {
+// 		return results['DefaultBackup']
+// 	}
+// }
 
 function getEmail (addressSettings, results) {
   // Given somewhat complex addressSettings config sheet, get correct
@@ -68,11 +68,13 @@ function getEmail (addressSettings, results) {
 }
 
 function sendFormResultEmail (results, settings) {
-  Logger.log('sendFormResultEmail'+JSON.stringify([results,templateSettings,addressSettings]));
-	var config = lookupFields(settings)
+  Logger.log('sendFormResultEmail'+JSON.stringify([results,settings]));
+	var config = lookupFields(settings, results)
 	config.emailLookup = settings.emailLookup;
+	logNormal('config=>%s',config);
 	sendEmailFromTemplate(
-    getEmail(config, results),
+    //getEmail(config, results),
+		config.To,
     config.Subject,
     config.Body,
     results,
