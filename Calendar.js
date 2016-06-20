@@ -106,14 +106,14 @@ function addUserToCalendarFromForm (results, calConfig) { //, informConfig, emai
 			}
 		}) // end forEach CalnedarsWrite
 	}
-  logNormal('Added calendars: ',JSON.stringify(calResults));
+  logNormal('Added calendars: %s',JSON.stringify(calResults));
   // Handle Emailing out update...
   //informList = lookupField(informSettings, results);
 	if (calendarSettings.InformFormUser) {
     informList = results.FormUser;
-	}
-  if (calResults.CalendarsWrite || calResults.CalendarsRead) {
-    sendEmailFromTemplate (informList, calendarSettings.EmailSubject, calendarSettings.EmailBody, calResults, true)
+		if (calResults.CalendarsWrite || calResults.CalendarsRead) {
+			sendEmailFromTemplate (informList, calendarSettings.EmailSubject, calendarSettings.EmailBody, calResults, true)
+		}
   }
 	return {'settings':calendarSettings,'results':calResults}
 	//sendEmailUpdate(user,calsAdded);
@@ -130,7 +130,8 @@ function addUserToCalendar (user, calendarId, role) {
     role: role
   };
   try {
-  Calendar.Acl.insert(acl, calendarId);
+		Calendar.Acl.insert(acl, calendarId);
+		logNormal('Added %s to calendar %s',user,calendarId);
   }
   catch (err) {
     Logger.log("Error adding calendar: "+err)
