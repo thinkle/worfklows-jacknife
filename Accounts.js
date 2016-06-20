@@ -5,6 +5,10 @@ defaultCreateAccountTemplate = "This email is to inform you that a new account h
 
 function createAccountFromForm (results, fieldSettings) {
 	logNormal('createAccountFromForm(%s,%s)',results,fieldSettings);
+	if (! checkAuthorization(results, fieldSettings)) {
+		Logger.log('Unauthorized use attempted.')
+		return false;
+	}
 	var params = lookupFields(fieldSettings,results);
 	params.informList = []
 	if (params.informFormUser) {
@@ -27,6 +31,7 @@ function createAccount (params) {
 	var emailTemplate = params.emailTemplate ? params.emailTemplate : defaultCreateAccountTemplate;
 	var emailSubject = params.emailSubject ? params.emailSubject : defaultCreateAccountSubject;
 	var username = params.username;
+	var requirePasswordReset = params.requirePasswordReset
 	user = params.fields ? params.fields : {}
   Logger.log('Username: '+username);
   try {
@@ -46,6 +51,9 @@ function createAccount (params) {
       var pw = (Math.random()).toString(36).replace('0.','')
       user.password = pw
     }
+		if (requirePasswordReset) {
+			user.changePasswordAtNextLogin = true
+		}
     Logger.log('Creating user: '+JSON.stringify(user));
     user = AdminDirectory.Users.insert(user);
     //Logger.log('User %s created with ID %s',user.primaryEmail,user.id);
@@ -61,7 +69,7 @@ function createAccount (params) {
           username,
           emailSubject,
           emailTemplate,
-          fields);
+          fields, true);
       });
     }
 		return user
