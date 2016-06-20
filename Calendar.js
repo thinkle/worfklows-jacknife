@@ -68,6 +68,8 @@ function checkAuthorization (results, config) {
 	if (conf.Authorize) {return true;}
 	else {
 		Logger.log('Form not authorized (User %s, conf %s)',conf.FormUser,conf);
+		sendEmailFromTemplate(conf.FormUser,'Unauthorized attempt',
+													'You attempted to use a form that is meant to trigger actions you are not authorized to perform. If you believe you should have access to the form, please email <a href="thinkle@innovationcharter.org">thinkle@innovationcharter.org</a>.\n\nDetailed technical information about what you were trying to do:\n'+JSON.stringify(conf))
 		return false
 	}
 }
@@ -153,7 +155,7 @@ function testCreateForm () {
 }
 
 function testCreateCalendarFormAndConfig () {
-	var ss = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+	var ss = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
 	createCalendarFormAndConfig(
     ['innovationcharter.org_4f5nt4qijeoblj11aj2q7hibdc@group.calendar.google.com','innovationcharter.org_0a0e0ddepor9shl5kfsvsvbt4c@group.calendar.google.com','innovationcharter.org_f18ij5fhojmf19fnjtlkcs0gvo@group.calendar.google.com']
 	);
