@@ -14,14 +14,29 @@ function sendEmail (email, subject, htmlBody) {
             )
 }
 
+function CheckForSelfApproval (settings) {
+	// We are checking whether the form allows self approval or what...
+	if (! settings.allowSelfApproval) {
+		if (settings.FormUser==settings.Approver) {
+			if (settings.ApproverDefault != settings.FormUser) {
+				settings.Approver = settings.ApproverDefault
+			}
+			else {
+				// fallback
+				settings.Approver = settings.ApproverBackup
+			}
+		}
+	}
+}
+
 function checkSelfApproval (val, addressSettings, results) {
 	if (! addressSettings['PreventSelfApprove']) {return val}
 	// Otherwise we *are* requiring that value != self
 	if (val != results['FormUser']) {
 		return val
 	}
-	if (results['Default']!=results['FormUser']) {
-		return results['Default']
+	if (results['EmailLookup']['Default']!=results['FormUser']) {
+		return results['EmailLookup']['Default']
 	}
 	if (results['DefaultBackup']!=results['FormUser']) {
 		return results['DefaultBackup']
@@ -52,12 +67,14 @@ function getEmail (addressSettings, results) {
   }
 }
 
-function sendFormResultEmail (results, templateSettings, addressSettings) {
+function sendFormResultEmail (results, settings) {
   Logger.log('sendFormResultEmail'+JSON.stringify([results,templateSettings,addressSettings]));
+	var config = lookupFields(settings)
+	config.emailLookup = settings.emailLookup;
 	sendEmailFromTemplate(
-    getEmail(addressSettings, results),
-    templateSettings.Subject,
-    templateSettings.Body,
+    getEmail(config, results),
+    config.Subject,
+    config.Body,
     results,
     true
 	);
