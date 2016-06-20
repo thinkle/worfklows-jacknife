@@ -93,6 +93,7 @@ function addUserToFoldersFromForm (results, config) {
       }
     }
 	//sendEmailUpdate(user,calsAdded);
+	return {'settings':settings,'results':folderResults}
 }
 
 function testCreateDriveFormAndConfig () {
