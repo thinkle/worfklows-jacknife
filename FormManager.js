@@ -80,6 +80,80 @@ function lookupFields (settings, results) {
 	return fields
 }
 
+function getMonthString (d) {
+	var month = d.getMonth()+1
+	month = "" + month;
+	if (month.length==1) {
+		month = "0"+month
+	}
+	return month
+}
+
+function getYearString (d,n) {
+	var year = d.getFullYear()
+	if (n==2) {
+		return (""+year).substr(2)
+	}
+	else {
+		return ""+year
+	}
+}
+
+function padNum (n, digits) {
+	numString = ""+n
+	while (numString.length < digits) {
+		numString = "0"+numString
+	}
+	return numString
+}
+
+// Update config based on magic...
+function lookupMagic (config, responses, form) {
+	for (var key in config) {
+		var val = config[key]
+		if (val.indexOf('*#*')==0) {
+			// PO-MAGIC!
+			val = val.substr(3); // cut off magic stuff... we'll handle the magic now!
+			d = new Date()
+			// Start search at...
+			if (val.indexOf('YY') >= 0) {
+				var timestampDate = new Date(d.getFullYear())
+			}
+			if (val.indexOf('MM') >= 0) {
+				var timestampDate = new Date(d.getFullYear(),d.getMonth())
+			}
+			val = val.replace('MM',getMonthString(d));
+			val = val.replace('YYYY',getYearString(d,4));
+			val = val.replace('YY',getYearString(d,2));
+			if (val.indexOf('#') >= 0) {
+				// This is an incrementer!
+				var allResponses = form.getResponses(timestampDate.getDate());
+				var item = getItemByTitle(form,key);
+				var numberMatch = /#+/g
+				var numLength = val.match(numberMatch)[0].length
+				// Now go through the responses and check for incrementation needs...
+				existingResponses = []
+				allResponses.forEach(function (resp) {existingResponses.push(
+					resp.getItemResponseForItem(item).getResponse() // response as string
+				)});
+				// Now let's just iterate through
+				// FIXME - How to iterate through and check for highest number... ?
+				var haveUniqueNumber = false;
+				var n = 0;
+				while (! haveUniqueNumber) {
+					n += 1; 
+					var numberCandidate = val.replace(numberMatch,padNumber(n,numLength))
+					if (existingResponses.indexOf(numberCandidate)==-1) {
+						haveUniqueNumber = true;
+						config[key] = val;
+					}
+				} // end while ! haveUniqueNumber
+			} // end test for magic incrementing # thingy...
+		} // end test for magic at all
+	} // end for key in config
+} // end lookupMagic
+
+
 /////////////////////////////////
 // Form2Form Stuff for Approval Forms
 ///////////////////////////////////
@@ -117,7 +191,7 @@ function preFillApprovalForm (params) {
     if (go_on) {
       Logger.log('Working with '+item.getType()+item.getTitle())
       itemTitle = item.getTitle()      
-      if (params.field2field.hasOwnProperty(itemTitle)) {        
+      if (params.field2field.hasOwnProperty(itemTitle)) {
         sourceKey = params.field2field[itemTitle]
         value = params.responseItems[sourceKey]
       }
@@ -161,7 +235,7 @@ function preFillApprovalForm (params) {
   Logger.log('preFill2=>'+newEditUrl);
   
   //Debug...
-  var masterSheet = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+  var masterSheet = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
 
   createConfigurationSheet(masterSheet,
                            'Approval Response Received Here is the Edit URL',
@@ -232,12 +306,14 @@ triggerActions = {
   'Email' : function (event, masterSheet, actionRow) {
     Logger.log('!!! EMAIL TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
     var responses = getResponseItems(event.response);
-    var templateSettings = actionRow['Config1'].table;
-    var lookupSettings = actionRow['Config2'].table;
+		var settings = actionRow['Config1'].table
+    //var templateSettings = actionRow['Config1'].table;
+    //var lookupSettings = actionRow['Config2'].table;
     sendFormResultEmail(
       responses,
-      templateSettings,
-      lookupSettings
+			settings
+      //templateSettings,
+      //lookupSettings
     );
 		return true;
   }, // end Email
@@ -279,33 +355,41 @@ triggerActions = {
     // END DEBUG
     Logger.log('Get actionRow'+JSON.stringify(actionRow));
     Logger.log('Get actionRow[Config1]'+JSON.stringify(actionRow.Config1));
-    var f2f = getApprovalFormToMasterLookup(actionRow)
+    //var f2f = getApprovalFormToMasterLookup(actionRow)
+		f2f = lookupFields(actionRow.Config1,responses);
+		lookupMagic(f2f,responses,event.source);
     Logger.log('Got f2f'+JSON.stringify(f2f));
-    if (actionRow['Config1'].table) {
-			var targetForm = FormApp.openById(actionRow['Config1'].table['Approval Form ID'])
-			var editUrl = preFillApprovalForm({'targetForm':targetForm,
-																				 'responseItems':responses,
-																				 'field2field':f2f})
-    }
-    else {
+    if (! actionRow['Config1'].table) {
       Logger.log('Did not find approval form to master :(');
       Logger.log('actionRow: '+JSON.stringify(actionRow));
-    }
+			return 0
+		}
+		var targetForm = FormApp.openById(actionRow['Config1'].table['Approval Form ID'])
+		var editUrl = preFillApprovalForm({'targetForm':targetForm,
+																			 'responseItems':responses,
+																			 'field2field':f2f})
     //if (actionRow['Config2'].table && actionRow['Config3'].table) {
     var templateSettings = actionRow['Config2'].table
-    var lookupSettings = actionRow['Config3'].table
-		responses['link'] = editUrl;
-    sendFormResultEmail(
-			responses,
-			templateSettings,
-			lookupSettings
-    );
-    //}
-    //else {
-    //  Logger.log('Did not find email settings for approval :(');
-    //  Logger.log('actionRow: '+JSON.stringify(actionRow));
-    //}
-    return true;
+		config = lookupFields(templateSettings,responses);
+    //var lookupSettings = actionRow['Config3'].table
+		//responses['link'] = editUrl;
+		checkForSelfApproval(config);
+		config.link = editUrl;
+		// send email with request
+		sendEmailFromTemplate(config.Approver,config.RequestSubject,config.RequestBody,
+													config,true);
+		if (config.InformSubmitter) {
+			// send email informing user of response thingy...
+			sendEmailFromTemplate(responses.FormUser, config.InformSubject, config.InformBody,
+														config, true
+													 ); 
+		}
+    // sendFormResultEmail(
+		// 	responses,
+		// 	templateSettings,
+		// 	lookupSettings
+    // );
+    return config;
   }, // end Approval Form Trigger
 	'Log' : function (event, masterSheet, actionRow, actionResults) {
 		var settings = lookupFields(actionRow['Config1'].table,getResponseItems(event.response))
@@ -353,7 +437,7 @@ function getItemByTitle (form, title) {
 //}
 
 function writePropertyTest () {
-PropertiesService.getUserProperties().setProperty('1s-jsFphG0dMysJivN4YUY7yBZLFY97eplYvXbbimysE','1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+PropertiesService.getUserProperties().setProperty('1s-jsFphG0dMysJivN4YUY7yBZLFY97eplYvXbbimysE','1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
 }
 
 function onFormSubmitTrigger (event) {
@@ -401,12 +485,14 @@ function testPrefillForm () {
   var form = FormApp.openById("1NFtScmn241rlKBz4azHzJK4DJ3P9Un44xUDSCzKQAiE");
   var editUrl = preFillApprovalForm({'targetForm':form,
 																		 'responseItems':responseItems,
-																		 'field2field':f2f})
+																		 'field2field':f2f,
+																		 //'config':config,
+																		})
   Logger.log('Edit URL: '+editUrl);  
 }
 
 function cleanupSheets () {
-  var ssApp = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+  var ssApp = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
   var sheet = ssApp.getSheetByName('Approval Response Received')  
   if (sheet) {ssApp.deleteSheet(sheet)};
   var sheet = ssApp.getSheetByName('Approval Response Received Here is the Edit URL')
@@ -508,7 +594,7 @@ function testCalTrigger () {
 } // end testCallTrigger
 
 function testGetConfigsForId () {
-	var masterSheet = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+	var masterSheet = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
 	Logger.log('GOT Configs: '+JSON.stringify(getMasterConfig(masterSheet).getConfigsForId('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4')));
 }
 
