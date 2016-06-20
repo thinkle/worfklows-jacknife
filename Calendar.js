@@ -115,6 +115,7 @@ function addUserToCalendarFromForm (results, calConfig) { //, informConfig, emai
   if (calResults.CalendarsWrite || calResults.CalendarsRead) {
     sendEmailFromTemplate (informList, calendarSettings.EmailSubject, calendarSettings.EmailBody, calResults, true)
   }
+	return {'settings':calendarSettings,'results':calResults}
 	//sendEmailUpdate(user,calsAdded);
 }
 
