@@ -147,7 +147,17 @@ return table;
 
 function spreadsheetify (value) {
 	if (Array.isArray(value)) {
-		return value.join(", ");
+		return value.map(function (o) {return spreadsheetify(o)}).join(", ");
+	}
+	if (typeof value == 'object') {
+		return JSON.stringify(value)
+	}
+	if (typeof value == 'undefined') {
+		return ''
+	}
+	if (typeof value == 'boolean') {
+		if (value) {return 1}
+		else {return 0}
 	}
 	else {
 		return value;
