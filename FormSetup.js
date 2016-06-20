@@ -218,11 +218,13 @@ function createApprovalForm (firstForm, params) {
   var approvalForm = FormApp.openById(approvalFormAsFile.getId());   
   approvalForm.setTitle(origTitle+' '+titleSuffix)  
   var convertFields = params['convertFields'] ? params['convertFields'] : [{'from':'FormUser','to':'Requester','type':FormApp.ItemType.TEXT},
-                                                                           {'from':'Timestamp','to':'Request Timestamp','type':FormApp.ItemType.TEXT}
-                                                                           ]
+                                                                           {'from':'Timestamp','to':'Request Timestamp','type':FormApp.ItemType.TEXT},
+																																					 {'from':'*#*FY16-MM-####','to':'PO Number','type':FormApp.ItemType.TEXT},
+                                                                          ]
   var newSectionHeader = params['approvalHeader'] ? params['approvalHeader'] : {'title':'Approval', 'helpText':'The above information was filled out by the requester. Use the section below to indicate your approval.'}
   var newFields = params['newFields'] ? params['newFields'] : [{'type':'textField','title':'Signature','helpText':'Write initials and date here to approve.'}]  
   newSectionHeader['type']=FormApp.ItemType.SECTION_HEADER
+
   Logger.log('create header');
   createFormItem(approvalForm,newSectionHeader);  
   for (var fi in convertFields) {
@@ -257,67 +259,69 @@ function createApprovalForm (firstForm, params) {
   
   // Create config sheets...
   var configSheets = []
-  //
-  
-  configSheets.push(createConfigurationSheet(controlSS, firstForm.getTitle()+' Approval Form',                                        
-                           {
-                           'Approval Form ID':approvalForm.getId(),
-                    'Approval Form Edit URL':approvalForm.getEditUrl(),
-   //}
-  //                 ))
-  //
-  //configSheets.push(createConfigurationSheet(controlSS, firstForm.getTitle()+' Fields',
-  //                                           {                                        
-      'fromFields':fromFields,
-        'toFields':toFields,
-          'fieldTypes':fieldTypes,
-                                             'helpText':helpText,
-                      }
-                          ));
+  approvalConfig = {
+			'Approval Form ID':approvalForm.getId(),
+			'Approval Form Edit URL':approvalForm.getEditUrl(),
+			'toFields':toFields,
+			'fieldTypes':fieldTypes,
+      'helpText':helpText,
+	};
+	for (var i=0; i<fromFields.length;i++) {
+		var toField = toFields[i];
+		var fromField = fromFields[i];
+		approvalConfig[toField] = '@'+fromField;
+	}
   configSheets.push(createConfigurationSheet(
-    controlSS,
-    firstForm.getTitle()+' Email Template',
-    {'Subject':firstForm.getTitle()+' Approval needed',
-     'Body':'We have received your form and need your approval. <a href="<<link>>">Click here</a> to approve.\n' + createEmailTableTemplateForForm(firstForm)                
-                    }    
-    ))
-  configSheets.push(createConfigurationSheet(
-    controlSS,
-    firstForm.getTitle()+' Email Settings',
-    {
-    'Lookup Field':'',
-    'Value 1':'foo@bar.com',
-    'Value 2':'boo@foo.com',
-    'Default':'asdf@asdf.org',    
-    'Possible Fields':listFormItemTitles(FormApp.openById(formAsFile.getId())),
-    }
-    ));                                                                
+		controlSS, firstForm.getTitle()+' Approval Form',approvalConfig
+  ));
+	configSheets.push(createConfigurationSheet(
+		controlSS, firstForm.getTitle()+' Approval Emails',
+		{'RequestSubject':firstForm.getTitle()+' Approval needed',
+		 'RequestBody':'We have received a request and need your approval. <a href="<<link>>">Click here</a> to approve.\n' + createEmailTableTemplateForForm(firstForm),
+		 'Approver':'@Department>>Email',
+		 'allowSelfApproval':0,
+		 'ApproverDefault':'thinkle+cgraves@innovationcharter.org',
+		 'ApproverBackup':'thinkle+acottle@innovationcharter.org',
+		 'includeFormSubmitter':0,
+		 'InformSubmitter':1,
+		 'InformSubject':firstForm.getTitle()+' Request submitted',
+		 'InformBody':'Your request has been submitted for approval to <<EmailTo>>.\n\nHere are the details of your request:\n'+createEmailTableTemplateForForm(firstForm),
+		 'EmailKey':['English','Spanish','Math','Science','History','Default','DefaultBackup'],
+		 'EmailVal':['thinkle+rdeery@innovationcharter.org','thinkle+otortorelli@innovationcharter.org','thinkle+shickey@innovationcharter.org','thinkle+eolesen@innovationcharter.org','cgraves@innovationcharter.org','acottle@innovationcharter.org'],
+		 'Possible Fields':listFormItemTitles(FormApp.openById(formAsFile.getId())),
+		}
+	)
+									 );                                          
   // write Configuration Data...
   Logger.log('masterConfig.pushConfig'+JSON.stringify([firstForm,'Approval',configSheets]));
   masterConfig.pushConfig(
     firstForm,
     'Approval',
     configSheets
-    )
+  )
   emailConfigSheets = []
   emailConfigSheets.push(createConfigurationSheet(
     controlSS,
     approvalForm.getTitle()+' Email Template',
     {'Subject': firstForm.getTitle()+' Response',
-                         'Body':'Your request has been responded to.\n\n'+createEmailTableTemplateForForm(approvalForm)
-     }
-     ));
-  emailConfigSheets.push(createConfigurationSheet(
-    controlSS,
-    approvalForm.getTitle()+' Email Settings',
-    {
-    'Lookup Field':'',
-    'Value 1':'foo@bar.com',
-    'Value 2':'boo@foo.com',
-    'Default':'asdf@asdf.org',    
-    'Possible Fields':listFormItemTitles(approvalForm),
+     'Body':'Your request has been responded to.\n\n'+createEmailTableTemplateForForm(approvalForm),
+		 'To':'@Requester',
+		 'Possible Fields':'listFormItemTitles(approvalForm)',
+		 'EmailKey':['Key1','Key2','Key3'],
+		 'EmailVal':['foo@bar.baz','foo@bar.bax','foo@bar.bay'],
     }
-    ));         
+  ));
+  // emailConfigSheets.push(createConfigurationSheet(
+  //   controlSS,
+  //   approvalForm.getTitle()+' Email Settings',
+  //   {
+  //   'Lookup Field':'',
+  //   'Value 1':'foo@bar.com',
+  //   'Value 2':'boo@foo.com',
+  //   'Default':'asdf@asdf.org',    
+  //   'Possible Fields':listFormItemTitles(approvalForm),
+  //   }
+  //   ));         
   // Now write second config file...
   masterConfig.pushConfig(
     approvalForm,
@@ -328,7 +332,6 @@ function createApprovalForm (firstForm, params) {
   // if we don't have one already...
   createFormTrigger(firstForm, controlSS);
   createFormTrigger(approvalForm, controlSS);
-  
 
  return approvalForm
 }
@@ -475,4 +478,6 @@ function clearAll () {
     if (s.getSheetId()!=0) { ssApp.deleteSheet(s) }
   });
 }
+
+            
 
