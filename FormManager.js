@@ -65,7 +65,7 @@ function lookupFields (settings, results) {
 				}
 			} // end looping through attributes
 			settings[settingKey] = obj
-			logNormal('%s settings[%s]=>%s',val,settingKey,obj);
+			logVerbose('%s settings[%s]=>%s',val,settingKey,obj);
 		}
 		if (val[0]=='%') {
 			// Syntax = %FieldnameFromForm
@@ -104,7 +104,7 @@ function lookupFields (settings, results) {
 			}
 		}
 	}
-	logNormal('Looked up fields->%s',fields);
+	logVerbose('Looked up fields->%s',fields);
 	return fields
 }
 
@@ -556,21 +556,21 @@ function testTrigger () {
 }
 
 function testUserTrigger () {
-  var form = FormApp.openById("1kq-v1uyylpKRXbvBj51TpkssCTzNyMn1PJzpMLmlA14") 
+  var form = FormApp.openById("1s-jsFphG0dMysJivN4YUY7yBZLFY97eplYvXbbimysE") 
   formResp = form.createResponse();
   items = form.getItems();
   items.forEach(function (item) {           
     var responded = false;
     if (item.getTitle()=="Username") {          
-      formResp.withItemResponse(item.asTextItem().createResponse("Newfaker.Fake@innovationcharter.org"))                   
+      formResp.withItemResponse(item.asTextItem().createResponse("NewestFaker.Fake@innovationcharter.org"))                   
       responded = true;
     }
     if (item.getTitle()=="First") {
-      formResp.withItemResponse(item.asTextItem().createResponse("Newfaker"));
+      formResp.withItemResponse(item.asTextItem().createResponse("Fake"));
       responded = true;
     }
     if (item.getTitle()=="Last") {
-      formResp.withItemResponse(item.asTextItem().createResponse("Fake"));
+      formResp.withItemResponse(item.asTextItem().createResponse("Faker"));
       responded =true;
     }
     if (item.getTitle()=="Personal Email") {
