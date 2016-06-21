@@ -137,47 +137,62 @@ function padNum (n, digits) {
 
 // Update config based on magic...
 function lookupMagic (config, responses, form) {
+  logNormal('working with lookupMagic(%s, %s, %s)',config, responses, form);
 	for (var key in config) {
 		var val = config[key]
-		if (val.indexOf('*#*')==0) {
-			// PO-MAGIC!
-			val = val.substr(3); // cut off magic stuff... we'll handle the magic now!
-			d = new Date()
-			// Start search at...
-			if (val.indexOf('YY') >= 0) {
-				var timestampDate = new Date(d.getFullYear())
-			}
-			if (val.indexOf('MM') >= 0) {
-				var timestampDate = new Date(d.getFullYear(),d.getMonth())
-			}
-			val = val.replace('MM',getMonthString(d));
-			val = val.replace('YYYY',getYearString(d,4));
-			val = val.replace('YY',getYearString(d,2));
-			if (val.indexOf('#') >= 0) {
-				// This is an incrementer!
-				var allResponses = form.getResponses(timestampDate.getDate());
-				var item = getItemByTitle(form,key);
-				var numberMatch = /#+/g
-				var numLength = val.match(numberMatch)[0].length
-				// Now go through the responses and check for incrementation needs...
-				existingResponses = []
-				allResponses.forEach(function (resp) {existingResponses.push(
-					resp.getItemResponseForItem(item).getResponse() // response as string
-				)});
-				// Now let's just iterate through
-				// FIXME - How to iterate through and check for highest number... ?
-				var haveUniqueNumber = false;
-				var n = 0;
-				while (! haveUniqueNumber) {
-					n += 1; 
-					var numberCandidate = val.replace(numberMatch,padNumber(n,numLength))
-					if (existingResponses.indexOf(numberCandidate)==-1) {
-						haveUniqueNumber = true;
-						config[key] = val;
-					}
-				} // end while ! haveUniqueNumber
-			} // end test for magic incrementing # thingy...
-		} // end test for magic at all
+		if (typeof val === 'string') {
+			if (val.indexOf('*#*')===0) {
+				// PO-MAGIC!
+				val = val.substr(3); // cut off magic stuff... we'll handle the magic now!
+				d = new Date()
+				// Start search at...
+				if (val.indexOf('YY') >= 0) {
+					var timestampDate = new Date(d.getFullYear())
+				}
+				if (val.indexOf('MM') >= 0) {
+					var timestampDate = new Date(d.getFullYear(),d.getMonth())
+				}
+				val = val.replace('MM',getMonthString(d));
+				val = val.replace('YYYY',getYearString(d,4));
+				val = val.replace('YY',getYearString(d,2));
+				if (val.indexOf('#') >= 0) {
+					// This is an incrementer!
+					var allResponses = form.getResponses(timestampDate);
+          //var allResponses = form.getResponses();
+					var item = getItemByTitle(form,key);
+					var numberMatch = /#+/g
+					var numLength = val.match(numberMatch)[0].length
+					// Now go through the responses and check for incrementation needs...
+					existingResponses = []
+          Logger.log('allResponses = '+allResponses);
+          Logger.log('item=%s',item);
+          if (allResponses) {
+						allResponses.forEach(function (resp) {
+              Logger.log('Looking @ %s',resp);
+              
+              
+              if (resp.getResponseForItem(item)) {
+                existingResponses.push(                  
+                  resp.getResponseForItem(item).getResponse() // response as string
+                )
+              } // end if
+            }); // end for Each...				
+          } // end if (allResponses)
+					// Now let's just iterate through
+					// FIXME - How to iterate through and check for highest number... ?
+					var haveUniqueNumber = false;
+					var n = 0;
+					while (! haveUniqueNumber) {
+						n += 1; 
+						var numberCandidate = val.replace(numberMatch,padNum(n,numLength))
+						if (existingResponses.indexOf(numberCandidate)==-1) {
+							haveUniqueNumber = true;
+							config[key] = numberCandidate;
+						}
+					} // end while ! haveUniqueNumber
+				} // end test for magic incrementing # thingy...
+			} // end test for magic at all
+		} 
 	} // end for key in config
 } // end lookupMagic
 
@@ -192,6 +207,7 @@ function preFillApprovalForm (params) {
   // params.targetForm = form object
   // params.responseItems = response items dictionary
   // params.field2field = lookup dictionary for fields that don't map directly  
+  logNormal('preFillApprovalForm(%s)',params);
   var formResponse = params.targetForm.createResponse()
   items = params.targetForm.getItems();  
   //Logger.log('Looking through items=>'+JSON.stringify(items));
@@ -220,8 +236,7 @@ function preFillApprovalForm (params) {
       Logger.log('Working with '+item.getType()+item.getTitle())
       itemTitle = item.getTitle()      
       if (params.field2field.hasOwnProperty(itemTitle)) {
-        sourceKey = params.field2field[itemTitle]
-        value = params.responseItems[sourceKey]
+        value = params.field2field[itemTitle];
       }
       else {
         value = params.responseItems[itemTitle] // assume we can translate directly
@@ -308,7 +323,7 @@ function getResponseItems (resp, actionResults) {
 	if (actionResults) { responseItems.actionResults = actionResults; }
   resp.getItemResponses().forEach(function (itemResp) {
     responseItems[itemResp.getItem().getTitle()]=itemResp.getResponse();
-    }) // end forEach itemResp
+  }) // end forEach itemResp
 	responseItems['Timestamp'] = resp.getTimestamp();
 	responseItems['FormUser'] = resp.getRespondentEmail();
 	logNormal('ResponseItems: >>>'+JSON.stringify(responseItems)+'<<<');
@@ -321,13 +336,13 @@ triggerActions = {
 	// an object with information about success for future actions to
 	// use)
  	'NewUser' : function (event, masterSheet, actionRow) {
-      Logger.log('!!! NEW USER TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
-     var responses = getResponseItems(event.response);
+    Logger.log('!!! NEW USER TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
+    var responses = getResponseItems(event.response);
  		var usernameSettings = actionRow['Config1'].table;
  		//var informSettings = actionRow['Config2'].table;
     //var emailSettings = actionRow['Config3'].table;
  		return createAccountFromForm(
-          //results, fieldSettings, informSettings, emailTemplateSettings
+      //results, fieldSettings, informSettings, emailTemplateSettings
       responses, 
  			usernameSettings
  			//informSettings,
@@ -347,28 +362,28 @@ triggerActions = {
       //lookupSettings
     );
   }, // end Email
-   'Folder' : function (event, masterSheet, actionRow) {
-     Logger.log('!!! FOLDER TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
-		 responses = getResponseItems(event.response);
-		 var config = actionRow['Config1'].table;
-	   return addUserToFoldersFromForm(responses,config);
-   }, // end Folder
-	 'Group': function (event, masterSheet, actionRow) {
-     Logger.log('!!! GROUP TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
-		 responses = getResponseItems(event.response);
-		 var groupConfig = actionRow['Config1'].table;
-		 return addToGroupFromForm(responses,groupConfig);
-	 },
-	 'Calendar': function (event, masterSheet, actionRow) {
-       Logger.log('!!! CALENDAR TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
-		 responses = getResponseItems(event.response);
-		 var calConfig = actionRow['Config1'].table;
-		 //var informConfig = actionRow['Config2'].table;
-		 //var emailConfig = actionRow['Config3'].table;
-		 var calendarsAdded = addUserToCalendarFromForm(responses, calConfig)//, informConfig, emailConfig);
-		 Logger.log('Added calendars: '+JSON.stringify(calendarsAdded));
-		 return calendarsAdded
-	 }, // end Calendar
+  'Folder' : function (event, masterSheet, actionRow) {
+    Logger.log('!!! FOLDER TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
+		responses = getResponseItems(event.response);
+		var config = actionRow['Config1'].table;
+	  return addUserToFoldersFromForm(responses,config);
+  }, // end Folder
+	'Group': function (event, masterSheet, actionRow) {
+    Logger.log('!!! GROUP TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
+		responses = getResponseItems(event.response);
+		var groupConfig = actionRow['Config1'].table;
+		return addToGroupFromForm(responses,groupConfig);
+	},
+	'Calendar': function (event, masterSheet, actionRow) {
+    Logger.log('!!! CALENDAR TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
+		responses = getResponseItems(event.response);
+		var calConfig = actionRow['Config1'].table;
+		//var informConfig = actionRow['Config2'].table;
+		//var emailConfig = actionRow['Config3'].table;
+		var calendarsAdded = addUserToCalendarFromForm(responses, calConfig)//, informConfig, emailConfig);
+		Logger.log('Added calendars: '+JSON.stringify(calendarsAdded));
+		return calendarsAdded
+	}, // end Calendar
   'Approval': function (event, masterSheet, actionRow) {
     Logger.log('!!! APPROVAL TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
     responses = getResponseItems(event.response)
@@ -385,8 +400,7 @@ triggerActions = {
     Logger.log('Get actionRow'+JSON.stringify(actionRow));
     Logger.log('Get actionRow[Config1]'+JSON.stringify(actionRow.Config1));
     //var f2f = getApprovalFormToMasterLookup(actionRow)
-		f2f = lookupFields(actionRow.Config1,responses);
-		lookupMagic(f2f,responses,event.source);
+		f2f = lookupFields(actionRow.Config1.table,responses);
     Logger.log('Got f2f'+JSON.stringify(f2f));
     if (! actionRow['Config1'].table) {
       Logger.log('Did not find approval form to master :(');
@@ -394,9 +408,11 @@ triggerActions = {
 			return 0
 		}
 		var targetForm = FormApp.openById(actionRow['Config1'].table['Approval Form ID'])
+    lookupMagic(f2f,responses,targetForm);
+    emailError ("Working with target f2f:"+JSON.stringify(f2f), 'no real error') 
 		var editUrl = preFillApprovalForm({'targetForm':targetForm,
-																			 'responseItems':responses,
-																			 'field2field':f2f})
+                                       'responseItems':responses,
+                                       'field2field':f2f})
     //if (actionRow['Config2'].table && actionRow['Config3'].table) {
     var templateSettings = actionRow['Config2'].table
 		config = lookupFields(templateSettings,responses);
@@ -447,11 +463,18 @@ function fixBrokenEvent (event) {
 }
 
 function getItemByTitle (form, title) {
+  var result = undefined;
   form.getItems().forEach(function (i) {
+    //Logger.log('look @ %s',i);
     if (i.getTitle()==title) {
-      return i
+      //Logger.log('%s is a hit for %s!',i, title);
+      result = i
     }
+    //else {
+    //  Logger.log('%s is not %s',i.getTitle(),title);
+    //}
   }) // end forEach item
+  return result;
 }
 
 //function getHiddenItem (form, title) {
@@ -466,7 +489,7 @@ function getItemByTitle (form, title) {
 //}
 
 function writePropertyTest () {
-PropertiesService.getUserProperties().setProperty('1s-jsFphG0dMysJivN4YUY7yBZLFY97eplYvXbbimysE','1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
+	PropertiesService.getUserProperties().setProperty('1s-jsFphG0dMysJivN4YUY7yBZLFY97eplYvXbbimysE','1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
 }
 
 function onFormSubmitTrigger (event) {
@@ -602,16 +625,16 @@ function testCalTrigger () {
 	var formResp = form.createResponse();
 	items = form.getItems();
 	items.forEach(function (item) {
-      
-      var title = item.getTitle();      
+    
+    var title = item.getTitle();      
 		if (item.getTitle()=='Username') {          
-          formResp.withItemResponse(item.asTextItem().createResponse("Fake.Faculty@innovationcharter.org"))                   
+      formResp.withItemResponse(item.asTextItem().createResponse("Fake.Faculty@innovationcharter.org"))                   
 		}
 		else {
 			if (item.getType()=='CHECKBOX') {
 				Logger.log('Filling out multiple choice by checking all the boxes');
-                var allResponses = item.asCheckboxItem().getChoices().map(function (i) {return i.getValue()})
-                Logger.log(JSON.stringify(allResponses));
+        var allResponses = item.asCheckboxItem().getChoices().map(function (i) {return i.getValue()})
+        Logger.log(JSON.stringify(allResponses));
 				var resp = item.asCheckboxItem().createResponse(
 					allResponses
 				)
@@ -627,4 +650,21 @@ function testGetConfigsForId () {
 	Logger.log('GOT Configs: '+JSON.stringify(getMasterConfig(masterSheet).getConfigsForId('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4')));
 }
 
+function testField () {  
+  form = FormApp.openById('1o8u9iGIN6e5M9CTOtQNBDjueR-8QSYNHzIQR-EUGv98');
+  Logger.log('Form = %s',form.getPublishedUrl());
+  
+  item  = getItemByTitle(form,'PO Number');
+  Logger.log('FOrm %s item %s',form,item);
+}
 
+function testMagic () {
+	form = FormApp.openById('1o8u9iGIN6e5M9CTOtQNBDjueR-8QSYNHzIQR-EUGv98');
+  
+	config = {
+		'PO Number':'*#*FY17-MM-####',
+	}
+	responses = []
+	lookupMagic(config, responses, form);
+	Logger.log('Config %s',config);
+}
