@@ -71,16 +71,33 @@ function sendFormResultEmail (results, settings) {
   Logger.log('sendFormResultEmail'+JSON.stringify([results,settings]));
 	var config = lookupFields(settings, results)
 	config.emailLookup = settings.emailLookup;
+	var templateFields = {}
+	for (var setting in results) {
+		templateFields[setting] = spreadsheetify(results[setting]);
+	} // end forEach result
+	for (var setting in settings) {
+		if (templateFields[setting]) {
+			logAlways('sendFormResultsEmail - Potential conflict between results[%s]=>%s and settings[%s]=>%s; using results',
+								setting, templateFields[setting], setting, settings[setting]
+							 )
+		}
+		else {
+			templateFields[setting] = spreadsheetify(settings[setting]);
+		}
+	} // end for each setting
 	logNormal('config=>%s',config);
+	if (config.emailFormUser) {
+		config.To = results.FormUser+','+config.To
+	}
 	sendEmailFromTemplate(
     //getEmail(config, results),
 		config.To,
     config.Subject,
     config.Body,
-    results,
+    templateFields,
     true
 	);
-	return true;
+	return {config:config,fields:templateFields}
 }
 
 function sendEmailFromTemplate (email, subj, template, fields, fixWhiteSpace) {
@@ -92,7 +109,7 @@ function applyTemplate (template, fields, fixWhiteSpace) {
     template = template.replace(/\n/g,'<br>');
   }
   for (var target in fields) {
-    var replacement = fields[target];
+    var replacement = spreadsheetify(fields[target]);
     template = template.replace(new RegExp(escapeRegExp('<<'+target+'>>'),'g'),replacement);
   }
   return template
