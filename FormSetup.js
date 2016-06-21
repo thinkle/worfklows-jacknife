@@ -21,7 +21,7 @@ function createFormItem (form, params) {
   switch (params['type']) {
     case FormApp.ItemType.TEXT:
       item = form.addTextItem();
-      break;
+      break; 
     case FormApp.ItemType.PARAGRAPH_TEXT:
       item = form.addParagraphTextItem();
       break;
@@ -470,6 +470,12 @@ function testCreateCalendarForm () {
   createCalendarSettings(calObj.form,calObj.configTable,
                          {'SpreadsheetApp':ssApp});
 		
+}
+
+function testCreateOnboardingTrigger () {
+  form = FormApp.openById('1s-jsFphG0dMysJivN4YUY7yBZLFY97eplYvXbbimysE')
+  controlSS = SpreadsheetApp.openById('1qp-rODE2LYzOARFBFnV0ysRvv9RkHj_r0iQKUvj89p0');
+   createFormTrigger(form,controlSS);
 }
 
 function clearAll () {
