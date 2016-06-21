@@ -71,7 +71,8 @@ function addUserToFoldersFromForm (results, config) {
 				}
 			}
 			catch (err) {
-              Logger.log('Error adding viewer %s to folder %s: %s',settings.Username,f,err);
+        Logger.log('Error adding viewer %s to folder %s: %s',settings.Username,f,err);
+				emailError('Error adding '+settings.Username+' to folder %s'+f+' (mode='+mode+')',err,{'subject':'Script error creating folder'});
 				return;
 			}
           logNormal('Added %s to folder %s',settings.Username,folder.getName());
@@ -82,7 +83,6 @@ function addUserToFoldersFromForm (results, config) {
       Logger.log('No folders for mode %s',mode);
     }
   }) // end forEach mode
-  
 	Logger.log('Done adding folders: %s',folderResults)
   // Handle Emailing out update...
   //informList = lookupField(informSettings, results);
