@@ -15,8 +15,9 @@ function createAccountFromForm (results, fieldSettings) {
 		params.informList.push(results.FormUser)
 	}
 	if (params.informOther) {
-		params.informList.push(params.informOther)
+		params.informList.push(params.informOther);
 	}
+	//params.informList.push(params.username); // doesn't work -- account isn't ready to receive email in time
  	return createAccount(params)
 }
 
@@ -51,6 +52,9 @@ function createAccount (params) {
       var pw = (Math.random()).toString(36).replace('0.','')
       user.password = pw
     }
+		if ( params.orgUnitPath ) {
+			user.orgUnitPath = params.orgUnitPath
+		}
 		if (requirePasswordReset) {
 			user.changePasswordAtNextLogin = true
 		}
