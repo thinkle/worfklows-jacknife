@@ -87,11 +87,19 @@ function addUserToCalendarFromForm (results, calConfig) { //, informConfig, emai
 			logVerbose('add user %s to calendar %s',user,c)
 			var success = addUserToCalendar(user,c,'reader');
 			if (success) {
-				calResults.CalendarsRead.push(
-                  //CalendarApp.getCalendarById(c).getName()
-                  Calendar.Calendars.get(c).summary
-                );
-			}
+				try {
+					calResults.CalendarsRead.push(
+						//CalendarApp.getCalendarById(c).getName()
+            Calendar.Calendars.get(c).summary
+          );
+				}
+				catch (err) {
+					if (! calResults.CalendarsFailedRead) {calResults.CalendarsFailedRead = []};
+					calResults.CalendarsFailedRead.push(c);
+					logAlways('Error %s logging calendar %s',err,c);
+					
+				}
+				}
 		}) // end forEach CalendarsRead
 	}
 	if (calendarSettings.CalendarsWrite) {
@@ -99,10 +107,17 @@ function addUserToCalendarFromForm (results, calConfig) { //, informConfig, emai
 			logVerbose('add user %s to calendar %s',user,c)
 			var success = addUserToCalendar(user,c,'writer');
 			if (success) {
-				calResults.CalendarsWrite.push(
-                  Calendar.Calendars.get(c).summary
+				try {
+					calResults.CalendarsWrite.push(
+            Calendar.Calendars.get(c).summary
 					//CalendarApp.getCalendarById(c).getName()
-				);          
+					);
+				}
+				catch (err) {
+					if (! calResults.CalendarsFailedWrite) {calResults.CalendarsFailedWrite = []};
+					calResults.CalendarsFailedWrite.push(c);
+					logAlways('Error %s logging calendar %s',err,c);
+				}
 			}
 		}) // end forEach CalnedarsWrite
 	}
@@ -135,7 +150,8 @@ function addUserToCalendar (user, calendarId, role) {
   }
   catch (err) {
     Logger.log("Error adding calendar: "+err)
-    throw err;
+		emailError('Error adding '+user+' to calendar '+calendarId+' role: '+role,err,{'subject':'Script error adding user to calendar'});
+    //throw err;
     return false
   }
   return true;
