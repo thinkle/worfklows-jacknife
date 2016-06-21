@@ -24,6 +24,17 @@ logAlways = function () {
 	doLog.apply(doLog,args)
 }
 
+function emailError (msg, err, params) {
+  if (! params) {params = {}};
+  subject = params.subject ? params.subject : 'Error';
+  to = params.to ? params.to : 'thinkle@innovationcharter.org';
+  msg += '<br>Error '+err;
+  msg += '<br>Exception: '+err.name+': '+err.message;
+	msg += '<br>Stack: '+err.stack
+	sendEmail(to, subject, msg, true);
+	//sendEmail('thinkle@innovationcharter.org','Error in Budget Script',msg)
+}
+
 function assertEq (a, b) {
   if (a==b) {
     logVerbose(a+'='+b+'! Success');
@@ -42,4 +53,14 @@ function testLogs () {
 		logVerbose('Log verbose message - verbosity=%s',l)
 		logAlways('Log always message - verbosity=%s',l)
 	});
+}
+
+function testError () {
+	try {
+		Logger.log('Here we go');
+		var soup = bar * 3 + 6
+	}
+	catch (err) {
+		emailError('Oops',err);
+	}
 }
