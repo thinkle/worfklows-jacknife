@@ -22,18 +22,30 @@ function addToGroupFromForm (results, groupSettings) {
 	}
 	var fields = lookupFields(groupSettings, results);
   Logger.log('addToGroupFromForm got fields=>%s',JSON.stringify(fields));
-	addToGroups(fields.username,fields.groups);
+	var groupsAdded = addToGroups(fields.username,fields.groups);
+  return {'user':fields.username,'groups':groupsAdded,'settings':groupSettings}
 }
 
 function addToGroups (username, groupEmails) {
+  var added = [];
 	groupEmails.forEach(function (groupEmail) {
     try {AdminDirectory.Members.insert({email:username,role:'MEMBER'},groupEmail);
-				 logNormal('Inserted '+username+' into group '+groupEmail);
+         logNormal('Inserted '+username+' into group '+groupEmail);
+         added.push(groupEmail)
         }
     catch (err) {
-      logNormal('Error adding user - already exists? '+err);
+      logVerbose('Error adding user - already exists? '+err);
+      if (err!="Exception: Member already exists.") {
+        logAlways('No, some other error: %s',err);
+				emailError('Error adding '+username+' to group %s'+groupEmail,err,{'subject':'Script error adding user to group'});
+        //throw err;
+      }
+      else {
+        added.push(groupEmail); // we record it if it already existed!
+      }
     }
-	});
+    });
+  return added
 }
 
 function testEmailAndAddToGroups () {
@@ -45,10 +57,18 @@ function testEmailAndAddToGroups () {
 		 fields:{'orgUnitPath':'/Staff',},
 		});
 	addToGroups('Fake.Faculty@innovationcharter.org',
-							['ms@innovationcharter.org','all@innovationcharter.org']
+                ["all@innovationcharter.org","ms_56team@innovationcharter.org","ms@innovationcharter.org","msfaculty@innovationcharter.org","56advisoryteachers@innovationcharter.org","ECTeam@innovationcharter.org","ms_56_community_membership@innovationcharter.org","PSteam@innovationcharter.org","self_direction_team@innovationcharter.org","ms_78team@innovationcharter.org","78advisoryteachers@innovationcharter.org","ms_advisors@innovationcharter.org"
+                ]		
 						 );
 }
 
+function testAddBunchOfGroups () {
+  var result = addToGroups('Faffffke.Faculty@innovationcharter.org',
+                ["groupThatIsReallynotAThing@innovationcharter.org","all@innovationcharter.org","ms_56team@innovationcharter.org","ms@innovationcharter.org","msfaculty@innovationcharter.org","56advisoryteachers@innovationcharter.org","ECTeam@innovationcharter.org","ms_56_community_membership@innovationcharter.org","PSteam@innovationcharter.org","self_direction_team@innovationcharter.org","ms_78team@innovationcharter.org","78advisoryteachers@innovationcharter.org","ms_advisors@innovationcharter.org"
+                ]		
+						 );
+  Logger.log('addToGroups=>%s',result);
+}
 
 function testCreateGroupForm () {
 	createGroupForm(['hs@innovationcharter.org',
