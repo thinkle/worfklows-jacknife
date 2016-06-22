@@ -56,12 +56,37 @@ function testListFormItemTitles() {
 }
 
 
-function createEmailTableTemplateForForm (form) {
-  htmlOut = '<table>'
+function createEmailTableTemplateForForm (form, extras) {
+  var htmlOut = '<table>'
+	var everyOther = true
   form.getItems().forEach( function (item) {
-    var item = item.getTitle();
-    htmlOut += '<tr><th>'+item+'</th><td><<'+item+'>></td></tr>';
+    var txt = item.getTitle();
+		if (item.getType() == FormApp.ItemType.SECTION_HEADER) {
+			htmlOut += '<tr style="background-color:#222;color:#ddf;font-weight:bold;><td colspan=2>'
+			htmlOut += txt
+			htmlOut += '</td></tr>'
+		}
+		else {
+		if (everyOther) {
+			htmlOut += '<tr style="background-color:#ffd">'
+		}
+		else {
+			htmlOut += '<tr style="background-color:#ddf">'
+		}
+		everyOther = (! everyOther);
+			htmlOut += '<th style="text-align: right;">'+txt+'</th><td><<'+txt+'>></td></tr>';
+		}
   }) // end forEach item
+	extras.forEach(function (extraItem) {
+		if (everyOther) {
+			htmlOut += '<tr style="background-color:#ffd">'
+		}
+		else {
+			htmlOut += '<tr style="background-color:#ddf">'
+		}
+		everyOther = (! everyOther);
+		htmlOut += '<th style="text-align: right;">'+extraItem[0]+'</th><td><<'+extraItem[1]+'>></td></tr>';
+	}); // end forEach extra
   htmlOut += '</table>';
   return htmlOut;
 }
@@ -219,7 +244,7 @@ function createApprovalForm (firstForm, params) {
   approvalForm.setTitle(origTitle+' '+titleSuffix)  
   var convertFields = params['convertFields'] ? params['convertFields'] : [{'from':'FormUser','to':'Requester','type':FormApp.ItemType.TEXT},
                                                                            {'from':'Timestamp','to':'Request Timestamp','type':FormApp.ItemType.TEXT},
-																																					 {'from':'*#*FY16-MM-####','to':'PO Number','type':FormApp.ItemType.TEXT},
+																																					 {'from':'*#*FY16-MM-###','to':'PO Number','type':FormApp.ItemType.TEXT},
                                                                           ]
   var newSectionHeader = params['approvalHeader'] ? params['approvalHeader'] : {'title':'Approval', 'helpText':'The above information was filled out by the requester. Use the section below to indicate your approval.'}
   var newFields = params['newFields'] ? params['newFields'] : [{'type':'textField','title':'Signature','helpText':'Write initials and date here to approve.'}]  
@@ -273,6 +298,9 @@ function createApprovalForm (firstForm, params) {
 			if (['%','*','?','@'].indexOf(fromField[0])==-1) {
 				approvalConfig[toField] = '%'+fromField;
 			}
+			else {
+				approvalConfig[toField] = fromField;
+			}
 		}
 	}
   configSheets.push(createConfigurationSheet(
@@ -281,7 +309,7 @@ function createApprovalForm (firstForm, params) {
 	configSheets.push(createConfigurationSheet(
 		controlSS, firstForm.getTitle()+' Approval Emails',
 		{'RequestSubject':firstForm.getTitle()+' Approval needed',
-		 'RequestBody':'We have received a request and need your approval. <a href="<<link>>">Click here</a> to approve.\n' + createEmailTableTemplateForForm(firstForm),
+		 'RequestBody':'We have received a request and need your approval. <a href="<<link>>">Click here</a> to approve.\n' + createEmailTableTemplateForForm(firstForm, [['PO Number','PO Number']]),
 		 'Approver':'@Department>>Email',
 		 'allowSelfApproval':0,
 		 'ApproverDefault':'thinkle+cgraves@innovationcharter.org',
@@ -289,7 +317,7 @@ function createApprovalForm (firstForm, params) {
 		 'includeFormSubmitter':0,
 		 'InformSubmitter':1,
 		 'InformSubject':firstForm.getTitle()+' Request submitted',
-		 'InformBody':'Your request has been submitted for approval to <<EmailTo>>.\n\nHere are the details of your request:\n'+createEmailTableTemplateForForm(firstForm),
+		 'InformBody':'Your request has been submitted for approval to <<Approver>>. You have been issued an initial PO number <<PO Number>>, to be active upon approval.\n\nHere are the details of your request:\n'+createEmailTableTemplateForForm(firstForm, [['PO Number','PO Number'],['Approver','Approver']]),
 		 'EmailKey':['English','Spanish','Math','Science','History','Default','DefaultBackup'],
 		 'EmailVal':['thinkle+rdeery@innovationcharter.org','thinkle+otortorelli@innovationcharter.org','thinkle+shickey@innovationcharter.org','thinkle+eolesen@innovationcharter.org','cgraves@innovationcharter.org','acottle@innovationcharter.org'],
 		 'Possible Fields':listFormItemTitles(FormApp.openById(formAsFile.getId())),
@@ -308,11 +336,12 @@ function createApprovalForm (firstForm, params) {
     controlSS,
     approvalForm.getTitle()+' Email Template',
     {'Subject': firstForm.getTitle()+' Response',
-     'Body':'Your request has been responded to.\n\n'+createEmailTableTemplateForForm(approvalForm),
-		 'To':'@Requester',
+     'Body':'Your request has been responded to by <<FormUser>>.\n\n'+createEmailTableTemplateForForm(approvalForm),
+		 'To':'%Requester',
 		 'Possible Fields':'listFormItemTitles(approvalForm)',
 		 'EmailKey':['Key1','Key2','Key3'],
 		 'EmailVal':['foo@bar.baz','foo@bar.bax','foo@bar.bay'],
+		 'onlyEmailIf':'%Signature'
     }
   ));
   // emailConfigSheets.push(createConfigurationSheet(
