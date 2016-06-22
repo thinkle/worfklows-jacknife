@@ -74,7 +74,10 @@ function lookupFields (settings, results) {
 		}
 		else {
 			// Syntax = @FormFieldname>>LookupFieldName
-			if (val[0]=='@' && val.indexOf('>>')>-1) {
+			if (val[0]=='@') {
+				if (val.indexOf('>>')==-1) {
+					throw 'Invalid configuration: '+val+' - @ with no >>';
+				}
 				val = val.substr(1); // Now we get the value and pass it through
 				var vals = val.split('>>');
 				var fieldKey = vals[0]
@@ -419,6 +422,19 @@ triggerActions = {
 		//responses['link'] = editUrl;
 		checkForSelfApproval(config);
 		config.link = editUrl;
+		// Update with fields from lookup magic...
+		for (var key in f2f) {
+			if (! config[key]) {
+				Logger.log('Setting config[%s] from f2f[%s]',config[key],f2f[key]);
+				config[key] = f2f[key];
+			}
+			else {
+				Logger.log('Not overriding[%s] with f2f[%s]',config[key],f2f[key]);
+			}
+		}
+		for (var key in responses) {
+			config[key] = responses[key];
+		}
 		// send email with request
 		sendEmailFromTemplate(config.Approver,config.RequestSubject,config.RequestBody,
 													config,true);
@@ -556,15 +572,34 @@ function cleanupSheets () {
   }
 }
 
-function testTrigger () {
+function testApprovalTrigger () {
   // Submit a form so we can test our trigger...
-  var form = FormApp.openById('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4');
+  //var form = FormApp.openById('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4');
+  var form = FormApp.openById('1uWzGNMj0cGMKy9i9C-qHZyaMwH7ModeEe0Cna-XmcBU');  
   var formResponse = form.createResponse()
   items = form.getItems();  
   items.forEach(function (item) {
-    var value = "English";
+		switch (item.getTitle()) {
+		  case 'Price':
+			var value = '47.77';
+      break;
+		case 'Item (Short Desc)':
+			var value = 'Widget, Extra Fancy';
+			break;
+          case 'Item Notes':
+            var value = 'Be sure to buy the prettiest ones';
+            break;          
+		default: 
+            var value = "English";
+    }
+		switch (item.getType()) {
+          case FormApp.ItemType.CHECKBOX: var item = item.asCheckboxItem(); break;
+          case FormApp.ItemType.TEXT: var item = item.asTextItem(); break;
+          case FormApp.ItemType.PARAGRAPH_TEXT: var item = item.asParagraphTextItem(); break;
+          case FormApp.ItemType.MULTIPLE_CHOICE: var item = item.asMultipleChoiceItem(); break;
+		}
     try {
-      itemResponse = item.createResponse(value); // Create a response
+      var itemResponse = item.createResponse(value); // Create a response
       formResponse.withItemResponse(itemResponse);
     }
     catch (err) {
