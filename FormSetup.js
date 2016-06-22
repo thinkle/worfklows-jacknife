@@ -269,7 +269,11 @@ function createApprovalForm (firstForm, params) {
 	for (var i=0; i<fromFields.length;i++) {
 		var toField = toFields[i];
 		var fromField = fromFields[i];
-		approvalConfig[toField] = '@'+fromField;
+		if (fromField) {
+			if (['%','*','?','@'].indexOf(fromField[0])==-1) {
+				approvalConfig[toField] = '%'+fromField;
+			}
+		}
 	}
   configSheets.push(createConfigurationSheet(
 		controlSS, firstForm.getTitle()+' Approval Form',approvalConfig
@@ -357,12 +361,14 @@ function createFormTrigger (form, master) {
 
 function testCreateApprovalForm () {   
   //var origForm = FormApp.openById('1LRophsb8hTo1GNv8qpGp8G-dCpdLIFBboO5rx5pIfII')
-  var origForm = FormApp.openById('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4')
+	//var fid = '1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4'
+	var fid = '1uWzGNMj0cGMKy9i9C-qHZyaMwH7ModeEe0Cna-XmcBU'
+  var origForm = FormApp.openById(fid);
+	DriveApp.getFileById(fid).setTrashed(false); // out of trash :)
   var origFolder = DriveApp.getFolderById('0B6UL9LRgyOtHTkJ6U1F1dVVlWkE');  
   var ssApp = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
   var approvalForm = createApprovalForm(origForm, {'destinationFolder':origFolder,
-                                                   'SpreadsheetApp':ssApp,})
-  
+                                                   'SpreadsheetApp':ssApp,})  
   Logger.log('ID: '+approvalForm.getId())
   Logger.log('Pub URL: '+approvalForm.getPublishedUrl())
   Logger.log('Edit URL: '+approvalForm.getEditUrl())
@@ -483,7 +489,27 @@ function clearAll () {
   ssApp.getSheets().forEach(function (s) {
     if (s.getSheetId()!=0) { ssApp.deleteSheet(s) }
   });
-}
+	var config = getMasterConfig(ssApp)
+	config.forEach(function (row) {
+		var formID = row.FormID
+		ScriptApp.getProjectTriggers().forEach(function (t) {
+			if (t.getTriggerSourceId()==formID) {
+				ScriptApp.deleteTrigger(t)
+				Logger.log('Deleting trigger %s',t);
+			}
+		}); // end for Each trigger
+      try {
+		var f = DriveApp.getFileById(formID);
+		Logger.log('trashing file: %s %s',f,formID);
+		f.setTrashed(true); // trash form
+      }
+      catch (err) {
+        Logger.log('Error deleting %s',formID);
+        Logger.log('Error: %s\nStack %s',err,err.stack);
+      }
+	}); // end for Each row
+	getSheetById(ssApp,0).clear(); // clear config sheet
+} // end clearAll
 
             
 
