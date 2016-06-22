@@ -88,6 +88,7 @@ function lookupFields (settings, results) {
 					throw "Illegal settings: no lookup dict "+lookupVar+'Lookup'+' for lookup value @'+val;
 				}
 				else {
+					logVerbose('Looking up %s in dictionary %s',initialResult, lookupDict);
 					function getResult (r) {
 						var fieldVal = lookupDict[r]
 						if (fieldVal) { return fieldVal }
@@ -99,6 +100,7 @@ function lookupFields (settings, results) {
 					else {
 						fields[settingKey] = getResult(initialResult)
 					}
+					logVerbose('fields[%s]=>%s',settingKey,fields[settingKey])
 				}
 			}
 			else {
@@ -277,17 +279,6 @@ function preFillApprovalForm (params) {
   var lastResp = allResponses[lastRespNo]
   var newEditUrl = lastResp.getEditResponseUrl();
 	edit_url = newEditUrl; // ARRRGHH -- work around broken google crap
-  Logger.log('preFill2=>'+newEditUrl);
-  
-  //Debug...
-  var masterSheet = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
-
-  createConfigurationSheet(masterSheet,
-                           'Approval Response Received Here is the Edit URL',
-                           {'editUrl':edit_url,'second_edit_url':newEditUrl,'this is':'a test'});          
-  
-  // End debug...
-  
   return edit_url
 }
 
@@ -452,6 +443,8 @@ triggerActions = {
     return config;
   }, // end Approval Form Trigger
 	'Log' : function (event, masterSheet, actionRow, actionResults) {
+      Logger.log('!!! Action Log !!!');
+      Logger.log('Event %s actionRow %s actionResults %s',event, actionRow, actionResults);
 		var settings = lookupFields(actionRow['Config1'].table,getResponseItems(event.response))
 		handleMagicSettings(settings) // here be dragons...
 		settings.Triggers = {}
@@ -461,8 +454,9 @@ triggerActions = {
 		}
 		settings.ResponseId = event.response.getId()
 		var sheet = getSheetById(SpreadsheetApp.openById(settings.SpreadsheetId),settings.SheetId);
-		var table = Table(sheet.getDataRange())
-		table.pushRow(settings) // we just push our settings -- the set up of the table then becomes the key...
+		var table = Table(sheet.getDataRange(),'ResponseId');
+        Logger.log('Updating row with %s',JSON.stringify(settings));
+		table.updateRow(settings) // we just push our settings -- the set up of the table then becomes the key...
 	},
 }
 
@@ -570,6 +564,43 @@ function cleanupSheets () {
     var sheet = ssApp.getSheetByName('Approval Response Received Here is the Edit URL-'+i)
     if (sheet) {ssApp.deleteSheet(sheet) }
   }
+}
+
+function testIACSApprovalTrigger () {
+	var form = FormApp.openById('1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM');
+	var formResponse = form.createResponse();
+	items = form.getItems();
+	items.forEach(function (item) {
+		switch (item.getTitle()) {
+		case 'Total Cost': var value="41.14"; break;
+		case 'Vendor': var value="Fake Vendor"; break;
+		case 'Total Type': var value="Exact Amount"; break;
+		case 'Request Type': var value="Purchase Order"; break;
+		case 'Item Name': var value="Widget"; break;
+		case 'Item Description': var value="Shiny"; break;
+		case 'Order Notes': var value="Get quick!"; break;
+		case 'Order Method': var value="NM Elan card"; break;
+		case 'Cost Account Type': var value="Technology (TH)"; break;
+		case 'Cost Sub-Account Type': var value="Operational Cost"; break;
+		default: return;
+		}
+		switch (item.getType()) {
+    case FormApp.ItemType.CHECKBOX: var item = item.asCheckboxItem(); break;
+    case FormApp.ItemType.TEXT: var item = item.asTextItem(); break;
+    case FormApp.ItemType.PARAGRAPH_TEXT: var item = item.asParagraphTextItem(); break;
+    case FormApp.ItemType.MULTIPLE_CHOICE: var item = item.asMultipleChoiceItem(); break;
+		default: return; // don't handle anything else.
+		}
+		try {
+      var itemResponse = item.createResponse(value); // Create a response
+      formResponse.withItemResponse(itemResponse);
+    }
+    catch (err) {
+      Logger.log('Oh well, no response for: '+JSON.stringify(item));
+			Logger.log('Error: '+err);
+    }
+  }) // end forEach
+  formResponse.submit();
 }
 
 function testApprovalTrigger () {
