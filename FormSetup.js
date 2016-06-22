@@ -77,6 +77,7 @@ function createEmailTableTemplateForForm (form, extras) {
 			htmlOut += '<th style="text-align: right;">'+txt+'</th><td><<'+txt+'>></td></tr>';
 		}
   }) // end forEach item
+  if (extras) {
 	extras.forEach(function (extraItem) {
 		if (everyOther) {
 			htmlOut += '<tr style="background-color:#ffd">'
@@ -87,6 +88,7 @@ function createEmailTableTemplateForForm (form, extras) {
 		everyOther = (! everyOther);
 		htmlOut += '<th style="text-align: right;">'+extraItem[0]+'</th><td><<'+extraItem[1]+'>></td></tr>';
 	}); // end forEach extra
+  }
   htmlOut += '</table>';
   return htmlOut;
 }
@@ -388,6 +390,26 @@ function createFormTrigger (form, master) {
   }
 }
 
+function createIACSApprovalLog () {
+	var fid = '1o85hFuoe3c1TlQBn6FFxj6flSPkzOiElODFtgitGnrI'
+	var ssApp = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');	
+	createLog(FormApp.openById(fid),{'SpreadsheetApp':ssApp});
+}
+
+function createIACSApprovalForm () {
+	var fid = '1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM'
+  var origForm = FormApp.openById(fid);
+	DriveApp.getFileById(fid).setTrashed(false); // out of trash :)
+  var origFolder = DriveApp.getFolderById('0B6UL9LRgyOtHTkJ6U1F1dVVlWkE');  
+  var ssApp = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
+  var approvalForm = createApprovalForm(origForm, {'destinationFolder':origFolder,
+                                                   'SpreadsheetApp':ssApp,})  
+  Logger.log('ID: '+approvalForm.getId())
+  Logger.log('Pub URL: '+approvalForm.getPublishedUrl())
+  Logger.log('Edit URL: '+approvalForm.getEditUrl())
+
+}
+
 function testCreateApprovalForm () {   
   //var origForm = FormApp.openById('1LRophsb8hTo1GNv8qpGp8G-dCpdLIFBboO5rx5pIfII')
 	//var fid = '1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4'
@@ -496,7 +518,7 @@ function createLog (form, params) {
 function testCreateLog () {
 	var ssApp = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
 	var form = FormApp.openById('1s-jsFphG0dMysJivN4YUY7yBZLFY97eplYvXbbimysE');
-	createLog(form, {'SpreadsheetApp':ssApp})
+	createLog(form, {'SpreadsheetApp':ssApp});
 }
 
 function testCreateCalendarForm () {
