@@ -3,7 +3,7 @@ function escapeRegExp(str) {
 }
 
 function sendEmail (email, subject, htmlBody) {
-  Logger.log('Result of sendmail=>');
+  Logger.log('Result of sendmail=>%s, %s, %s',email,subject,htmlBody);
   Logger.log(JSON.stringify(
     MailApp.sendEmail(
       {to:email,
@@ -70,7 +70,15 @@ function getEmail (addressSettings, results) {
 function sendFormResultEmail (results, settings) {
   Logger.log('sendFormResultEmail'+JSON.stringify([results,settings]));
 	var config = lookupFields(settings, results)
-	config.emailLookup = settings.emailLookup;
+	// Add support for conditional email...
+	if (config.hasOwnProperty('onlyEmailIf')) {
+		Logger.log('Checking onlyEmailIf field!');
+		if (! config.onlyEmailIf) {
+			logNormal('Not sending email: \nresults:%s \nsettings:%s',results,settings);
+			return 'No Email Sent';
+		}
+	}
+	//
 	var templateFields = {}
 	for (var setting in results) {
 		templateFields[setting] = spreadsheetify(results[setting]);
@@ -101,6 +109,17 @@ function sendFormResultEmail (results, settings) {
 }
 
 function sendEmailFromTemplate (email, subj, template, fields, fixWhiteSpace) {
+	debug = 0;
+	if (debug) {
+      msg = '<pre>';
+		msg += 'Email being sent: here is what we got.\n';
+		msg +=  'Template: '+template+'\n\n';
+		msg += 'Fields: '+JSON.stringify(fields)+'\n\n';
+		msg += 'Result: \nSubject: '+applyTemplate(subj,fields);
+		msg += 'Result: \nBody: '+applyTemplate(template,fields,fixWhiteSpace);
+    msg += '</pre>';
+		emailError(msg, 'No real error :)', {'subject':'Email Debug Info: '+applyTemplate(subj,fields)});
+	}
   sendEmail(email, applyTemplate(subj, fields), applyTemplate(template, fields, fixWhiteSpace));
 }
 
