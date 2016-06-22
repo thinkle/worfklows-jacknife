@@ -1,4 +1,3 @@
-
 ////////////////////////////////////////////////////
 // This file contains code that handles triggers  //
 // for forms and approvals                        //
@@ -409,7 +408,7 @@ triggerActions = {
 		}
 		var targetForm = FormApp.openById(actionRow['Config1'].table['Approval Form ID'])
     lookupMagic(f2f,responses,targetForm);
-    emailError ("Working with target f2f:"+JSON.stringify(f2f), 'no real error') 
+    //emailError ("Working with target f2f:"+JSON.stringify(f2f), 'no real error') 
 		var editUrl = preFillApprovalForm({'targetForm':targetForm,
                                        'responseItems':responses,
                                        'field2field':f2f})
