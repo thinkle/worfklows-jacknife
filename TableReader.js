@@ -25,13 +25,14 @@ function getSheetById (ss, id) {
   }
 }
 
-function Table (range) {
+function Table (range, idHeader) {
   var values = range.getValues()
   logVerbose('Table(' + JSON.stringify(range) + ')')
   var sheet = range.getSheet()
   var rowOffset = range.getRow()
   var colOffset = range.getColumn()
   var headers = values[0]
+  var rowsById = {}
   
   logVerbose('headers=>'+JSON.stringify(headers))  
   
@@ -50,7 +51,7 @@ function Table (range) {
 //      cell.setValue(val);
 //      row[i] = val;
 //    } // end row.setValue
-
+    
     var rowObj = {}
     var rowNum = values.indexOf(row);
 
@@ -77,7 +78,10 @@ function Table (range) {
                                                   },
                               'get': function() {return row[i]},
                             }
-                              )        
+                              )   
+      if (idHeader && h==idHeader) {
+        rowsById[row[i]] = rowObj
+      }
      }      // end buildProperties
     
     
@@ -142,7 +146,23 @@ function Table (range) {
     table.push(processRow(pushArray));
   } // end values.pushRow
 
-return table;
+  table.updateRow = function (data) {
+    var id = data[idHeader]
+    if (rowsById.hasOwnProperty(id)) {
+      var row = rowsById[id];
+      for (var prop in data) {
+        if (data.hasOwnProperty(prop) && row.hasOwnProperty(prop)) {          
+          row[prop] = data[prop]
+        }
+      }
+    }
+    else {
+      table.pushRow(data)
+    }
+  }
+  
+  
+  return table;
 }
 
 function spreadsheetify (value) {
@@ -164,6 +184,14 @@ function spreadsheetify (value) {
 	}
 }
 
+function testTableWithIDs () {
+  var ss = SpreadsheetApp.openById('1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk') 
+    var sheet = getSheetById(ss,'98430562')  
+    var table = Table(sheet.getDataRange(),'ID');
+  table.updateRow({'ID':78,'Name':'Merwin','Age':105})
+  table.updateRow({'ID':3,'Name':'Clara-boo','Age':6})
+}
+
 function testTable () {
   var ss = SpreadsheetApp.openById('1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk')  
   var sheet = getSheetById(ss,'573504329')  
@@ -179,5 +207,6 @@ function testTable () {
   table.pushRow(['Jon','Churchill',42])  
   table.pushRow({'Last':'Gross','First':"Terry",'Age':'Unknown'})
 	table.pushRow({'Last':'Clifford','First':"Stephen",'Age':'42','Extra':'Stuff','What':'Happens?'})
+    table[5]['Age'] = '28'
   logVerbose('Table length is now: '+table.length)
 }
