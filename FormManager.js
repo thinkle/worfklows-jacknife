@@ -439,6 +439,7 @@ function onFormSubmitTrigger (event) {
     }
     catch (err) {
 			actionResults[action] = FAILURE;
+			emailError('Error on action '+action, err);
       Logger.log('Ran into error on action %s: %s\nSTACK:%s',action,err.name,err.stack);
       Logger.log('Blargh!');
     }
