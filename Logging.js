@@ -1,8 +1,38 @@
-function handleMagicSettings (settings) {
-	// Where we allow magic syntax for magical things :)
-	return settings
+function logEvent (configTable, event, actionResults, extraConfig) {
+  // DEBUG CODE
+  //msg = 'logEvent('+JSON.stringify(configTable)+','+JSON.stringify(event)+',';
+  //msg += JSON.stringify(actionResults)+','+JSON.stringify(extraConfig)+')';
+  //emailError (msg, "NO ERROR",{'subject':'logEvent debug info'})
+  // END DEBUG CODE
+	var settings = lookupFields(configTable,getResponseItems(event.response))
+	settings.Triggers = {}
+	for (var key in actionResults) {
+		settings[key+'Action'] = actionResults[key]
+		settings.Triggers[key] = actionResults[key]
+	}
+	for (var key in extraConfig) {
+		settings[key] = extraConfig[key];
+	}
+	settings.ResponseId = event.response.getId()
+    try {
+      var sheet = getSheetById(SpreadsheetApp.openById(settings.SpreadsheetId),settings.SheetId);
+    }
+  catch (err) {
+    emailError('Unable to fetch sheet '+settings.SpreadsheetId+' + '+settings.SheetId,
+               err)
+    throw err;
+  }
+  var idCol = configTable.idCol ? idCol : undefined
+  var table = Table(sheet.getDataRange(),idCol);
+  Logger.log('Updating row with %s',JSON.stringify(settings));
+  try {
+    table.updateRow(settings) // we just push our settings -- the set up of the table then becomes the key...
+  }
+  catch (err) {
+    emailError('Error updating '+settings.SpreadsheetId+' with '+JSON.stringify(settings), err);
+    throw err;
+  }
 }
-
 
 function createLogHeaderRow (form) {
   row = ['ResponseId','Timestamp']
@@ -52,4 +82,32 @@ function setupLoggingSheet (form, logSheet) {
 	configOptions['SheetId'] = logSheet.getSheetId()
 	configOptions['SpreadsheetId'] = logSheet.getParent().getId()
   return configOptions
+}
+
+
+function testLog () {
+  fakeEvent = {    
+    response : {
+      getItemResponses : function () { return [
+        {getItem : function () { return {getTitle : function () { return 'Test Item'}}},
+         getResponse : function () {return 'testValue'},
+        }
+      ]},
+      getTimestamp : function () { return new Date() },
+      getRespondentEmail : function () { return 'thinkle+responder@innovationcharter.org'},
+      getId : function () { 
+      //  return (Math.random()*100000).toFixed(0); 
+        return 79722
+      },
+    }
+  }
+  configTable = {    
+    'TestLookup':'%Test Item',
+    'SpreadsheetId':'1dJZALNnN86MIt2UIXhpoq7Gd2oFuHMqxKY2-763LSEI',
+    'SheetId':'0',
+    'idCol':'ResponseId',
+  }
+  extraConfig = {'Foo':'Bear'}
+  actionResults = {}
+  logEvent(configTable,fakeEvent,actionResults,extraConfig);
 }
