@@ -161,26 +161,24 @@ function lookupMagic (config, responses, form) {
 				val = val.replace('YY',getYearString(d,2));
 				if (val.indexOf('#') >= 0) {
 					// This is an incrementer!
-                  
-                    var lock = LockService.getScriptLock()
-                    
-                  try {
-                  lock.waitLock(120000);
-                  }
-                  catch (err) {
-                    emailError('Unable to get lock after 30 seconds ;(',err);
-                  }                  
+          var lock = LockService.getScriptLock()
+          try {
+            lock.waitLock(120000);
+          }
+          catch (err) {
+            emailError('Unable to get lock after 30 seconds ;(',err);
+          }                  
 					var numberMatch = /#+/g
 					var numLength = val.match(numberMatch)[0].length
-                    var scriptCache = CacheService.getScriptCache();
-                    var lastval = scriptCache.get(val);
-                    if (! lastval) {
-                      var lastval =  PropertiesService.getUserProperties().getProperty(val)
-                    }
+          var scriptCache = CacheService.getScriptCache();
+          var lastval = scriptCache.get(val);
+          if (! lastval) {
+            var lastval =  PropertiesService.getUserProperties().getProperty(val)
+          }
 					if (lastval) {
-						newval = Number(lastval) + 1;                        
+						newval = Number(lastval) + 1;
 						PropertiesService.getUserProperties().setProperty(val,newval);
-                        scriptCache.put(val,newval,21600);
+						scriptCache.put(val,newval,21600);
 						config[key] = val.replace(numberMatch,padNum(newval,numLength))
 					}
 					else {
@@ -216,8 +214,8 @@ function lookupMagic (config, responses, form) {
 							}
 						} // end while ! haveUniqueNumber
 						PropertiesService.getUserProperties().setProperty(val,n);
-                        scriptCache.put(val,n,21600);
-                      lock.releaseLock();
+						scriptCache.put(val,n,21600)
+						lock.releaseLock();
 					} // end if
 				} // end test for magic incrementing # thingy...
 			} // end test for magic at all
@@ -304,7 +302,8 @@ function preFillApprovalForm (params) {
   var lastResp = allResponses[lastRespNo]
   var newEditUrl = lastResp.getEditResponseUrl();
 	edit_url = newEditUrl; // ARRRGHH -- work around broken google crap
-  return edit_url
+  return {'edit_url':edit_url,
+          'response':lastResp}
 }
 
 function getApprovalFormToMasterLookup (actionRow) {
@@ -402,7 +401,7 @@ triggerActions = {
 		Logger.log('Added calendars: '+JSON.stringify(calendarsAdded));
 		return calendarsAdded
 	}, // end Calendar
-  'Approval': function (event, masterSheet, actionRow) {
+  'Approval': function (event, masterSheet, actionRow, actionResults) {
     Logger.log('!!! APPROVAL TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
     responses = getResponseItems(event.response)
     // DEBUG 
@@ -428,9 +427,10 @@ triggerActions = {
 		var targetForm = FormApp.openById(actionRow['Config1'].table['Approval Form ID'])
     lookupMagic(f2f,responses,targetForm);
     //emailError ("Working with target f2f:"+JSON.stringify(f2f), 'no real error') 
-		var editUrl = preFillApprovalForm({'targetForm':targetForm,
+		var approvalRespObj = preFillApprovalForm({'targetForm':targetForm,
                                        'responseItems':responses,
                                        'field2field':f2f})
+        editUrl = approvalRespObj.edit_url
     //if (actionRow['Config2'].table && actionRow['Config3'].table) {
     var templateSettings = actionRow['Config2'].table
 		config = lookupFields(templateSettings,responses);
@@ -465,23 +465,21 @@ triggerActions = {
 		// 	templateSettings,
 		// 	lookupSettings
     // );
+    logEvent(
+      actionRow['Config3'].table,
+      event,
+      actionResults,
+      {'ApprovalResponseId':approvalRespObj.response.getId(),
+       'ApprovalURL':editUrl,
+       'OriginalResponseId':event.response.getId(),
+       'OriginalURL':event.response.getEditResponseUrl()}
+    );
     return config;
   }, // end Approval Form Trigger
 	'Log' : function (event, masterSheet, actionRow, actionResults) {
-      Logger.log('!!! Action Log !!!');
-      Logger.log('Event %s actionRow %s actionResults %s',event, actionRow, actionResults);
-		var settings = lookupFields(actionRow['Config1'].table,getResponseItems(event.response))
-		handleMagicSettings(settings) // here be dragons...
-		settings.Triggers = {}
-		for (var key in actionResults) {
-			settings[key+'Action'] = actionResults[key]
-			settings.Triggers[key] = actionResults[key]
-		}
-		settings.ResponseId = event.response.getId()
-		var sheet = getSheetById(SpreadsheetApp.openById(settings.SpreadsheetId),settings.SheetId);
-		var table = Table(sheet.getDataRange(),'ResponseId');
-        Logger.log('Updating row with %s',JSON.stringify(settings));
-		table.updateRow(settings) // we just push our settings -- the set up of the table then becomes the key...
+    Logger.log('!!! Action Log !!!');
+    Logger.log('Event %s actionRow %s actionResults %s',event, actionRow, actionResults);
+	logEvent(actionRow['Config1'].table,event,actionResults);
 	},
 }
 
@@ -599,7 +597,7 @@ function randomChoice (arr) {
 
 function testManyTriggers () {
  // PropertiesService.getUserProperties().setProperty('FY16-06-###','32');
-	for (var i=1; i<25; i++) {
+	for (var i=1; i<20; i++) {
 		//Utilities.sleep(1000);
         testIACSApprovalTrigger();        
 	};
@@ -637,8 +635,8 @@ function testIACSApprovalTrigger (vals) {
 			['Student Services Cost (AV)','SS Counseling Cost'],
 		]);
 		vals = {
-			'Total Cost': Math.random() * 1000,
-			'Vendor': "Lovely Vendor",
+			'Total Cost': (Math.random() * 1000).toFixed(2),
+			'Vendor': randomChoice(["CDW",'Amazon','Staples','WB Mason']),
 			'Total Type': "Exact Amount",
 			'Request Type': "Purchase Order",
 			'Item Name': randomChoice(["Widget",'Thingy','Whoosywhatsit']),
