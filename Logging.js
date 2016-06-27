@@ -22,11 +22,14 @@ function logEvent (configTable, event, actionResults, extraConfig) {
                err)
     throw err;
   }
-  var idCol = configTable.idCol ? idCol : undefined
+  var idCol = configTable.idCol ? configTable.idCol : undefined
   var table = Table(sheet.getDataRange(),idCol);
   Logger.log('Updating row with %s',JSON.stringify(settings));
   try {
+    var lock = LockService.getScriptLock()
+    lock.waitLock(120000);
     table.updateRow(settings) // we just push our settings -- the set up of the table then becomes the key...
+    lock.releaseLock();
   }
   catch (err) {
     emailError('Error updating '+settings.SpreadsheetId+' with '+JSON.stringify(settings), err);
@@ -110,4 +113,14 @@ function testLog () {
   extraConfig = {'Foo':'Bear'}
   actionResults = {}
   logEvent(configTable,fakeEvent,actionResults,extraConfig);
+}
+
+function testIDWackiness () {
+	var ss = SpreadsheetApp.openById('1U2MpGDV9RmczNYJ38z4D-5Pps7_wQlhl_CeSdMVhQRk');
+	var sheet = ss.getActiveSheet();
+	var table = Table(sheet.getDataRange(),'ResponseId');
+	table.updateRow(
+		{'ResponseId':'2_ABaOnufyOAOCS9OEtiO00cDjpvhAQhEM_QnLrAFMJAdHoBX7koD3EugQGjG0pQ',
+		 'Signature':'Test Update From Script!'}
+	);
 }
