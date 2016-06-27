@@ -396,6 +396,22 @@ function createIACSApprovalLog () {
 	createLog(FormApp.openById(fid),{'SpreadsheetApp':ssApp});
 }
 
+function setupIACSApprovalForm () {
+    var fid = '1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM'
+	//var fid = '1VrnBZ1Be8t9epgaOlxk6x8z1s9NxGfcWCU3O8LJBWdA'; 
+	form = FormApp.openById(fid);
+	var approvalFormID = '1o85hFuoe3c1TlQBn6FFxj6flSPkzOiElODFtgitGnrI';
+	aform = FormApp.openById(approvalFormID);
+	controlSS = SpreadsheetApp.openById('10yauqDvNnG2iQwoaIWbRs_3HKVJkYcx0HK3MRCL2bRE')
+//	var masterConfig = getMasterConfig(controlSS);
+//	masterConfig.pushConfig(form,'Approval',[createConfigurationSheet(controlSS,'FY17 Request Approval Form',{'fix':'me'}),
+//																					createConfigurationSheet(controlSS,'FY17 Request Approval Form',{'fix':'me'})]);
+//	masterConfig.pushConfig(aform,'Email',[createConfigurationSheet(controlSS,'FY17 Request Approval Emails',{'fix':'me'})]);
+//	masterConfig.pushConfig(aform,'Log',[createConfigurationSheet(controlSS,'FY17 Purchase Log',{'fix':'me'})]);
+	createFormTrigger(form, controlSS)
+	createFormTrigger(aform, controlSS)
+}
+
 function createIACSApprovalForm () {
 	var fid = '1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM'
   var origForm = FormApp.openById(fid);
