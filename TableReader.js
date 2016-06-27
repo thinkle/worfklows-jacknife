@@ -139,12 +139,22 @@ function Table (range, idHeader) {
     if (! pushArray[headers.length-1]) {
       pushArray[headers.length-1] = ""; // extend array to proper length...
     }
-    cell = sheet.getRange(rowOffset+values.length,colOffset,1,headers.length)
+    //cell = sheet.getRange(rowOffset+values.length,colOffset,1,headers.length)
+		var appendRow = [];
+		for (var i=1; i<colOffset; i++) {
+			appendRow.push(''); // pad beginning of array...
+		}
+		appendRow = appendRow.concat(pushArray);
     logVerbose('New values = '+JSON.stringify(pushArray));
-    cell.setValues([pushArray]); // push to sheet...
+    //cell.setValues([pushArray]); // push to sheet...
+		sheet.appendRow(appendRow);
     values.push(pushArray); // push to array
     table.push(processRow(pushArray));
   } // end values.pushRow
+
+	table.hasRow = function (id) {
+		return rowsById.hasOwnProperty(id)
+	}
 
   table.updateRow = function (data) {
     var id = data[idHeader]
@@ -197,10 +207,10 @@ function testTable () {
   var sheet = getSheetById(ss,'573504329')  
   //var sheet = ss.getSheetByName("testGrid");
   var table = Table(sheet.getDataRange())
-  logVerbose('Table length is : '+table.length);
-  logVerbose('Table row 1: '+table[1].First+' '+table[1].Last)
-  logVerbose('Table row 1: '+table[1][0]+' '+table[1][1])
-  logVerbose('Got table '+JSON.stringify(table))
+  logNormal('Table length is : '+table.length);
+  logNormal('Table row 1: '+table[1].First+' '+table[1].Last)
+  logNormal('Table row 1: '+table[1][0]+' '+table[1][1])
+  logNormal('Got table '+JSON.stringify(table))
   table[1]['Last'] = 'Sayre'
   table[2]['Last'] = 'Hinkle'
   table[3]['Last']='Holy Shit It Worked'
@@ -208,5 +218,5 @@ function testTable () {
   table.pushRow({'Last':'Gross','First':"Terry",'Age':'Unknown'})
 	table.pushRow({'Last':'Clifford','First':"Stephen",'Age':'42','Extra':'Stuff','What':'Happens?'})
     table[5]['Age'] = '28'
-  logVerbose('Table length is now: '+table.length)
+  logNormal('Table length is now: '+table.length)
 }
