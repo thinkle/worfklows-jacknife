@@ -103,3 +103,19 @@ function getApprovalFormToMasterLookup (actionRow) {
   return f2f
 }
 
+function checkForApprovals (form, logsheet) {
+	var allResponses = form.getResponses();
+	var logTable = Table(logsheet, 'OriginalResponseId');
+	var fixed = []
+	allResponses.forEach (function (resp) {
+		var respId = resp.getId();
+		if (! logTable.hasRow(respId)) {
+			// We don't have the row! We better do this thing...
+			Logger.log('Do this thing! '+respId+' '+resp);
+			//
+		}
+	}); // end forEach resp
+}
+
+function approvalOnTimerCleanup () {
+}
