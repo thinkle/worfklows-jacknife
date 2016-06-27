@@ -161,39 +161,64 @@ function lookupMagic (config, responses, form) {
 				val = val.replace('YY',getYearString(d,2));
 				if (val.indexOf('#') >= 0) {
 					// This is an incrementer!
-					var allResponses = form.getResponses(timestampDate);
-          //var allResponses = form.getResponses();
-					var item = getItemByTitle(form,key);
+                  
+                    var lock = LockService.getScriptLock()
+                    
+                  try {
+                  lock.waitLock(120000);
+                  }
+                  catch (err) {
+                    emailError('Unable to get lock after 30 seconds ;(',err);
+                  }                  
 					var numberMatch = /#+/g
 					var numLength = val.match(numberMatch)[0].length
-					// Now go through the responses and check for incrementation needs...
-					existingResponses = []
-          Logger.log('allResponses = '+allResponses);
-          Logger.log('item=%s',item);
-          if (allResponses) {
-						allResponses.forEach(function (resp) {
-              Logger.log('Looking @ %s',resp);
-              
-              
-              if (resp.getResponseForItem(item)) {
-                existingResponses.push(                  
-                  resp.getResponseForItem(item).getResponse() // response as string
-                )
-              } // end if
-            }); // end for Each...				
-          } // end if (allResponses)
-					// Now let's just iterate through
-					// FIXME - How to iterate through and check for highest number... ?
-					var haveUniqueNumber = false;
-					var n = 0;
-					while (! haveUniqueNumber) {
-						n += 1; 
-						var numberCandidate = val.replace(numberMatch,padNum(n,numLength))
-						if (existingResponses.indexOf(numberCandidate)==-1) {
-							haveUniqueNumber = true;
-							config[key] = numberCandidate;
-						}
-					} // end while ! haveUniqueNumber
+                    var scriptCache = CacheService.getScriptCache();
+                    var lastval = scriptCache.get(val);
+                    if (! lastval) {
+                      var lastval =  PropertiesService.getUserProperties().getProperty(val)
+                    }
+					if (lastval) {
+						newval = Number(lastval) + 1;                        
+						PropertiesService.getUserProperties().setProperty(val,newval);
+                        scriptCache.put(val,newval,21600);
+						config[key] = val.replace(numberMatch,padNum(newval,numLength))
+					}
+					else {
+						// Otherwise, we have to look through all responses after date for highest number
+						// then increment...
+						var allResponses = form.getResponses(timestampDate);
+						//var allResponses = form.getResponses();
+						var item = getItemByTitle(form,key);
+						// Now go through the responses and check for incrementation needs...
+						existingResponses = []
+						Logger.log('allResponses = '+allResponses);
+						Logger.log('item=%s',item);
+						if (allResponses) {
+							allResponses.forEach(function (resp) {
+								Logger.log('Looking @ %s',resp);
+								if (resp.getResponseForItem(item)) {
+									existingResponses.push(                  
+										resp.getResponseForItem(item).getResponse() // response as string
+									)
+								} // end if
+							}); // end for Each...				
+						} // end if (allResponses)
+						// Now let's just iterate through
+						// FIXME - How to iterate through and check for highest number... ?
+						var haveUniqueNumber = false;
+						var n = 0;
+						while (! haveUniqueNumber) {
+							n += 1; 
+							var numberCandidate = val.replace(numberMatch,padNum(n,numLength))
+							if (existingResponses.indexOf(numberCandidate)==-1) {
+								haveUniqueNumber = true;
+								config[key] = numberCandidate;
+							}
+						} // end while ! haveUniqueNumber
+						PropertiesService.getUserProperties().setProperty(val,n);
+                        scriptCache.put(val,n,21600);
+                      lock.releaseLock();
+					} // end if
 				} // end test for magic incrementing # thingy...
 			} // end test for magic at all
 		} 
@@ -566,23 +591,84 @@ function cleanupSheets () {
   }
 }
 
-function testIACSApprovalTrigger () {
+function randomChoice (arr) {
+	return arr[Math.floor(Math.random() * arr.length)]
+}
+
+
+
+function testManyTriggers () {
+ // PropertiesService.getUserProperties().setProperty('FY16-06-###','32');
+	for (var i=1; i<25; i++) {
+		//Utilities.sleep(1000);
+        testIACSApprovalTrigger();        
+	};
+}
+
+function testIACSApprovalTrigger (vals) {
 	var form = FormApp.openById('1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM');
 	var formResponse = form.createResponse();
+	if (! vals) {
+		cost = randomChoice([
+			['Technology (TH)','Operational Cost'],
+			['Technology (TH)','Capital Cost'],
+			['Board of Trustees Cost (GO)', ''],
+			['School Leader Cost (GO)',''],
+			['Business Office (AC)',''],
+			['Development/Enrollment/Outreach Cost (GO)',''],
+			['High School Cost (EA)','HS Math Cost'],
+			['High School Cost (EA)','HS English Cost'],
+			['High School Cost (EA)','HS Science/Engineering Cost'],
+			['High School Cost (EA)','HS Spanish Cost'],
+			['High School Cost (EA)','HS Social Studies Cost'],
+			['High School Cost (EA)','HS Choice Block Cost'],
+			['High School Cost (EA)','HS Health/Wellness Cost'],
+			['High School Cost (EA)','HS General Instructional Cost'],
+			['High School Cost (EA)','HS Furniture Cost'],
+			['High School Cost (EA)','HS Professional Development Cost'],
+			['High School Cost (EA)','HS Endersession Cost'],
+			['Middle School Cost (MK)','MS Math Cost'],
+			['Middle School Cost (MK)','MS Field Trip Cost'],
+			['Middle School Cost (MK)','MS Advisory Cost'],
+			['Student Services Cost (AV)','SS Instructional Cost'],
+			['Student Services Cost (AV)','SS Instructional Cost'],
+			['Student Services Cost (AV)','SS Furniture Cost'],
+			['Student Services Cost (AV)','SS Professional Development Cost'],
+			['Student Services Cost (AV)','SS Counseling Cost'],
+		]);
+		vals = {
+			'Total Cost': Math.random() * 1000,
+			'Vendor': "Lovely Vendor",
+			'Total Type': "Exact Amount",
+			'Request Type': "Purchase Order",
+			'Item Name': randomChoice(["Widget",'Thingy','Whoosywhatsit']),
+			'Item Description': randomChoice(["Shiny",'Extra Fancy','Very nice']),
+			'Order Notes': "Get quick!",
+			'Order Method': randomChoice([
+				'Self-ordered - Receipt or proof of purchase to be provided',
+				'Self-ordered - Invoice to come',
+				'Self-ordered - via School Amazon Account',
+				'Ordered by Business office',
+				'AC Elan card',
+				'GO Elan card',
+				'MK Elan card',
+				'NM Elan card',
+				'RH Elan card',
+				'Home Depot CC',
+				'Lowes CC',
+				'Exxon CC'
+			]),
+			'Cost Account Type': cost[0],
+			'Cost Sub-Account Type': cost[1],
+		}
+	}
 	items = form.getItems();
 	items.forEach(function (item) {
-		switch (item.getTitle()) {
-		case 'Total Cost': var value="41.14"; break;
-		case 'Vendor': var value="Fake Vendor"; break;
-		case 'Total Type': var value="Exact Amount"; break;
-		case 'Request Type': var value="Purchase Order"; break;
-		case 'Item Name': var value="Widget"; break;
-		case 'Item Description': var value="Shiny"; break;
-		case 'Order Notes': var value="Get quick!"; break;
-		case 'Order Method': var value="NM Elan card"; break;
-		case 'Cost Account Type': var value="Technology (TH)"; break;
-		case 'Cost Sub-Account Type': var value="Operational Cost"; break;
-		default: return;
+		if (vals.hasOwnProperty(item.getTitle())) {
+			var value = vals[item.getTitle()];
+		}
+		else {
+			return
 		}
 		switch (item.getType()) {
     case FormApp.ItemType.CHECKBOX: var item = item.asCheckboxItem(); break;
@@ -605,7 +691,7 @@ function testIACSApprovalTrigger () {
 
 function testApprovalTrigger () {
   // Submit a form so we can test our trigger...
-  //var form = FormApp.openById('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4');
+  //var form = FormApp.openById('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4');	
   var form = FormApp.openById('1uWzGNMj0cGMKy9i9C-qHZyaMwH7ModeEe0Cna-XmcBU');  
   var formResponse = form.createResponse()
   items = form.getItems();  
