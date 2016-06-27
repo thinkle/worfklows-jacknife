@@ -325,7 +325,18 @@ function createApprovalForm (firstForm, params) {
 		 'Possible Fields':listFormItemTitles(FormApp.openById(formAsFile.getId())),
 		}
 	)
-									 );                                          
+									 );
+	var log = SpreadsheetApp.create(firstForm.getTitle()+' Approval Log');
+	log.getActiveSheet().appendRow(
+		['OriginalResponseId','OriginalURL','ApprovalResponseId','ApprovalURL','InformedEmail','ToApproveEmail']
+	);
+	configSheets.push(createConfigurationSheet(
+		controlSS, firstForm.getTitle()+' Approval Log',
+		{
+			'SheetId':'0',
+			'SpreadsheetId':log.getId(),
+		}
+	));
   // write Configuration Data...
   Logger.log('masterConfig.pushConfig'+JSON.stringify([firstForm,'Approval',configSheets]));
   masterConfig.pushConfig(
@@ -408,8 +419,27 @@ function setupIACSApprovalForm () {
 //																					createConfigurationSheet(controlSS,'FY17 Request Approval Form',{'fix':'me'})]);
 //	masterConfig.pushConfig(aform,'Email',[createConfigurationSheet(controlSS,'FY17 Request Approval Emails',{'fix':'me'})]);
 //	masterConfig.pushConfig(aform,'Log',[createConfigurationSheet(controlSS,'FY17 Purchase Log',{'fix':'me'})]);
-	createFormTrigger(form, controlSS)
-	createFormTrigger(aform, controlSS)
+	//createFormTrigger(form, controlSS)
+	//createFormTrigger(aform, controlSS)
+	var log = SpreadsheetApp.create(firstForm.getTitle()+' Approval Log');
+	log.getActiveSheet().appendRow(
+		['OriginalResponseId','OriginalURL','ApprovalResponseId','ApprovalURL','InformedEmail','ToApproveEmail']
+	);
+	configSheets.push(createConfigurationSheet(
+		controlSS, firstForm.getTitle()+' Approval Log',
+		{
+			'SheetId':'0',
+			'SpreadsheetId':log.getId(),
+		}
+	));
+  // write Configuration Data...
+  Logger.log('masterConfig.pushConfig'+JSON.stringify([firstForm,'Approval',configSheets]));
+  masterConfig.pushConfig(
+    form,
+    'Approval',
+    configSheets
+  )
+
 }
 
 function createIACSApprovalForm () {
