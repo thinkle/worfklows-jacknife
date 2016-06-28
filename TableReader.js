@@ -161,8 +161,10 @@ function Table (range, idHeader) {
     if (rowsById.hasOwnProperty(id)) {
       var row = rowsById[id];
       for (var prop in data) {
-        if (data.hasOwnProperty(prop) && row.hasOwnProperty(prop)) {          
-          row[prop] = data[prop]
+        if (data.hasOwnProperty(prop) && row.hasOwnProperty(prop)) {  
+          if (data[prop] !== undefined) {
+            row[prop] = data[prop]
+          }
         }
       }
     }
