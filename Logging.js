@@ -27,7 +27,7 @@ function logEvent (configTable, event, actionResults, extraConfig) {
   Logger.log('Updating row with %s',JSON.stringify(settings));
   try {
     var lock = LockService.getScriptLock()
-    lock.waitLock(120000);
+    lock.waitLock(240000);
     table.updateRow(settings) // we just push our settings -- the set up of the table then becomes the key...
     lock.releaseLock();
   }
