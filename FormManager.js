@@ -163,7 +163,7 @@ function lookupMagic (config, responses, form) {
 					// This is an incrementer!
           var lock = LockService.getScriptLock()
           try {
-            lock.waitLock(120000);
+            lock.waitLock(240000);
           }
           catch (err) {
             emailError('Unable to get lock after 30 seconds ;(',err);
@@ -494,6 +494,10 @@ function testManyTriggers () {
 	};
 }
 
+function paragraphify (s) {
+	return s + s + s + s + s + s + s + s + s + s;
+}
+
 function testIACSApprovalTrigger (vals) {
 	var form = FormApp.openById('1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM');
 	var formResponse = form.createResponse();
@@ -505,6 +509,7 @@ function testIACSApprovalTrigger (vals) {
 			['School Leader Cost (GO)',''],
 			['Business Office (AC)',''],
 			['Development/Enrollment/Outreach Cost (GO)',''],
+			['Other Administration (AC)',''],
 			['High School Cost (EA)','HS Math Cost'],
 			['High School Cost (EA)','HS English Cost'],
 			['High School Cost (EA)','HS Science/Engineering Cost'],
@@ -524,6 +529,20 @@ function testIACSApprovalTrigger (vals) {
 			['Student Services Cost (AV)','SS Furniture Cost'],
 			['Student Services Cost (AV)','SS Professional Development Cost'],
 			['Student Services Cost (AV)','SS Counseling Cost'],
+			['Library Cost (MK)',''],
+			['Athletics Cost (NM)','General Athletics Cost'],
+			['Athletics Cost (NM)','Basketball Cost'],
+			['Athletics Cost (NM)','Dance Cost'],
+			['Athletics Cost (NM)','Volleyball Cost'],
+			['Theater Arts Cost (RH)','Camp Cost'],
+			['Theater Arts Cost (RH)','Play Production Cost'],
+			['Food Services Cost (KD)',''],
+			['Health Services Cost (GNP)',''],
+			['Facilities Cost (RF)','Permits/Testing'],
+			['Facilities Cost (RF)','HVAC'],
+			['Facilities Cost (RF)','Pest Control'],
+			['Facilities Cost (RF)','Snow Removal'],
+			['Facilities Cost (RF)','Cleaning Service'],
 		]);
 		vals = {
 			'Total Cost': (Math.random() * 1000).toFixed(2),
@@ -531,8 +550,8 @@ function testIACSApprovalTrigger (vals) {
 			'Total Type': "Exact Amount",
 			'Request Type': "Purchase Order",
 			'Item Name': randomChoice(["Widget",'Thingy','Whoosywhatsit']),
-			'Item Description': randomChoice(["Shiny",'Extra Fancy','Very nice']),
-			'Order Notes': "Get quick!",
+			'Item Description': paragraphify(randomChoice(["This is a shiny item and a long sentence.",'Please make sure to get the Extra Fancy variety.','Very nice if you can get it I believe it would be.  '])),
+			'Order Notes': paragraphify("Get quick! If you can, that is. If you cannot, you can perhaps do it slowly. Maybe just buy it this year."),
 			'Order Method': randomChoice([
 				'Self-ordered - Receipt or proof of purchase to be provided',
 				'Self-ordered - Invoice to come',
