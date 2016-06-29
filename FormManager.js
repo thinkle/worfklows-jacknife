@@ -330,8 +330,8 @@ triggerActions = {
     lookupMagic(f2f,responses,targetForm);
     //emailError ("Working with target f2f:"+JSON.stringify(f2f), 'no real error') 
 		var approvalRespObj = preFillApprovalForm({'targetForm':targetForm,
-                                       'responseItems':responses,
-                                       'field2field':f2f})
+																							 'responseItems':responses,
+																							 'field2field':f2f})
     editUrl = approvalRespObj.edit_url
     //if (actionRow['Config2'].table && actionRow['Config3'].table) {
     //var lookupSettings = actionRow['Config3'].table
@@ -376,7 +376,7 @@ triggerActions = {
 	'Log' : function (event, masterSheet, actionRow, actionResults) {
     Logger.log('!!! Action Log !!!');
     Logger.log('Event %s actionRow %s actionResults %s',event, actionRow, actionResults);
-	return logEvent(actionRow['Config1'].table,event,actionResults);
+		return logEvent(actionRow['Config1'].table,event,actionResults);
 	},
 }
 
@@ -494,10 +494,10 @@ function randomChoice (arr) {
 
 
 function testManyTriggers () {
- // PropertiesService.getUserProperties().setProperty('FY16-06-###','32');
+	// PropertiesService.getUserProperties().setProperty('FY16-06-###','32');
 	for (var i=1; i<20; i++) {
 		//Utilities.sleep(1000);
-        testIACSApprovalTrigger();        
+    testIACSApprovalTrigger();        
 	};
 }
 
@@ -521,76 +521,80 @@ function testSelfApproval () {
 		})
 }
 
+function getAllResponseOptions (form,title) {
+  var opts = []
+  form.getItems().forEach(function (i) {      
+    if (i.getTitle()==title) {
+      var mci = i.asMultipleChoiceItem();    
+      mci.getChoices().forEach( function (c) {  
+        opts.push(c.getValue());
+      });
+    }});
+  return opts;
+}
+
+function testAllAccounts () {
+  
+}
+function testGetAllResponseOptions () {
+	Logger.log('%s',getAllResponseOptions(
+		FormApp.openById('1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM'),
+		'Cost Sub-Account Type'
+  ));
+}
+
+function getIACSOptions () {
+  var form = FormApp.openById('1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM');
+  var vals = ['Cost Account Type','Cost Sub-Account Type','Total Type','Order Method','Request Type'];
+  var opts = {}
+  vals.forEach(function (k) {
+    opts[k] = getAllResponseOptions(form,k);
+  });
+  Logger.log('IACS OPTIONS: %s',opts);
+  return opts
+}
+
+function testAllIACSOptions () {
+  var allOpts = getIACSOptions()
+  for (var key in allOpts) {
+    Logger.log('Testing %s',key);
+    var choices  = allOpts[key];
+    choices.forEach(function (c) { 
+      Logger.log('%s=%s',key,c);
+      vals = {
+        'Total Cost': (Math.random() * 1000).toFixed(2),
+        'Vendor': randomChoice(["CDW",'Amazon','Staples','WB Mason']),
+        'Total Type': randomChoice(allOpts['Total Type']),
+        'Request Type': randomChoice(allOpts['Request Type']),
+        'Item Name': 'Testing '+key+':'+c,
+        'Item Description': paragraphify('Item Desc testing '+key+':'+c),
+        'Order Notes': paragraphify("Order Notes: "+key+':'+c),
+        'Order Method': randomChoice(allOpts['Order Method']),
+				'Cost Account Type': randomChoice(allOpts['Cost Account Type']),
+				'Cost Sub-Account Type': randomChoice(allOpts['Cost Sub-Account Type']),
+			}
+      vals[key] = c;
+      testIACSApprovalTrigger(vals);
+    });
+  }
+}
+
 function testIACSApprovalTrigger (vals) {
 	var form = FormApp.openById('1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM');
 	var formResponse = form.createResponse();
 	if (! vals) {
-		cost = randomChoice([
-			['Technology (TH)','Operational Cost'],
-			['Technology (TH)','Capital Cost'],
-			['Board of Trustees Cost (GO)', ''],
-			['School Leader Cost (GO)',''],
-			['Business Office (AC)',''],
-			['Development/Enrollment/Outreach Cost (GO)',''],
-			['Other Administration (AC)',''],
-			['High School Cost (EA)','HS Math Cost'],
-			['High School Cost (EA)','HS English Cost'],
-			['High School Cost (EA)','HS Science/Engineering Cost'],
-			['High School Cost (EA)','HS Spanish Cost'],
-			['High School Cost (EA)','HS Social Studies Cost'],
-			['High School Cost (EA)','HS Choice Block Cost'],
-			['High School Cost (EA)','HS Health/Wellness Cost'],
-			['High School Cost (EA)','HS General Instructional Cost'],
-			['High School Cost (EA)','HS Furniture Cost'],
-			['High School Cost (EA)','HS Professional Development Cost'],
-			['High School Cost (EA)','HS Endersession Cost'],
-			['Middle School Cost (MK)','MS Math Cost'],
-			['Middle School Cost (MK)','MS Field Trip Cost'],
-			['Middle School Cost (MK)','MS Advisory Cost'],
-			['Student Services Cost (AV)','SS Instructional Cost'],
-			['Student Services Cost (AV)','SS Instructional Cost'],
-			['Student Services Cost (AV)','SS Furniture Cost'],
-			['Student Services Cost (AV)','SS Professional Development Cost'],
-			['Student Services Cost (AV)','SS Counseling Cost'],
-			['Library Cost (MK)',''],
-			['Athletics Cost (NM)','General Athletics Cost'],
-			['Athletics Cost (NM)','Basketball Cost'],
-			['Athletics Cost (NM)','Dance Cost'],
-			['Athletics Cost (NM)','Volleyball Cost'],
-			['Theater Arts Cost (RH)','Camp Cost'],
-			['Theater Arts Cost (RH)','Play Production Cost'],
-			['Food Services Cost (KD)',''],
-			['Health Services Cost (GNP)',''],
-			['Facilities Cost (RF)','Permits/Testing'],
-			['Facilities Cost (RF)','HVAC'],
-			['Facilities Cost (RF)','Pest Control'],
-			['Facilities Cost (RF)','Snow Removal'],
-			['Facilities Cost (RF)','Cleaning Service'],
-		]);
-		vals = {
-			'Total Cost': (Math.random() * 1000).toFixed(2),
+    var allOpts = getIACSOptions()
+    vals = {
+      'Total Cost': (Math.random() * 1000).toFixed(2),
+      'Total Type': randomChoice(allOpts['Total Type']),
+      'Request Type': randomChoice(allOpts['Request Type']),
+      'Order Method': randomChoice(allOpts['Order Method']),
+			'Cost Account Type': randomChoice(allOpts['Cost Account Type']),
+			'Cost Sub-Account Type': randomChoice(allOpts['Cost Sub-Account Type']),		
 			'Vendor': randomChoice(["CDW",'Amazon','Staples','WB Mason']),
-			'Total Type': "Exact Amount",
-			'Request Type': "Purchase Order",
 			'Item Name': randomChoice(["Widget",'Thingy','Whoosywhatsit']),
 			'Item Description': paragraphify(randomChoice(["This is a shiny item and a long sentence.",'Please make sure to get the Extra Fancy variety.','Very nice if you can get it I believe it would be.  '])),
 			'Order Notes': paragraphify("Get quick! If you can, that is. If you cannot, you can perhaps do it slowly. Maybe just buy it this year."),
-			'Order Method': randomChoice([
-				'Self-ordered - Receipt or proof of purchase to be provided',
-				'Self-ordered - Invoice to come',
-				'Self-ordered - via School Amazon Account',
-				'Ordered by Business office',
-				'AC Elan card',
-				'GO Elan card',
-				'MK Elan card',
-				'NM Elan card',
-				'RH Elan card',
-				'Home Depot CC',
-				'Lowes CC',
-				'Exxon CC'
-			]),
-			'Cost Account Type': cost[0],
-			'Cost Sub-Account Type': cost[1],
 		}
 	}
 	items = form.getItems();
@@ -628,23 +632,23 @@ function testApprovalTrigger () {
   items = form.getItems();  
   items.forEach(function (item) {
 		switch (item.getTitle()) {
-		  case 'Price':
+		case 'Price':
 			var value = '47.77';
       break;
 		case 'Item (Short Desc)':
 			var value = 'Widget, Extra Fancy';
 			break;
-          case 'Item Notes':
-            var value = 'Be sure to buy the prettiest ones';
-            break;          
+    case 'Item Notes':
+      var value = 'Be sure to buy the prettiest ones';
+      break;          
 		default: 
-            var value = "English";
+      var value = "English";
     }
 		switch (item.getType()) {
-          case FormApp.ItemType.CHECKBOX: var item = item.asCheckboxItem(); break;
-          case FormApp.ItemType.TEXT: var item = item.asTextItem(); break;
-          case FormApp.ItemType.PARAGRAPH_TEXT: var item = item.asParagraphTextItem(); break;
-          case FormApp.ItemType.MULTIPLE_CHOICE: var item = item.asMultipleChoiceItem(); break;
+    case FormApp.ItemType.CHECKBOX: var item = item.asCheckboxItem(); break;
+    case FormApp.ItemType.TEXT: var item = item.asTextItem(); break;
+    case FormApp.ItemType.PARAGRAPH_TEXT: var item = item.asParagraphTextItem(); break;
+    case FormApp.ItemType.MULTIPLE_CHOICE: var item = item.asMultipleChoiceItem(); break;
 		}
     try {
       var itemResponse = item.createResponse(value); // Create a response
@@ -742,8 +746,8 @@ function testField () {
 
 function testMagic () {
 	//var form = FormApp.openById('1o8u9iGIN6e5M9CTOtQNBDjueR-8QSYNHzIQR-EUGv98');
-    //var form = FormApp.openById('1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM');
-    var form = FormApp.openById('1o85hFuoe3c1TlQBn6FFxj6flSPkzOiElODFtgitGnrI');
+  //var form = FormApp.openById('1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM');
+  var form = FormApp.openById('1o85hFuoe3c1TlQBn6FFxj6flSPkzOiElODFtgitGnrI');
 	config = {
 		'PO Number':'*#*FY16-MM-###',
 	}
