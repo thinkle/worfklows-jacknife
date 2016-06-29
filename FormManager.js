@@ -311,13 +311,15 @@ triggerActions = {
     // END DEBUG
     Logger.log('Get actionRow'+JSON.stringify(actionRow));
     Logger.log('Get actionRow[Config1]'+JSON.stringify(actionRow.Config1));
-    //var f2f = getApprovalFormToMasterLookup(actionRow)
+		// configuration set up
 		f2f = lookupFields(actionRow.Config1.table,responses);
     var templateSettings = actionRow['Config2'].table
 		config = lookupFields(templateSettings,responses);
+		var logConf = actionRow['Config3'].table
 		checkForSelfApproval(config);
-		approver = config.Approver
-		f2f.Approver = config.Approver
+		f2f.Approver = config.Approver;
+		logConf.Approver = config.Approver;
+		// end configuration setup
     Logger.log('Got f2f'+JSON.stringify(f2f));
     if (! actionRow['Config1'].table) {
       Logger.log('Did not find approval form to master :(');
@@ -360,10 +362,8 @@ triggerActions = {
 														config, true
 													 ); 
 		}
-		var logConf = actionRow['Config3'].table
-		logConf.Approver = config.Approver; // make sure we get this right :)
     logEvent(
-      logConf,
+			logConf,
       event,
       actionResults,
       {'ApprovalResponseId':approvalRespObj.response.getId(),
@@ -376,7 +376,7 @@ triggerActions = {
 	'Log' : function (event, masterSheet, actionRow, actionResults) {
     Logger.log('!!! Action Log !!!');
     Logger.log('Event %s actionRow %s actionResults %s',event, actionRow, actionResults);
-	logEvent(actionRow['Config1'].table,event,actionResults);
+	return logEvent(actionRow['Config1'].table,event,actionResults);
 	},
 }
 
