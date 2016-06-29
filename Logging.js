@@ -35,6 +35,7 @@ function logEvent (configTable, event, actionResults, extraConfig) {
     emailError('Error updating '+settings.SpreadsheetId+' with '+JSON.stringify(settings), err);
     throw err;
   }
+  return settings
 }
 
 function createLogHeaderRow (form) {
@@ -70,20 +71,19 @@ function setupLoggingSheet (form, logSheet) {
   else {
     // If there is an existing sheet... grab the first row...
     logSheet = SpreadsheetApp.getActiveSheet() // comment me
-    var headers = logSheet.getRange(1,1,1,
-																		logSheet.getLastColumn())
+    var headers = logSheet.getRange(1,1,1,logSheet.getLastColumn());
     headers.forEach( function (i) {
       if (getItemByTitle(form,i)) {
         configOptions[i]='%'+i;
       }
       else {
-        configOptions[i]=''
+        configOptions[i]='';
       }
     })
   } // end pre-existing sheet set-up
 	// Set up ID and Spreadsheet options
-	configOptions['SheetId'] = logSheet.getSheetId()
-	configOptions['SpreadsheetId'] = logSheet.getParent().getId()
+	configOptions['SheetId'] = logSheet.getSheetId();
+	configOptions['SpreadsheetId'] = logSheet.getParent().getId();
   return configOptions
 }
 
