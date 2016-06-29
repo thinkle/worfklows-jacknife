@@ -16,8 +16,9 @@ function sendEmail (email, subject, htmlBody) {
 
 function checkForSelfApproval (settings) {
 	// We are checking whether the form allows self approval or what...
-	if (! settings.allowSelfApproval) {
+	if (! settings.allowSelfApproval || settings.allowSelfApproval=='0') {
 		if (settings.FormUser==settings.Approver) {
+			Logger.log('Uh oh self approval -- better fix it');
 			if (settings.ApproverDefault != settings.FormUser) {
 				settings.Approver = settings.ApproverDefault
 			}
