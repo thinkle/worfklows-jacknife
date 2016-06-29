@@ -4,8 +4,8 @@ function logEvent (configTable, event, actionResults, extraConfig) {
   //msg += JSON.stringify(actionResults)+','+JSON.stringify(extraConfig)+')';
   //emailError (msg, "NO ERROR",{'subject':'logEvent debug info'})
   // END DEBUG CODE
-	var settings = lookupFields(configTable,getResponseItems(event.response))
-	settings.Triggers = {}
+	var settings = lookupFields(configTable,getResponseItems(event.response, actionResults));
+	settings.Triggers = {};
 	for (var key in actionResults) {
 		settings[key+'Action'] = actionResults[key]
 		settings.Triggers[key] = actionResults[key]
@@ -26,10 +26,8 @@ function logEvent (configTable, event, actionResults, extraConfig) {
   var table = Table(sheet.getDataRange(),idCol);
   Logger.log('Updating row with %s',JSON.stringify(settings));
   try {
-    var lock = LockService.getScriptLock()
-    lock.waitLock(240000);
     table.updateRow(settings) // we just push our settings -- the set up of the table then becomes the key...
-    lock.releaseLock();
+
   }
   catch (err) {
     emailError('Error updating '+settings.SpreadsheetId+' with '+JSON.stringify(settings), err);
