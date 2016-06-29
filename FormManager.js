@@ -313,6 +313,11 @@ triggerActions = {
     Logger.log('Get actionRow[Config1]'+JSON.stringify(actionRow.Config1));
     //var f2f = getApprovalFormToMasterLookup(actionRow)
 		f2f = lookupFields(actionRow.Config1.table,responses);
+    var templateSettings = actionRow['Config2'].table
+		config = lookupFields(templateSettings,responses);
+		checkForSelfApproval(config);
+		approver = config.Approver
+		f2f.Approver = config.Approver
     Logger.log('Got f2f'+JSON.stringify(f2f));
     if (! actionRow['Config1'].table) {
       Logger.log('Did not find approval form to master :(');
@@ -325,13 +330,13 @@ triggerActions = {
 		var approvalRespObj = preFillApprovalForm({'targetForm':targetForm,
                                        'responseItems':responses,
                                        'field2field':f2f})
-        editUrl = approvalRespObj.edit_url
+    editUrl = approvalRespObj.edit_url
     //if (actionRow['Config2'].table && actionRow['Config3'].table) {
-    var templateSettings = actionRow['Config2'].table
-		config = lookupFields(templateSettings,responses);
     //var lookupSettings = actionRow['Config3'].table
 		//responses['link'] = editUrl;
-		checkForSelfApproval(config);
+		// DEBUG
+		//emailError('Checked for self-approval: '+JSON.stringify(config),'no error');
+		// END DEBUG
 		config.link = editUrl;
 		// Update with fields from lookup magic...
 		for (var key in f2f) {
@@ -355,8 +360,10 @@ triggerActions = {
 														config, true
 													 ); 
 		}
+		var logConf = actionRow['Config3'].table
+		logConf.Approver = config.Approver; // make sure we get this right :)
     logEvent(
-      actionRow['Config3'].table,
+      logConf,
       event,
       actionResults,
       {'ApprovalResponseId':approvalRespObj.response.getId(),
@@ -496,6 +503,22 @@ function testManyTriggers () {
 
 function paragraphify (s) {
 	return s + s + s + s + s + s + s + s + s + s;
+}
+
+function testSelfApproval () {
+	testIACSApprovalTrigger(
+		{
+			'Total Cost':'34.43',
+			'Vendor':'ThinkGeek',
+			'Total Type':'Exact Amount',
+			'Request Type':'Purchase Order',
+			'Item Name':'Mouse',
+			'Item Description':'Wireless',
+			'Order Notes':'Need yesterday',
+			'Order Method':'Self-ordered - Invoice to come',
+			'Cost Account Type':'Technology (TH)',
+			'Cost Sub-Account Type':'Operational Cost',
+		})
 }
 
 function testIACSApprovalTrigger (vals) {
@@ -718,10 +741,11 @@ function testField () {
 }
 
 function testMagic () {
-	form = FormApp.openById('1o8u9iGIN6e5M9CTOtQNBDjueR-8QSYNHzIQR-EUGv98');
-  
+	//var form = FormApp.openById('1o8u9iGIN6e5M9CTOtQNBDjueR-8QSYNHzIQR-EUGv98');
+    //var form = FormApp.openById('1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM');
+    var form = FormApp.openById('1o85hFuoe3c1TlQBn6FFxj6flSPkzOiElODFtgitGnrI');
 	config = {
-		'PO Number':'*#*FY17-MM-####',
+		'PO Number':'*#*FY16-MM-###',
 	}
 	responses = []
 	lookupMagic(config, responses, form);
