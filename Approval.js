@@ -98,7 +98,7 @@ function getApprovalFormToMasterLookup (actionRow) {
     }}
   else {
     Logger.log('No conf ?');
-    Logger.log('conf: '+JSON.stringify(conf));
+    Logger.log('conf: '+shortStringify(conf));
   }
   return f2f
 }
@@ -121,7 +121,7 @@ function getApprovalFormToMasterLookup (actionRow) {
     }}
   else {
     Logger.log('No conf ?');
-    Logger.log('conf: '+JSON.stringify(conf));
+    Logger.log('conf: '+shortStringify(conf));
   }
   return f2f
 }

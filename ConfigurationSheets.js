@@ -66,15 +66,15 @@ function getSheetById (ss, id) {
 
 function getConfigurationSheetById (ssID, sheetID, settings) {
   if (! ssID.getSheets) { // Handle case where we get handed a SS obj.
-    Logger.log('Grabbing sheet from ID: '+ssID+' obj: '+JSON.stringify(ssID));
+    Logger.log('Grabbing sheet from ID: '+ssID+' obj: '+shortStringify(ssID));
     var ss = SpreadsheetApp.openById(ssID);
   }
   else{
     var ss = ssID
-    }
+  }
   var sheet = getSheetById(ss, sheetID);
   if (sheet) {
-    logVerbose('Got sheet '+JSON.stringify(sheet))
+    logVerbose('Got sheet '+shortStringify(sheet))
     return ConfigurationSheet(sheet, settings) 
   }
   else {
@@ -92,20 +92,20 @@ COLORS = {
                     'bg':'#FFECB3'},
            'odd': {'fg':'#1A237E',
                    'bg':'#FFF8E1'},
-           },
+          },
   'lkey' : {'odd' : {'fg' : '#F5F5F5',
                      'bg': '#212121'},
-           'even' : {'fg': '#E0E0E0',
-                    'bg' : '#424242'},
-          },
+						'even' : {'fg': '#E0E0E0',
+											'bg' : '#424242'},
+           },
   'lval' : {'even': {'fg':'#424242',
                      'bg':'#F5F5F5'},
-           'odd': {'fg':'#212121',
-                   'bg':'#E0E0E0'},
+						'odd': {'fg':'#212121',
+										'bg':'#E0E0E0'},
            },           
-  }
+}
 
-                    
+
 function formatKeys (sheet, i) {    
   var keyc = i % 2 ? COLORS.key.even : COLORS.key.odd;
   var valc = i % 2 ? COLORS.val.even : COLORS.val.odd;
@@ -130,7 +130,7 @@ function formatLKeys (sheet, colnum) {
   val.setFontColor(valc.fg); val.setBackground(valc.bg);
   val.setFontWeight('normal'); val.setFontStyle('italic');
 }
-           
+
 function ConfigurationSheet (sheet, settings) {
   
   function overwriteConfiguration (keyValues, listValues) {
@@ -145,7 +145,7 @@ function ConfigurationSheet (sheet, settings) {
         
       }
     } // en for each key
-        
+    
     // Now handle list values...
     var column = 3; 
     for (var k in listValues) {
@@ -186,7 +186,7 @@ function ConfigurationSheet (sheet, settings) {
   
   function getConfigurationTable () {
     var keyValues = sheet.getRange(1,1,sheet.getLastRow(),2).getValues()
-    logVerbose('working with keyValues='+JSON.stringify(keyValues));
+    logVerbose('working with keyValues='+shortStringify(keyValues));
     var data = {}
     for (var r=0; r<keyValues.length; r++) {
       var row = keyValues[r]
@@ -217,22 +217,22 @@ function ConfigurationSheet (sheet, settings) {
 					var rootName = listHeader.substr(0,listHeader.length-3)
 					if (data.hasOwnProperty(rootName+'Val')) {
 						// Yippee - we have values...
-                      Object.defineProperty(data,
-                                            rootName+'Lookup',
-                                            {value:LookupArray(data[listHeader],data[rootName+'Val']),
-                        enumerable:false});
-                }
-            }
+            Object.defineProperty(data,
+                                  rootName+'Lookup',
+                                  {value:LookupArray(data[listHeader],data[rootName+'Val']),
+																	 enumerable:false});
+          }
+        }
       }); // end forEach valueListHeader...
     return data;
   } // end getConfigurationTable  
-           
+  
   configurationSheet = { // object we will return
     
     getSheetLink : function () { return sheet.getParent().getUrl()+'#gid='+sheet.getSheetId();
-    },
+															 },
     getSheetId: function () { return sheet.getSheetId();
-    },
+														},
     loadConfigurationTable: function () {
       this.table = getConfigurationTable();
     },    
@@ -249,8 +249,8 @@ function ConfigurationSheet (sheet, settings) {
 function LookupArray (array1, array2) {
 	var lookupArray = {};      
 	array1.forEach(function (key) {
-      if (! key) {return};
-      Logger.log('Key='+key);
+    if (! key) {return};
+    logVerbose('Key='+key);
 		Object.defineProperty(
 			lookupArray,
 			key,
@@ -260,17 +260,17 @@ function LookupArray (array1, array2) {
 					return array2[idx]
 				}
 			}, // end get
-			set : function (v) {
-				var idx = array1.indexOf(key);
-				if (idx > -1) {
-					array2[idx] = v
-				}
-				else {
-					array1.push(key)
-					array2.push(v)
-				}
-			}, // end set
-             enumerable: true,
+			 set : function (v) {
+				 var idx = array1.indexOf(key);
+				 if (idx > -1) {
+					 array2[idx] = v
+				 }
+				 else {
+					 array1.push(key)
+					 array2.push(v)
+				 }
+			 }, // end set
+       enumerable: true,
 			})
 	}) // end forEach key
 	Object.preventExtensions(lookupArray); // prevent confusion
@@ -287,10 +287,10 @@ function createConfigurationSheet (ss, sheetName, table) {
   }
   var sheet = ss.insertSheet(sheetName)    
   var cs = ConfigurationSheet(sheet)
-  logVerbose('Writing data values'+JSON.stringify(table))
+  logVerbose('Writing data values'+shortStringify(table))
   cs.writeConfigurationTable(
     table
-    )  
+  )  
   return cs
 }
 
@@ -326,12 +326,12 @@ function getMasterConfig (ss) {
     pushData = {'Form':form.getEditUrl(),'FormID':form.getId(),'Action':action}
     n = 1
     configSheets.forEach( function (configSheet) {
-      logAlways('Pushing configSheet '+n+': '+JSON.stringify(configSheet));
+      logAlways('Pushing configSheet '+n+': '+shortStringify(configSheet));
       pushData['Config '+n+' Link'] = configSheet.getSheetLink();      
       pushData['Config '+n+' ID'] = configSheet.getSheetId();  
       n += 1;
     }) // end forEach configSheet...
-    logAlways('pushRow '+JSON.stringify(pushData));
+    logAlways('pushRow '+shortStringify(pushData));
     table.pushRow(pushData);
   }
   table.getConfigsForId = function (id) {
@@ -357,7 +357,7 @@ function getMasterConfig (ss) {
         } // end for each config
         //return configs;
         //} // end getConfigurationSheets
-          
+        
         retRows.push(row)
       }
     }) // end forEach row...
@@ -372,14 +372,14 @@ function testReadConfigsFromMaster () {
   var masterConfig = getMasterConfig(ss)
   var configs = masterConfig.getConfigsForId(formId)
   configs.forEach(function (cRow) {
-    logVerbose('Config row: '+JSON.stringify(cRow))
-    logVerbose('Has method: '+JSON.stringify(cRow.getConfigurationSheets));
+    logVerbose('Config row: '+shortStringify(cRow))
+    logVerbose('Has method: '+shortStringify(cRow.getConfigurationSheets));
     //cRow.getConfigurationSheets().forEach( function (sheet) {
     var sheet = cRow['Config1']
     logVerbose('Got sheet: '+JSON.stringify(sheet.table))
     logVerbose('From fields: '+JSON.stringify(sheet.table.fromFields))
     logVerbose('Approval Form ID: '+JSON.stringify(sheet.table['Approval Form ID']))
-   // })
+		// })
   })
 }
 
@@ -395,12 +395,12 @@ function testCreateConfig () {
                            })
 }// end testCreateConfig
 
-                           
+
 function testReadConfigurationSheet () {
   var cs = getConfigurationSheetById(
     '1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk',
     '286151412'
-    )
+  )
   Logger.log('Got configuration sheet'+JSON.stringify(cs))
   cs.loadConfigurationTable()
   Logger.log('Got data table: '+JSON.stringify(cs.table));
@@ -453,10 +453,10 @@ function testMagicDictionaryStuff () {
 }
 
 function testReadMagic () {
-   var cs = getConfigurationSheetById(
+  var cs = getConfigurationSheetById(
     '1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk',
     '652288327'
-    );
+  );
   cs.loadConfigurationTable();
   Logger.log('Config:'+JSON.stringify(cs));
   Logger.log(JSON.stringify(cs.table['Regular Key']));

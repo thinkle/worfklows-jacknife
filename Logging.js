@@ -24,7 +24,7 @@ function logEvent (configTable, event, actionResults, extraConfig) {
   }
   var idCol = configTable.idCol ? configTable.idCol : undefined
   var table = Table(sheet.getDataRange(),idCol);
-  Logger.log('Updating row with %s',JSON.stringify(settings));
+  Logger.log('Updating row with %s',shortStringify(settings));
   try {
     table.updateRow(settings) // we just push our settings -- the set up of the table then becomes the key...
 

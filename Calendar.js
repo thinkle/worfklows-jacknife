@@ -69,7 +69,7 @@ function checkAuthorization (results, config) {
 	else {
 		Logger.log('Form not authorized (User %s, conf %s)',conf.FormUser,conf);
 		sendEmailFromTemplate(conf.FormUser,'Unauthorized attempt',
-													'You attempted to use a form that is meant to trigger actions you are not authorized to perform. If you believe you should have access to the form, please email <a href="thinkle@innovationcharter.org">thinkle@innovationcharter.org</a>.\n\nDetailed technical information about what you were trying to do:\n'+JSON.stringify(conf))
+													'You attempted to use a form that is meant to trigger actions you are not authorized to perform. If you believe you should have access to the form, please email <a href="thinkle@innovationcharter.org">thinkle@innovationcharter.org</a>.\n\nDetailed technical information about what you were trying to do:\n'+shortStringify(conf))
 		return false
 	}
 }

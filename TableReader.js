@@ -145,7 +145,7 @@ function Table (range, idHeader) {
 			appendRow.push(''); // pad beginning of array...
 		}
 		appendRow = appendRow.concat(pushArray);
-    logVerbose('New values = '+JSON.stringify(pushArray));
+    logVerbose('New values = '+shortStringify(pushArray));
     //cell.setValues([pushArray]); // push to sheet...
 		sheet.appendRow(appendRow);
     values.push(pushArray); // push to array
@@ -159,14 +159,24 @@ function Table (range, idHeader) {
   table.updateRow = function (data) {
     var id = data[idHeader]
     if (rowsById.hasOwnProperty(id)) {
-      var row = rowsById[id];
-      for (var prop in data) {
-        if (data.hasOwnProperty(prop) && row.hasOwnProperty(prop)) {  
-          if (data[prop] !== undefined) {
-            row[prop] = data[prop]
-          }
-        }
-      }
+			var lock = LockService.getScriptLock()
+			try {
+				lock.waitLock(240000);
+				var row = rowsById[id];
+				for (var prop in data) {
+					if (data.hasOwnProperty(prop) && row.hasOwnProperty(prop)) {  
+						if (data[prop] !== undefined) {
+							row[prop] = data[prop]
+						}
+					}
+				}
+			}
+			catch (err) {
+				emailError('Error during table write',err);
+			}
+			finally {
+				lock.releaseLock();
+			}
     }
     else {
       table.pushRow(data)
@@ -212,7 +222,7 @@ function testTable () {
   logNormal('Table length is : '+table.length);
   logNormal('Table row 1: '+table[1].First+' '+table[1].Last)
   logNormal('Table row 1: '+table[1][0]+' '+table[1][1])
-  logNormal('Got table '+JSON.stringify(table))
+  logNormal('Got table '+shortStringify(table))
   table[1]['Last'] = 'Sayre'
   table[2]['Last'] = 'Hinkle'
   table[3]['Last']='Holy Shit It Worked'

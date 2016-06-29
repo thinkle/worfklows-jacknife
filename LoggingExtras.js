@@ -3,7 +3,8 @@ VERBOSITY = 1
 function doLog (verbosity) {    
   if (VERBOSITY >= verbosity) {
     var args = Array.prototype.slice.call(arguments);
-    args.shift()    
+    args.shift()
+		args = args.map(tidyLog)
     Logger.log.apply(Logger,args)
   }
 }
@@ -40,8 +41,8 @@ function assertEq (a, b) {
     logVerbose(a+'='+b+'! Success');
   }
   else {
-    Logger.log('ASSERTION ERROR: '+JSON.stringify(a)+'!='+JSON.stringify(b))
-    throw 'AssertionError'+JSON.stringify(a)+'!='+JSON.stringify(b);
+    Logger.log('ASSERTION ERROR: '+shortStringify(a)+'!='+JSON.stringify(b))
+    throw 'AssertionError'+shortStringify(a)+'!='+JSON.stringify(b);
   }
 }
 
@@ -63,4 +64,54 @@ function testError () {
 	catch (err) {
 		emailError('Oops',err);
 	}
+}
+
+function tidyLog (obj) {
+	if (typeof obj == 'object') {
+		var objCopy = {}
+		for (key in obj) {
+			var val = obj[key]
+			objCopy[key] = val
+			if (typeof val == 'string') {
+				if (val.length > 20) {
+					objCopy[key] = val.substr(0,17)+'...'
+				}
+			}
+			if (Array.isArray(val)) {
+				objCopy[key] = val.map(function (o) {return tidyLog(o)});
+			}
+			if (typeof val == 'object') {
+				objCopy[key] = tidyLog(val)
+			}
+		}
+		return objCopy
+	}
+	else {
+		return obj
+	}
+
+}
+
+function testTidyLog () {
+	bigObj = {}
+	bigSubObj = {}
+	bugSubSub = {}
+	bigObj['subObj'] = bigSubObj
+	bigSubObj['subObj'] = bigSubSub
+	for (var i=0; i<20; i++) {
+		bigObj[i] = 'Foo is a long string'
+		bigObj[i+'Foo'] = 'Foo is a longer string'
+		bigObj[i+'FooFoo'] = paragraphify('Foo is an even much longer string. ')
+		bigSubObj[i] = bigObj[i];
+		bigSubSub[i] = bigObj[i];
+		bigSubObj[i+'Foo'] = bigObj[i+'Foo'];
+		bigSubSub[i+'FooFoo'] = bigObj[i+'Foo'];
+		bigSubObj[i+'Foo'] = bigObj[i+'FooFoo'];
+		bigSubSub[i+'FooFoo'] = bigObj[i+'FooFoo'];		
+	}
+	logNormal('Log: %s',bigObj);
+}
+
+function shortStringify (obj) {
+	return JSON.stringify(tidyLog(obj))
 }

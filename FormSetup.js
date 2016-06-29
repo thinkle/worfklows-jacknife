@@ -43,7 +43,7 @@ function listFormItemTitles (form) {
       titles.push(item.getTitle())
     }
     else {
-      Logger.log('ignoring '+JSON.stringify(item));
+      Logger.log('ignoring '+shortStringify(item));
     }
   }) // end forEach item
   return titles
@@ -338,7 +338,7 @@ function createApprovalForm (firstForm, params) {
 		}
 	));
   // write Configuration Data...
-  Logger.log('masterConfig.pushConfig'+JSON.stringify([firstForm,'Approval',configSheets]));
+  Logger.log('masterConfig.pushConfig'+shortStringify([firstForm,'Approval',configSheets]));
   masterConfig.pushConfig(
     firstForm,
     'Approval',
@@ -433,7 +433,7 @@ function setupIACSApprovalForm () {
 		}
 	));
   // write Configuration Data...
-  Logger.log('masterConfig.pushConfig'+JSON.stringify([firstForm,'Approval',configSheets]));
+  Logger.log('masterConfig.pushConfig'+shortStringify([firstForm,'Approval',configSheets]));
   masterConfig.pushConfig(
     form,
     'Approval',

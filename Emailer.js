@@ -4,7 +4,7 @@ function escapeRegExp(str) {
 
 function sendEmail (email, subject, htmlBody) {
   Logger.log('Result of sendmail=>%s, %s, %s',email,subject,htmlBody);
-  Logger.log(JSON.stringify(
+  Logger.log(shortStringify(
     MailApp.sendEmail(
       {to:email,
        htmlBody:htmlBody,
@@ -69,7 +69,7 @@ function getEmail (addressSettings, results) {
 }
 
 function sendFormResultEmail (results, settings) {
-  Logger.log('sendFormResultEmail'+JSON.stringify([results,settings]));
+  Logger.log('sendFormResultEmail'+shortStringify([results,settings]));
 	var config = lookupFields(settings, results)
 	// Add support for conditional email...
 	if (config.hasOwnProperty('onlyEmailIf')) {
@@ -115,7 +115,7 @@ function sendEmailFromTemplate (email, subj, template, fields, fixWhiteSpace) {
       msg = '<pre>';
 		msg += 'Email being sent: here is what we got.\n';
 		msg +=  'Template: '+template+'\n\n';
-		msg += 'Fields: '+JSON.stringify(fields)+'\n\n';
+		msg += 'Fields: '+shortStringify(fields)+'\n\n';
 		msg += 'Result: \nSubject: '+applyTemplate(subj,fields);
 		msg += 'Result: \nBody: '+applyTemplate(template,fields,fixWhiteSpace);
     msg += '</pre>';

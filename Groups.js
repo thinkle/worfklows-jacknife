@@ -21,7 +21,7 @@ function addToGroupFromForm (results, groupSettings) {
 		return false;
 	}
 	var fields = lookupFields(groupSettings, results);
-  Logger.log('addToGroupFromForm got fields=>%s',JSON.stringify(fields));
+  Logger.log('addToGroupFromForm got fields=>%s',shortStringify(fields));
 	var groupsAdded = addToGroups(fields.username,fields.groups);
   return {'user':fields.username,'groups':groupsAdded,'settings':groupSettings}
 }

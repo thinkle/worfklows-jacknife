@@ -37,7 +37,7 @@ function lookupFields (settings, results) {
 		logAlways('No results (%s) handed to lookupFields',results)
 	}
 	logNormal('lookupFields(%s,%s)',settings,results);
-  logVerbose('Starting with settings: %s, results: %s',JSON.stringify(settings),JSON.stringify(results));
+  logVerbose('Starting with settings: %s, results: %s',shortStringify(settings),shortStringify(results));
 	fields = {}
 	if (results.FormUser) { fields.FormUser=results.FormUser }
 	if (results.Timestamp) { fields.Timestamp = results.Timestamp }
@@ -64,7 +64,7 @@ function lookupFields (settings, results) {
 				}
 			} // end looping through attributes
 			settings[settingKey] = obj
-			logNormal('%s settings[%s]=>%s (looked up in %s)',val,settingKey,obj,results.actionResults);
+			logNormal('%s settings[%s]=>%s (looked up in actionResults %s)',val,settingKey,obj,Object.keys(results.actionResults));
 		}
 		if (val[0]=='%') {
 			// Syntax = %FieldnameFromForm
@@ -436,7 +436,7 @@ function onFormSubmitTrigger (event) {
   // now lookup our configuration information and do our thing...
   var masterConfig = getMasterConfig(masterSheet);
   var formActions = masterConfig.getConfigsForId(form.getId());
-  Logger.log('Working with formActions: '+JSON.stringify(formActions));
+  Logger.log('Working with formActions: '+shortStringify(formActions));
   var actionResults = {}
   formActions.forEach(function (actionRow) {
     Logger.log('Trying action: '+actionRow);
@@ -619,7 +619,7 @@ function testIACSApprovalTrigger (vals) {
       formResponse.withItemResponse(itemResponse);
     }
     catch (err) {
-      Logger.log('Oh well, no response for: '+JSON.stringify(item));
+      Logger.log('Oh well, no response for: '+shortStringify(item));
 			Logger.log('Error: '+err);
     }
   }) // end forEach
@@ -657,7 +657,7 @@ function testApprovalTrigger () {
       formResponse.withItemResponse(itemResponse);
     }
     catch (err) {
-      Logger.log('Oh well, no response for: '+JSON.stringify(item));
+      Logger.log('Oh well, no response for: '+shortStringify(item));
 			Logger.log('Error: '+err);
     }
   }) // end forEach
@@ -692,7 +692,7 @@ function testUserTrigger () {
       if (item.getType()=='CHECKBOX') {
         Logger.log('Filling out multiple choice by checking all the boxes');
         var allResponses = item.asCheckboxItem().getChoices().map(function (i) {return i.getValue()})
-        Logger.log(JSON.stringify(allResponses));
+        Logger.log(shortStringify(allResponses));
         var resp = item.asCheckboxItem().createResponse(
           allResponses
         )
@@ -722,7 +722,7 @@ function testCalTrigger () {
 			if (item.getType()=='CHECKBOX') {
 				Logger.log('Filling out multiple choice by checking all the boxes');
         var allResponses = item.asCheckboxItem().getChoices().map(function (i) {return i.getValue()})
-        Logger.log(JSON.stringify(allResponses));
+        Logger.log(shortStringify(allResponses));
 				var resp = item.asCheckboxItem().createResponse(
 					allResponses
 				)
@@ -735,7 +735,7 @@ function testCalTrigger () {
 
 function testGetConfigsForId () {
 	var masterSheet = SpreadsheetApp.openById('1-mHEuYtRNQDtQO1vX0WY49RsB6noRXQuV_sBLUl0DJ0');
-	Logger.log('GOT Configs: '+JSON.stringify(getMasterConfig(masterSheet).getConfigsForId('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4')));
+	Logger.log('GOT Configs: '+shortStringify(getMasterConfig(masterSheet).getConfigsForId('1ntFrLMtb3ER8c8eCV-8nEooDnII_FF6HCLRQMntTCt4')));
 }
 
 function testField () {  
