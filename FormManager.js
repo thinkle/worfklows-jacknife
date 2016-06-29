@@ -496,7 +496,7 @@ function randomChoice (arr) {
 function testManyTriggers () {
 	// PropertiesService.getUserProperties().setProperty('FY16-06-###','32');
 	for (var i=1; i<20; i++) {
-		//Utilities.sleep(1000);
+		Utilities.sleep(1000);
     testIACSApprovalTrigger();        
 	};
 }
@@ -557,6 +557,7 @@ function getIACSOptions () {
 function testAllIACSOptions () {
   var allOpts = getIACSOptions()
   for (var key in allOpts) {
+		Utilities.sleep(1000);
     Logger.log('Testing %s',key);
     var choices  = allOpts[key];
     choices.forEach(function (c) { 
@@ -575,6 +576,7 @@ function testAllIACSOptions () {
 			}
       vals[key] = c;
       testIACSApprovalTrigger(vals);
+			Utilities.sleep(100);
     });
   }
 }
