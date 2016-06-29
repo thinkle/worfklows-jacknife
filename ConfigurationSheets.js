@@ -251,7 +251,7 @@ function LookupArray (array1, array2) {
 	array1.forEach(function (key) {
     if (! key) {return};
     logVerbose('Key='+key);
-		Object.defineProperty(
+    Object.defineProperty(
 			lookupArray,
 			key,
 			{get : function () {
