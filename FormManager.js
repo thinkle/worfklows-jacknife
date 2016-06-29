@@ -45,7 +45,7 @@ function lookupFields (settings, results) {
 		logVerbose('lookupFields "%s"=>"%s"',settingKey,settings[settingKey]);
 		var val = settings[settingKey];
 		if (val[0]=='?') {
-			logNormal('Looking up action! %s',val);
+			logNormal('Looking up action! %s:%s',settingKey,val);
 			// Syntax = +ACTION.attribute.attribute.attribute
 			var result = val.substr(1);
 			// BUILD REST OF THIS TO PARSE OUT ACTION RESULTS
@@ -64,7 +64,7 @@ function lookupFields (settings, results) {
 				}
 			} // end looping through attributes
 			settings[settingKey] = obj
-			logVerbose('%s settings[%s]=>%s',val,settingKey,obj);
+			logNormal('%s settings[%s]=>%s (looked up in %s)',val,settingKey,obj,results.actionResults);
 		}
 		if (val[0]=='%') {
 			// Syntax = %FieldnameFromForm
