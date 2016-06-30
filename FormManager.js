@@ -44,7 +44,8 @@ function lookupFields (settings, results) {
 	for (var settingKey in settings) {
 		logVerbose('lookupFields "%s"=>"%s"',settingKey,settings[settingKey]);
 		var val = settings[settingKey];
-		if (val[0]=='?') {
+		switch (val[0]) {
+		case '?':
 			logNormal('Looking up action! %s:%s',settingKey,val);
 			// Syntax = +ACTION.attribute.attribute.attribute
 			var result = val.substr(1);
@@ -63,50 +64,48 @@ function lookupFields (settings, results) {
 					obj = undefined
 				}
 			} // end looping through attributes
-			settings[settingKey] = obj
+			fields[settingKey] = obj
 			logNormal('%s settings[%s]=>%s (looked up in actionResults %s)',val,settingKey,obj,Object.keys(results.actionResults));
-		}
-		if (val[0]=='%') {
+			break;
+		case '%':
 			// Syntax = %FieldnameFromForm
 			val = val.substr(1);
 			fields[settingKey] = results[val];
-      logVerbose('fields[%s]=%s',settingKey,fields[settingKey]);
-		}
-		else {
-			// Syntax = @FormFieldname>>LookupFieldName
-			if (val[0]=='@') {
-				if (val.indexOf('>>')==-1) {
-					throw 'Invalid configuration: '+val+' - @ with no >>';
-				}
-				val = val.substr(1); // Now we get the value and pass it through
-				var vals = val.split('>>');
-				var fieldKey = vals[0]
-				var lookupVar = vals[1]
-				var initialResult = results[fieldKey]
-				var lookupDict = settings[lookupVar+'Lookup'];
-				if (!lookupDict) {
-					throw "Illegal settings: no lookup dict "+lookupVar+'Lookup'+' for lookup value @'+val;
-				}
-				else {
-					logVerbose('Looking up %s in dictionary %s',initialResult, lookupDict);
-					function getResult (r) {
-						var fieldVal = lookupDict[r]
-						if (fieldVal) { return fieldVal }
-						else { return lookupDict['Default']}
-					}
-					if (Array.isArray(initialResult)) {
-						fields[settingKey] = initialResult.map(getResult)
-					}
-					else {
-						fields[settingKey] = getResult(initialResult)
-					}
-					logVerbose('fields[%s]=>%s',settingKey,fields[settingKey])
-				}
+			logVerbose('fields[%s]=%s',settingKey,fields[settingKey]);
+			break;
+		case '@':
+			if (val.indexOf('>>')==-1) {
+				throw 'Invalid configuration: '+val+' - @ with no >>';
+			}
+			val = val.substr(1); // Now we get the value and pass it through
+			var vals = val.split('>>');
+			var fieldKey = vals[0]
+			var lookupVar = vals[1]
+			var initialResult = results[fieldKey]
+			var lookupDict = settings[lookupVar+'Lookup'];
+			if (!lookupDict) {
+				throw "Illegal settings: no lookup dict "+lookupVar+'Lookup'+' for lookup value @'+val;
 			}
 			else {
-				fields[settingKey] = val;
+				logVerbose('Looking up %s in dictionary %s',initialResult, lookupDict);
+				function getResult (r) {
+					var fieldVal = lookupDict[r]
+					if (fieldVal) { return fieldVal }
+					else { return lookupDict['Default']}
+				}
+				if (Array.isArray(initialResult)) {
+					fields[settingKey] = initialResult.map(getResult)
+				}
+				else {
+					fields[settingKey] = getResult(initialResult)
+				}
+				logVerbose('fields[%s]=>%s',settingKey,fields[settingKey])
 			}
-		}
+			break;
+		default:
+			logVerbose('fields[%s]=>%s',settingKey,val);
+			fields[settingKey] = val;
+		} // end switch
 	}
 	logVerbose('Looked up fields->%s',fields);
 	return fields
@@ -757,3 +756,24 @@ function testMagic () {
 	lookupMagic(config, responses, form);
 	Logger.log('Config %s',config);
 }
+
+function testLookupField () {
+	settings = {
+		'TestAt':'@Foo>>Bar',
+		'TestDefault':'@Default>>Bar',
+		'TestPerc':'%Foo',
+		'TestQuest':'?Email.config.To',
+		'TestNorm':'Nuttin special',
+		'BarLookup':{'Foo':'FooLookedUp',
+								 'Bar':'LookedUpBar',
+								 'Default':'Default?',
+								},
+	}
+	result = {
+		'Foo':'Boo',
+		'Default':'Nothing to see here',
+		'actionResults':{'Email':{'config':{'To':'me@me.me'}}}
+	}
+	Logger.log('lookupFields=>%s',lookupFields(settings,result))
+}
+						
