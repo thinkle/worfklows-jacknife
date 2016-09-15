@@ -1,13 +1,17 @@
 /* 
 DESIGN NOTES
 
-The basic idea here is that we create a master configuration sheet that handles a number of kinds of actions. These actions can be strung together into a workflow. The spreadsheet manages everything and can be edited directly as needed.
+The basic idea here is that we create a master configuration sheet that handles a number of kinds of actions. These
+actions can be strung together into a workflow. The spreadsheet manages everything and can be edited directly as needed. 
+At some future point I may go ahead and write a UI to manage it.
+
+All of the configuration data for the program lives in that spreadsheet.
+
 
 The master spreadsheet contains:
 
 Form - Action - Config Sheets
 
-All of the configuration data for the program lives in that spreadsheet.
 
 Here are the possible actions and configurations:
 
