@@ -136,7 +136,7 @@ function checkForApprovals (form, logsheet) {
         // can actually be one of TWO different IDs, and the ID you get off of an object
         // from resp.getId() is DIFFERENT than the ID you get from 
         // form.getResponse(resp).getId() -- so yeah, thanks google, thanks a fucking lot.
-		if (! logTable.hasRow(respId) && ! logTable.hasRow(form.getResponse(resp.getId()))) {
+		if (! logTable.hasRow(respId) && ! logTable.hasRow(form.getResponse(resp.getId()).getId())) {
 			// We don't have the row! We better do this thing...
 			Logger.log('Do this thing! '+respId+' '+resp);
             //foo = y + 7 + 23;
@@ -155,6 +155,7 @@ function checkForApprovals (form, logsheet) {
 }
 
 function approvalOnTimerCleanup () {
+    Logger.log('approvalOnTimerCleanup')
 	form_sources = []
 	ScriptApp.getProjectTriggers().forEach(function (trigger) {
 		if (trigger.getEventType()==ScriptApp.EventType.ON_FORM_SUBMIT) {
@@ -187,6 +188,46 @@ function approvalOnTimerCleanup () {
 	}) // end forEach formSource
 }
 			
+function approvedApprovalOnTimerCleanup () {
+	// Custom IACS Method -- unlikely to help anyone else :(
+    Logger.log('approvedApprovalOnTimerCleanup')
+	var masterSheet = SpreadsheetApp.openById('10yauqDvNnG2iQwoaIWbRs_3HKVJkYcx0HK3MRCL2bRE');
+	var masterConfig = getMasterConfig(masterSheet);
+	var form = FormApp.openById('1o85hFuoe3c1TlQBn6FFxj6flSPkzOiElODFtgitGnrI');
+	var logSheet = getSheetById(SpreadsheetApp.openById('1U2MpGDV9RmczNYJ38z4D-5Pps7_wQlhl_CeSdMVhQRk'),'0');
+	var logTable = Table(logSheet.getDataRange(),'PO#');
+	var byPO = false
+	function getByPO () { // only do if needed
+		var byPO = {}
+		logTable.forEach(function (r) {
+			byPO[r['PO#']] = r
+		});
+		return byPO
+	}
+	var poItem = getItemByTitle(form,'PO Number')
+	form.getResponses().forEach(function (resp) {
+      Logger.log('Looking at response: '+resp);
+		var respId = resp.getId()
+		var respId2 = form.getResponse(respId).getId()
+		if (! logTable.hasRow(respId) && ! logTable.hasRow(respId2)) {
+			// Now check for another corner case -- it's possible we have the PO# but not the ID
+			// in which case it's likely that someone used my form-submitter to do a bulk approval
+			// of these.
+			if (! byPO) { byPO = getByPO()}
+			var poNum = resp.getResponseForItem(poItem).getResponse()
+			if (! byPO.hasOwnProperty(poNum)) {
+				// Weird -- it seems we really truly don't have this one.
+				// Let's kick it off manually
+				fakeEvent = {
+					'source':form,
+					'response':resp,
+				}
+				onFormSubmitTrigger(fakeEvent);
+			}
+		}
+	}); // end forEach response
+} // end approvedApprovalTimerCleanup
+
 function listProps () {
   var allProps = PropertiesService.getUserProperties().getProperties();  
   for (var key in allProps) {Logger.log('%s:%s',key,allProps[key]);}
