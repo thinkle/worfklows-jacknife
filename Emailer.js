@@ -84,14 +84,14 @@ function sendFormResultEmail (results, settings) {
 	for (var setting in results) {
 		templateFields[setting] = spreadsheetify(results[setting]);
 	} // end forEach result
-	for (var setting in settings) {
+	for (var setting in config) {
 		if (templateFields[setting]) {
 			logAlways('sendFormResultsEmail - Potential conflict between results[%s]=>%s and settings[%s]=>%s; using results',
 								setting, templateFields[setting], setting, settings[setting]
 							 )
 		}
 		else {
-			templateFields[setting] = spreadsheetify(settings[setting]);
+			templateFields[setting] = spreadsheetify(config[setting]);
 		}
 	} // end for each setting
 	logNormal('config=>%s',config);
