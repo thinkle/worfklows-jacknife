@@ -66,7 +66,12 @@ function testError () {
 	}
 }
 
-function tidyLog (obj) {
+function tidyLog (obj) {return obj}
+
+function tidyLogSucks (obj) {
+	if (Array.isArray(obj)) {
+		return obj.map(tidyLog)
+	}
 	if (typeof obj == 'object') {
 		var objCopy = {}
 		for (key in obj) {
