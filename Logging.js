@@ -4,7 +4,7 @@ function logEvent (configTable, event, actionResults, extraConfig) {
   //msg += JSON.stringify(actionResults)+','+JSON.stringify(extraConfig)+')';
   //emailError (msg, "NO ERROR",{'subject':'logEvent debug info'})
   // END DEBUG CODE
-	var settings = lookupFields(configTable,getResponseItems(event.response, actionResults));
+	var settings = lookupFields(configTable,getResponseItems(event.response, actionResults));	
 	settings.Triggers = {};
 	for (var key in actionResults) {
 		settings[key+'Action'] = actionResults[key]
@@ -25,6 +25,7 @@ function logEvent (configTable, event, actionResults, extraConfig) {
   var idCol = configTable.idCol ? configTable.idCol : undefined
   var table = Table(sheet.getDataRange(),idCol);
   Logger.log('Updating row with %s',shortStringify(settings));
+	//emailError('logEvent updating table '+shortStringify(table)+'row with settings: '+shortStringify(settings),'No error'); // DEBUG
   try {
     table.updateRow(settings) // we just push our settings -- the set up of the table then becomes the key...
 
