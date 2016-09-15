@@ -156,6 +156,10 @@ function Table (range, idHeader) {
 		return rowsById.hasOwnProperty(id)
 	}
 
+    table.getRow = function (id) {
+      return rowsById[id];
+    }
+    
   table.updateRow = function (data) {
     var id = data[idHeader]
     if (rowsById.hasOwnProperty(id)) {
@@ -183,6 +187,7 @@ function Table (range, idHeader) {
     }
   }
   
+  table.headers = headers;
   
   return table;
 }
