@@ -263,12 +263,12 @@ triggerActions = {
   'Email' : function (event, masterSheet, actionRow, actionResults) {
     Logger.log('!!! EMAIL TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
     var responses = getResponseItems(event.response,actionResults);
-		var settings = actionRow['Config1'].table
+	var settings = actionRow['Config1'].table    
     //var templateSettings = actionRow['Config1'].table;
     //var lookupSettings = actionRow['Config2'].table;
     return sendFormResultEmail(
       responses,
-			settings
+      settings
       //templateSettings,
       //lookupSettings
     );
@@ -379,13 +379,49 @@ triggerActions = {
 	},
 }
 
+function getFormFromTrigger (source) {
+  var form = undefined;  
+  ScriptApp.getProjectTriggers().forEach(function (trigger) {
+    if (trigger.getUniqueId()==source.triggerUid) {
+    form = FormApp.openById(trigger.getTriggerSourceId());
+    Logger.log('form=%s',form);  
+    success = form;
+  }
+  else {
+    Logger.log('%s is not the one we want :(',trigger.getUniqueId());
+    }
+  });
+Logger.log('Got form=%s',form)
+return form
+}
+
+
+function testFormWeirdness () {
+//var id="1FAIpQLSfeCwEnjOTljgGnbZVVif1z6xgMZ30m2v7SAAonZ15fRGCsZQ"
+//Logger.log('Got form %s',FormApp.openById(id));
+  source = {
+  triggerUid : 6464680668718090000}
+  form = getFormFromTrigger (source);
+  Logger.log('Got form %s',form)
+  }
+ 
 function fixBrokenEvent (event) {
   // google's event does not work as documented... Let's fix it! 
   // Help from: comment #2 on https://code.google.com/p/google-apps-script-issues/issues/detail?id=4810 
   if (! event.source ) {
     var responseEditUrl = event.response.getEditResponseUrl(); //gets edit response url which includes the form url
     var responseUrl = responseEditUrl.toString().replace(/viewform.*/,''); //returns only the form url
-    event.source = FormApp.openByUrl(responseUrl); //gets the submitted form id
+    try {event.source = FormApp.openByUrl(responseUrl); //gets the submitted form id
+    }
+    catch (err) {
+    //emailError('Unable to get form for '+responseUrl+' taken from '+responseEditUrl+' in event '+JSON.stringify(event),err);
+    //throw err
+      try {event.source = getFormFromTrigger(event);}
+      catch (err2) {
+        emailError('Unable to get form for '+responseUrl+' taken from '+responseEditUrl+' or from trigger in event' + JSON.stringify(event),err2);
+        throw err2;
+     }
+    }    
   }
   return event
 }
@@ -421,17 +457,15 @@ function writePropertyTest () {
 }
 
 function onFormSubmitTrigger (event) {
-  Logger.log('onFormSubmitTrigger got: '+JSON.stringify(event))
-  event = fixBrokenEvent(event)  
-  var form = event.source;  
-  // can we keep this bound in the future?
-  //var masterSheet = SpreadsheetApp.getActiveSheet();
+  Logger.log('onFormSubmitTrigger got event: '+JSON.stringify(event))
+  event = fixBrokenEvent(event)
+  var form = event.source;
   masterSheetId = PropertiesService.getUserProperties().getProperty(form.getId())
   if (!masterSheetId) {
     throw "No Master Sheet ID associated with form that triggered us ;("
-  }
-  
+  }  
   var masterSheet = SpreadsheetApp.openById(masterSheetId);
+  logNormal('Trigger got Form %s, master sheet %s',form.getId(),masterSheetId);
   // now lookup our configuration information and do our thing...
   var masterConfig = getMasterConfig(masterSheet);
   var formActions = masterConfig.getConfigsForId(form.getId());
@@ -553,7 +587,24 @@ function getIACSOptions () {
   return opts
 }
 
+function oneTest () {
+    vals = {
+      'Total Cost': 0,
+      'Total Type': "Exact Amount",
+      'Request Type': "Purchase Order",
+      'Order Method': "Self-ordered - Receipt or proof of purchase to be provided",
+			'Cost Account Type': "Technology (TH)",
+			'Cost Sub-Account Type': "Operational Cost",
+			'Vendor': "NOT REAL",
+			'Item Name': "TEST",
+			'Item Description': "TEST DESC",
+			'Order Notes': "TEST NOTES",
+		}
+	testIACSApprovalTrigger(vals);
+}
+
 function testAllIACSOptions () {
+  throw "Sheet is live, please don't test anymore";https://docs.google.com/spreadsheets/d/1U2MpGDV9RmczNYJ38z4D-5Pps7_wQlhl_CeSdMVhQRk/edit#gid=1254599839
   var allOpts = getIACSOptions()
   for (var key in allOpts) {
 		Utilities.sleep(1000);
