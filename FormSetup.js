@@ -235,13 +235,19 @@ function createUserForm (calendarIDs, groups, folderIDs,params) {
 
 /* newTextItems=['Approval'], convertFields={'Requester':'FormUser', 'Request Timestamp':'Timestamp'}, ) */
 function createApprovalForm (firstForm, params) {
+  if (params == undefined) {params = {}}
   var formAsFile = DriveApp.getFileById(firstForm.getId())
   var origTitle = firstForm.getTitle()
   var origName = formAsFile.getName()
   var titleSuffix = params['titleSuffix'] ? params['titleSuffix'] : ' Approval'  
   var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
   var masterConfig = getMasterConfig(controlSS);
-  var approvalFormAsFile = formAsFile.makeCopy(origName+' '+titleSuffix, params['destinationFolder'] ? params['destinationFolder'] : undefined)
+  if (params['DestinationFolder']) {
+  var approvalFormAsFile = formAsFile.makeCopy(origName+' '+titleSuffix, params['destinationFolder'] ? params['destinationFolder'] : "")
+  }
+  else {
+      var approvalFormAsFile = formAsFile.makeCopy(origName+' '+titleSuffix);
+  }
   var approvalForm = FormApp.openById(approvalFormAsFile.getId());   
   approvalForm.setTitle(origTitle+' '+titleSuffix)  
   var convertFields = params['convertFields'] ? params['convertFields'] : [{'from':'FormUser','to':'Requester','type':FormApp.ItemType.TEXT},
@@ -314,14 +320,12 @@ function createApprovalForm (firstForm, params) {
 		 'RequestBody':'We have received a request and need your approval. <a href="<<link>>">Click here</a> to approve.\n' + createEmailTableTemplateForForm(firstForm, [['PO Number','PO Number']]),
 		 'Approver':'@Department>>Email',
 		 'allowSelfApproval':0,
-		 'ApproverDefault':'thinkle+cgraves@innovationcharter.org',
-		 'ApproverBackup':'thinkle+acottle@innovationcharter.org',
+		 'ApproverDefault':'DEFAULTAPPROVAL@FOO.BAR',
+		 'ApproverBackup':'BACKUPAPPROVAL@FOO.BAR',
 		 'includeFormSubmitter':0,
 		 'InformSubmitter':1,
 		 'InformSubject':firstForm.getTitle()+' Request submitted',
 		 'InformBody':'Your request has been submitted for approval to <<Approver>>. You have been issued an initial PO number <<PO Number>>, to be active upon approval.\n\nHere are the details of your request:\n'+createEmailTableTemplateForForm(firstForm, [['PO Number','PO Number'],['Approver','Approver']]),
-		 'EmailKey':['English','Spanish','Math','Science','History','Default','DefaultBackup'],
-		 'EmailVal':['thinkle+rdeery@innovationcharter.org','thinkle+otortorelli@innovationcharter.org','thinkle+shickey@innovationcharter.org','thinkle+eolesen@innovationcharter.org','cgraves@innovationcharter.org','acottle@innovationcharter.org'],
 		 'Possible Fields':listFormItemTitles(FormApp.openById(formAsFile.getId())),
 		}
 	)
