@@ -1,7 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="WorkflowJacknifeApp">
 <head>
   <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.js"></script>
+
+		<script>
+			var wApp = angular.module('WorkflowJacknifeApp',[]);
+			console.log('created app:',wApp);
+			wApp.controller('MasterConfigCtrl', function ($scope) {
+			var vm = this;
+			vm.forms = ['none','yet']
+
+			vm.gotoSheet = function (id) {
+			  google.script.run.gotoSheet(id);
+			}
+
+			function gotData (data) {
+			  console.log('Got new data '+data);
+			  vm.forms = data;
+        $scope.$apply();
+
+			}
+
+			function gotError (err) {
+			  console.log('Got error: '+err);
+			  vm.forms = [err];
+        $scope.$apply();
+			}
+			
+			google.script.run.withSuccessHandler(gotData).withFailureHandler(gotError).
+			   getCurrentMasterConfig()
+			
+			})
+
+		</script>
+
   <script>
     // IMPORTANT: Replace the value for DEVELOPER_KEY with the API key obtained
     // from the Google Developers Console.
@@ -99,9 +132,23 @@
     }
   </script>
 </head>
-<body>
+<body ng-controller="MasterConfigCtrl as mcc">
   <div>
   <h3>Workflows Jacknife</h3>
+	<ul>
+		<li ng-repeat="form in mcc.forms"><a href="{{form.Form}}">Form</a>: {{form.Action}}:
+
+			<span ng-if="form.ConfigId1">
+				<a ng-click="mcc.gotoSheet(form.ConfigId1)">Config 1</a>
+			</span>
+			<span ng-if="form.ConfigId2">
+				<a ng-click="mcc.gotoSheet(form.ConfigId2)">Config 2</a>
+			</span>
+			<span ng-if="form.ConfigId3">
+				<a ng-click="mcc.gotoSheet(form.ConfigId3)">Config 3</a>
+			</span>
+		</li>
+	</ul>
   <p>Select a form to kick off your process</p>
     <button onclick='getOAuthToken()'>Select a Form</button>
     <p id='result'></p>
