@@ -11,13 +11,29 @@
 			var vm = this;
 			vm.forms = ['none','yet']
 
+			vm.testCall = function () {
+			  console.log('Got testCall');
+			  google.script.run.testGasCall()
+			}
+
+            vm.testCalForm = function () {
+              console.log('Got testCalForm');
+              google.script.run.testGasCalForm()
+            }
+
+
+            vm.doAction = function (action, form) {
+               google.script.run.sidebarDoAction(action,form);
+            }
+
 			vm.gotoSheet = function (id) {
 			  google.script.run.gotoSheet(id);
 			}
 
 			function gotData (data) {
 			  console.log('Got new data '+data);
-			  vm.forms = data;
+			  vm.forms = data.config;
+              vm.actions = data.actions;
         $scope.$apply();
 
 			}
@@ -29,8 +45,7 @@
 			}
 			
 			google.script.run.withSuccessHandler(gotData).withFailureHandler(gotError).
-			   getCurrentMasterConfig()
-			
+			   getCurrentMasterConfig()			
 			})
 
 		</script>
@@ -112,8 +127,9 @@
         document.getElementById('result').innerHTML =
             '<b>You chose:</b><br>Name: <a href="' + url + '">' + title +
             '</a><br>ID: ' + id;
-        google.script.run
-          .withFailureHandler(showError).createApprovalFormFromId(id);
+        
+        //google.script.run
+        //  .withFailureHandler(showError).createApprovalFormFromId(id);
             
       } else if (action == google.picker.Action.CANCEL) {
         document.getElementById('result').innerHTML = 'Picker canceled.';
@@ -135,6 +151,7 @@
 <body ng-controller="MasterConfigCtrl as mcc">
   <div>
   <h3>Workflows Jacknife</h3>
+  <button ng-click="mcc.testCalForm()">Create Calendar Form</button>
 	<ul>
 		<li ng-repeat="form in mcc.forms"><a href="{{form.Form}}">Form</a>: {{form.Action}}:
 
@@ -147,10 +164,24 @@
 			<span ng-if="form.ConfigId3">
 				<a ng-click="mcc.gotoSheet(form.ConfigId3)">Config 3</a>
 			</span>
+            <ul>
+              <li ng-repeat="action in mcc.actions">
+                <a ng-click="mcc.doAction(action.action, form.Form)">{{action.name}}</a>
+              </li>
+            </ul>            
 		</li>
 	</ul>
+	<button ng-click="mcc.testCall()">Test Call w As</button>
   <p>Select a form to kick off your process</p>
     <button onclick='getOAuthToken()'>Select a Form</button>
+    <div ng-if="form.SelectedForm">
+       <h3>Selected Form!</h3>
+       <ul>
+       <li ng-repeat="action in mcc.actions">
+           <a ng-click="mcc.doAction(action.action, form.SelectedForm)">{{action.name}}</a>
+              </li>
+              </ul>
+    </div>    
     <p id='result'></p>
   </div>
   <script src="https://apis.google.com/js/api.js?onload=onApiLoad"></script>

@@ -25,10 +25,56 @@ function include(filename) {
       .getContent();
 }
 
-function createApprovalFormFromId (formId) {
+function createApprovalFormFromUrl (formId) {
   Logger.log('createApprovalForm(%s)',formId);
-  firstForm = FormApp.openById(formId);
+  firstForm = FormApp.openByUrl(formId);
   createApprovalForm (firstForm);
+}
+
+function sidebarDoAction(action, form) {
+  Logger.log('Do Action %s to form %s',action,form);
+  Logger.log('Action = %s',sidebarActions[action])
+  Logger.log('Calling!');
+  return sidebarActions[action].callback(form)
+}
+
+function testGetGasData () {
+	return ['happy','go','lucky'];
+}
+
+function testGasCalForm () {
+  testCreateCalEventSettings();
+}
+// SIDEBAR CALLBACKS/ETC
+
+sidebarActions = {
+  // Organize information for sidebar UI
+  email : {
+    name : "Launch Email",
+    callback : function (formId) {
+    },
+  }, // end email
+  approval : {
+    name : "Create Approval Form",
+    callback : createApprovalFormFromUrl,
+  }, // end approval
+  calEvent : {
+    name : "Create Calendar Event",
+    callback: function (formId) {
+      Logger.log('Cal Event Callback!');
+      var calConfig = createCalEventConfig();       
+      var params = {};
+      createCalendarEventSettings(FormApp.openByUrl(formId), calConfig, params);
+    } // end calEvent callback
+  } // end calEvent
+} // end sidebarActions
+
+function getSidebarActions () {
+  actions = []
+  for (var sa in sidebarActions) {
+    actions.push({'action':sa, 'name':sidebarActions[sa]['name']})
+  }
+  return actions
 }
 
 function getCurrentMasterConfig () {
@@ -42,7 +88,8 @@ function getCurrentMasterConfig () {
 			}
 		}
 	}
-	return conf
+  var sbActions = getSidebarActions()
+  return {config: conf, actions: sbActions}
 }
 
 function gotoSheet (id) {
@@ -52,3 +99,6 @@ function gotoSheet (id) {
 	ss.setActiveSheet(sheet);
 }
 
+function testGasCall () {
+	Logger.log('Got Gas Call');
+}
