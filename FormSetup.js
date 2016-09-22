@@ -112,6 +112,26 @@ function createCalendarSettings (form, calConfig, params) {
   createFormTrigger(form, controlSS);
 }
 
+function createCalendarEventSettings (form, calConfig, params) {
+	var formAsFile = DriveApp.getFileById(form.getId());
+	var formTitle = form.getTitle()+' Calendar Event'; 
+	var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
+	var masterConfig = getMasterConfig(controlSS);
+	var configSheets = [];
+	configSheets.push(
+		createConfigurationSheet(
+			controlSS, formTitle+' Settings',
+			calConfig
+		));
+	masterConfig.pushConfig(
+		form,
+		'CalendarEvent',
+		configSheets
+	);
+  createFormTrigger(form, controlSS);
+}
+
+
 function createGroupSettings (form, params) {
 	var formAsFile = DriveApp.getFileById(form.getId());
 	var formTitle = form.getTitle(); Logger.log('title='+formTitle);
