@@ -372,11 +372,17 @@ triggerActions = {
     );
     return config;
   }, // end Approval Form Trigger
+  'CalendarEvent' : function (event, masterSheet, actionRow, actionResults) {
+    Logger.log('!!! CAL EVENT TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
+	responses = getResponseItems(event.response);
+	var ceConfig = actionRow['Config1'].table;
+	return addCalendarEventFromForm(responses,ceConfig);
+  }, // end CalendarEvent Trigger
 	'Log' : function (event, masterSheet, actionRow, actionResults) {
     Logger.log('!!! Action Log !!!');
     Logger.log('Event %s actionRow %s actionResults %s',event, actionRow, actionResults);
 		return logEvent(actionRow['Config1'].table,event,actionResults);
-	},
+	}, // end Log Trigger
 }
 
 function getFormFromTrigger (source) {
