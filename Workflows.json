@@ -53,7 +53,7 @@
         {
             "type": "server_js", 
             "id": "6ca1832d-bd6b-4479-90cb-a9ca75a8b939", 
-            "name": "Calendar"
+            "name": "CalendarPermissions"
         }, 
         {
             "type": "server_js", 
@@ -94,6 +94,11 @@
             "type": "server_js", 
             "id": "610ee871-6963-4a27-bb36-0478814663bf", 
             "name": "PickerHelper"
+        }, 
+        {
+            "type": "server_js", 
+            "id": "43330baf-a0dd-4719-8127-af60e7b4b064", 
+            "name": "CalendarEvent"
         }
     ], 
     "id": "1rWoDJhnstrwiN3MBZXOJjg5yX2zsoNLlZLRO-Vp7gSX1za7UNSzENJBO"
