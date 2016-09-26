@@ -3,18 +3,37 @@
   return html.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME);
 }*/
 
+TEXT = 1
+FOLDER = 2
+FIELDCONVERSION = 3
+FIELDLIST = 4
+PARA = 5
+
 function onOpen (e) {
   SpreadsheetApp.getUi().createAddonMenu()  
   .addItem('Open Workflows','showSidebar')
+  .addItem('Test Config','testConf')
   .addToUi();
 }
 
 function showSidebar () {
-  var ui = HtmlService.createHtmlOutputFromFile('Sidebar')
-  .setTitle('Jacknife');
+  var ui = HtmlService.createTemplateFromFile('Sidebar')
+      .evaluate()
+      .setTitle('Jacknife');
   SpreadsheetApp.getUi().showSidebar(ui);
 }
 
+function showPicker () {
+  var dialogId = Utilities.base64Encode(Math.random());
+	var template = HtmlService.createTemplateFromFile('Picker')
+  template.dialogId = dialogId;
+  ui = template.evaluate();
+	ui.setWidth(800);
+	ui.setHeight(600);
+  SpreadsheetApp.getUi().showModalDialog(ui,"Choose Form");
+  //SpreadsheetApp.getUi().showSidebar(template);
+  return dialogId;
+}
 
 function onInstall (e) {
   onOpen(e)
@@ -22,21 +41,41 @@ function onInstall (e) {
 
 function include(filename) { 
   return HtmlService.createHtmlOutputFromFile(filename)
-      .getContent();
+    .getContent();
 }
 
-function createApprovalFormFromUrl (formId) {
+function createApprovalFormFromUrl (formId, params) {
   Logger.log('createApprovalForm(%s)',formId);
   firstForm = FormApp.openByUrl(formId);
-  createApprovalForm (firstForm);
+  createApprovalForm (firstForm, params);
 }
 
-function sidebarDoAction(action, form) {
-  Logger.log('Do Action %s to form %s',action,form);
+function sidebarDoAction (action, form, params) {
+  Logger.log('Do Action %s to form %s params %s',action,form,params);
   Logger.log('Action = %s',sidebarActions[action])
-  Logger.log('Calling!');
-  return sidebarActions[action].callback(form)
+  Logger.log('Calling! with params needed %s',sidebarActions[action].params);
+  if (sidebarActions[action].params && (! params)) {
+    Logger.log('do Modal');
+    sidebarDoModal(action, form);
+    return 'getParams'
+  }
+  else {
+    Logger.log('do action');
+    return sidebarActions[action].callback(form, params)
+  }
 }
+
+function sidebarDoModal (action, form) {  
+  var template = HtmlService.createTemplateFromFile('ConfigurationDialog')
+  template.action = action;
+  template.form = form;
+  ui = template.evaluate();
+  ui.setWidth(800);
+  ui.setHeight(600);
+  SpreadsheetApp.getUi().showModalDialog(ui,"Configure "+template.action);
+  //SpreadsheetApp.getUi().showSidebar(template);
+  //return dialogId;
+}  
 
 function testGetGasData () {
 	return ['happy','go','lucky'];
@@ -45,6 +84,7 @@ function testGetGasData () {
 function testGasCalForm () {
   testCreateCalEventSettings();
 }
+
 // SIDEBAR CALLBACKS/ETC
 
 sidebarActions = {
@@ -52,21 +92,53 @@ sidebarActions = {
   email : {
     name : "Launch Email",
     callback : function (formId) {
-    },
-  }, // end email
+    }, // end email callback
+		params : { },
+	}, // end email
   approval : {
     name : "Create Approval Form",
     callback : createApprovalFormFromUrl,
-  }, // end approval
-  calEvent : {
-    name : "Create Calendar Event",
-    callback: function (formId) {
-      Logger.log('Cal Event Callback!');
-      var calConfig = createCalEventConfig();       
-      var params = {};
-      createCalendarEventSettings(FormApp.openByUrl(formId), calConfig, params);
-    } // end calEvent callback
-  } // end calEvent
+		params : {
+			titleSuffix : {'label':'Approval Form Title Suffix',
+										 'type':TEXT,
+										 'val':' Approval'},
+			destinationFolder : {'label':'Folder',
+													 'type':FOLDER,
+													 'val':undefined,},
+			convertFields : {'label':'Fields to Convert',
+											 type:FIELDCONVERSION,
+											 'val':[{'from':'FormUser','to':'Requester','type':FormApp.ItemType.TEXT},
+                              {'from':'Timestamp','to':'Request Timestamp','type':FormApp.ItemType.TEXT},
+															{'from':'*#*FY16-MM-###','to':'PO Number','type':FormApp.ItemType.TEXT},
+														 ],},
+			'approvalHeader.title':{'label':'Header Title for Approval Form',
+															'type':TEXT,
+															'val':'The above information was filled out by the requester. Use the section below to indicate your approval.',},
+			'approvalHeader.helpText':{
+				'label':'Approval Form Help Text',
+				'type':TEXT,
+				'val':'The above information was filled out by the requester. Use the section below to indicate your approval.'
+			},
+			newFields: {'label':'New Fields',
+									'type':FIELDLIST,
+									'val':[{'type':'textField','title':'Signature','helpText':'Write initials and date here to approve.'}]},
+			emailInformBody : {'label':'Body of email to requester.',
+												 'type':PARA,
+												 'val':'Your request has been submitted for approval to <<Approver>>. You have been issued an initial PO number <<PO Number>>, to be active upon approval.\n\nHere are the details of your request:'},
+			emailRequestBody : {'label':'Body of email to approver.',
+													'type':PARA,
+													'val':'We have received a request and need your approval. <a href="<<link>>">Click here</a> to approve.'},
+		} // end params
+	}, // end approval
+	calEvent : {
+		name : "Create Calendar Event",
+		callback: function (formId) {
+			Logger.log('Cal Event Callback!');
+			var calConfig = createCalEventConfig();       
+			var params = {};
+			createCalendarEventSettings(FormApp.openByUrl(formId), calConfig, params);
+		} // end calEvent callback
+	} // end calEvent
 } // end sidebarActions
 
 function getSidebarActions () {
@@ -78,18 +150,40 @@ function getSidebarActions () {
 }
 
 function getCurrentMasterConfig () {
+  Logger.log('get data config...');
 	conf = getMasterConfig(SpreadsheetApp.getActiveSpreadsheet());
-	for (var i=1; i<conf.length; i++) {
+  Logger.log('Config of length: %s',conf.length);
+	for (var i=2; i<conf.length; i++) {
 		table = conf[i];
+      Logger.log('look @ %s',table);
 		for (var n=1; n<=3; n++) {
 			if (table['Config '+n+' Link'] && (table['Config '+n+' Link'] != 'NOT_FOUND')) {
 				table['ConfigLink'+n]=table['Config '+n+' Link']
 				table['ConfigId'+n]=table['Config '+n+' ID']
 			}
-		}
-	}
+          try {
+			var f = FormApp.openByUrl(table['Form'])            
+			table['Title'] = f.getTitle();
+            table['Id'] = f.getId()
+
+          }
+          catch (err) {
+            Logger.log('config row %s: unable to get form from url %s',i,table['Form']);
+          }
+          
+          if (! table['Title']) {
+            table['Title'] = 'Untitled';
+          }
+        }
+    }
   var sbActions = getSidebarActions()
+  Logger.log('Config %s',conf);
+  Logger.log('actions = %s',sbActions);
   return {config: conf, actions: sbActions}
+}
+
+function getActionDetails (action, form) {
+  return sidebarActions[action]
 }
 
 function gotoSheet (id) {
@@ -97,6 +191,10 @@ function gotoSheet (id) {
 	var ss = SpreadsheetApp.getActiveSpreadsheet()
 	var sheet = getSheetById(ss,id);
 	ss.setActiveSheet(sheet);
+}
+
+function testConf () {
+  sidebarDoAction('approval','testform');
 }
 
 function testGasCall () {
