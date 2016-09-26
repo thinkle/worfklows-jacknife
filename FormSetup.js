@@ -282,7 +282,8 @@ function createApprovalForm (firstForm, params) {
   createFormItem(approvalForm,newSectionHeader);  
   for (var fi in convertFields) {
     var fieldParams = convertFields[fi]
-    var existingItems = approvalForm.getItems(fieldParams['type'])
+    //var existingItems = approvalForm.getItems(fieldParams['type'])
+    var existingItems = approvalForm.getItems(FormApp.ItemType.TEXT)
     for (var ii in existingItems) {
       itm = existingItems[ii]
       if (itm.getTitle()==fieldParams['from']) {
@@ -308,7 +309,8 @@ function createApprovalForm (firstForm, params) {
     helpText.push(f.helpText ? f.helpText : '')
     fieldTypes.push(f.type ? f.type : '')
    }
-  newFields.forEach(addField);  convertFields.forEach(addField);  
+  newFields.forEach(addField);  
+  convertFields.forEach(addField);  
   
   // Create config sheets...
   var configSheets = []
@@ -337,15 +339,17 @@ function createApprovalForm (firstForm, params) {
 	configSheets.push(createConfigurationSheet(
 		controlSS, firstForm.getTitle()+' Approval Emails',
 		{'RequestSubject':firstForm.getTitle()+' Approval needed',
-		 'RequestBody':'We have received a request and need your approval. <a href="<<link>>">Click here</a> to approve.\n' + createEmailTableTemplateForForm(firstForm, [['PO Number','PO Number']]),
-		 'Approver':'@Department>>Email',
+		 //'RequestBody':'We have received a request and need your approval. <a href="<<link>>">Click here</a> to approve.\n' + createEmailTableTemplateForForm(firstForm, [['PO Number','PO Number']]),
+		 'RequestBody':(params['emailRequestBody'] ? params['emailRequestBody'] : 'We have received a request and need your approval. <a href="<<link>>">Click here</a> to approve.') +'\n\n'+ createEmailTableTemplateForForm(approvalForm),
+		 'Approver':'foo@bar.com',
 		 'allowSelfApproval':0,
 		 'ApproverDefault':'DEFAULTAPPROVAL@FOO.BAR',
 		 'ApproverBackup':'BACKUPAPPROVAL@FOO.BAR',
 		 'includeFormSubmitter':0,
 		 'InformSubmitter':1,
 		 'InformSubject':firstForm.getTitle()+' Request submitted',
-		 'InformBody':'Your request has been submitted for approval to <<Approver>>. You have been issued an initial PO number <<PO Number>>, to be active upon approval.\n\nHere are the details of your request:\n'+createEmailTableTemplateForForm(firstForm, [['PO Number','PO Number'],['Approver','Approver']]),
+		 //'InformBody':'Your request has been submitted for approval to <<Approver>>. You have been issued an initial PO number <<PO Number>>, to be active upon approval.\n\nHere are the details of your request:\n'+createEmailTableTemplateForForm(firstForm, [['PO Number','PO Number'],['Approver','Approver']]),
+		 'InformBody' : (params['emailInformBody'] ? params['emailInformBody'] : 'Your request has been submitted for approval to <<Approver>>. You have been issued an initial PO number <<PO Number>>, to be active upon approval.\n\nHere are the details of your request:')+'\n\n'+createEmailTableTemplateForForm(approvalForm),
 		 'Possible Fields':listFormItemTitles(FormApp.openById(formAsFile.getId())),
 		}
 	)
