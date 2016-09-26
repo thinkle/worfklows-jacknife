@@ -91,9 +91,14 @@ sidebarActions = {
   // Organize information for sidebar UI
   email : {
     name : "Launch Email",
-    callback : function (formId) {
+    callback : function (formUrl, params) {
+			form = FormApp.openByUrl(formUrl);
+			createEmailTrigger(form, params);
     }, // end email callback
-		params : { },
+		params : {
+			'EmailTitle':{val:'Form Received','type':TEXT,'label':'Title'},
+			'Body':{val:'Email body? Use fields like this: <<Field Title>>.','type':PARA,'label':'Body'},
+		},
 	}, // end email
   approval : {
     name : "Create Approval Form",
