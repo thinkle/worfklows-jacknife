@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html ng-app="WorkflowJacknifePref">
+<head>
+<link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.js"></script>
+<script>
+
+</script>
+<script>
+	var wApp = angular.module('WorkflowJacknifePref',[]);
+	console.log('created app:',wApp);
+	wApp.controller('ConfigCtrl', function ($scope) {
+		var vm = this;
+		vm.action = "<?!= action ?>";
+		vm.form = "<?!= form ?>";
+		vm.prefs = 'NONE YET';
+        vm.type = {}
+        vm.type.TEXT = 1
+        vm.type.FOLDER = 2
+        vm.type.FIELDCONVERSION = 3        
+        vm.type.FIELDLIST = 4
+        vm.type.PARA = 5
+        vm.type.FIELD = 6
+        vm.actionName = "Waiting..."
+// GLOBALS COPIED FROM TOP OF CODE.GS
+		function gotFormLayout (actionDetails) {
+			console.log('gotFormLayout got %s',JSON.stringify(actionDetails));
+            vm.prefs = actionDetails.params;
+            vm.actionName = actionDetails.name
+//			prefList = [];
+//   		for (var p in actionDetails.params) {
+//				if (actionDetails.hasOwnProperty(p)) {
+//					val = actionDetails[p]
+//					val['name'] = p
+//					prefList.push(val);
+//				}
+//			}
+//			vm.prefs = prefList;    
+			$scope.$apply();
+		} // end gotFormLayout
+        
+        function allDone () {
+		    google.script.host.close()
+        }
+        
+        vm.doAction = function () {
+          console.log('doAction!');
+          console.log("Do actions with prefs %s",JSON.stringify(vm.prefs));
+          myprefs = {}
+          for (var key in vm.prefs) {
+             try {myprefs[key]=vm.prefs[key].val}
+             catch (err) {
+             console.log('Unable to add pref %s',key)
+             }
+             }
+          google.script.run.withSuccessHandler(allDone).sidebarDoAction(vm.action,vm.form,myprefs);
+        }
+        
+		google.script.run.withSuccessHandler(gotFormLayout).getActionDetails(vm.action,vm.form);
+	}); // end ConfigCtrl
+
+</script>
+
+</head>
+<body ng-controller="ConfigCtrl as cc">
+	{{cc.prefs}}
+	<div ng-if="! cc.prefs">
+		Loading preference information...
+	</div>
+	<div ng-if="cc.prefs">
+		<form>
+        <table>
+		<tr ng-repeat="pref in cc.prefs">
+			<td>	<label>{{pref.label}}</label></td>
+            <td><input ng-if="pref.type==cc.type.TEXT"
+                       type="text" ng-model="pref.val" size="80">
+                <textarea ng-if="pref.type==cc.type.PARA" cols="80"
+                rows="10"
+                      ng-model="pref.val"></textarea>
+                      
+                <div ng-if="pref.type==cc.type.FIELDCONVERSION">
+                   Convert from...
+                   <table>
+                     <tr><th>From</th><th>To</th></tr>
+                     <tr ng-repeat="conversion in pref.val">
+                        <td>
+                          <input type="text" ng-model="conversion.from">
+                            <!--<option value="conversion.from">{{conversion.from}}</option>
+                          </select>-->
+                        </td>
+                        <td>
+                          <input type="text" ng-model="conversion.to">
+                            <!--<option value="conversion.to">{{conversion.to}}</option>
+                          </select>-->
+                        </td>
+                        <td>
+                          <button ng-click="pref.val.splice($index,1)">-</button>
+                        </td>
+                      </tr>
+                   </table>
+                   <button ng-click="pref.val.push({from:'',to:''})">+Add Conversion+</button>
+                   </div>
+                   //'val':[{'type':'textField','title':'Signature','helpText':'Write initials and date here to approve.'}]},	
+                  <div ng-if="pref.type==cc.type.FIELDLIST">
+                    Field List
+                    <table>
+                      <tr><th>Type</th><th>Field</th><th>Help Text</th></tr>
+                      <tr ng-repeat="field in pref.val">
+                        <td><input type="text" ng-model="field.type"></td>
+                        <td><input type="text" ng-model="field.title"></td>
+                        <td><input type="text" ng-model="field.helpText"></td>
+                      
+                      </tr>
+                                            
+
+                    </table>
+                    <button ng-click="pref.val.push({type:'textField',title:'New Field','helpText':'help text here'})">+Add Field+</button>
+                  </div>
+                      
+                      
+             </td>   
+             </tr>
+             </table>
+
+        <button ng-click="cc.doAction()">{{cc.actionName}}</button>
+		</form>
+	</div>
+</body>
+</html>
+
