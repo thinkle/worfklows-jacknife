@@ -3,7 +3,8 @@ DESIGN NOTES
 
 The basic idea here is that we create a master configuration sheet that handles a number of kinds of actions. These
 actions can be strung together into a workflow. The spreadsheet manages everything and can be edited directly as needed. 
-At some future point I may go ahead and write a UI to manage it.
+
+The sidebar can be used to create the configuration sheets as needed and associate them with forms.
 
 All of the configuration data for the program lives in that spreadsheet.
 
