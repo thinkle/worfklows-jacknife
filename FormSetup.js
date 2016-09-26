@@ -410,6 +410,29 @@ function createApprovalForm (firstForm, params) {
  return approvalForm
 }
 
+function createEmailTrigger (form, params) {
+  var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
+	var masterConfig = getMasterConfig(controlSS);
+	emailConfigSheets = []
+  emailConfigSheets.push(createConfigurationSheet(
+    controlSS,
+    form.getTitle()+' Email Template',
+    {'Subject': params['EmailTitle'] ? params['EmailTitle'] : firstForm.getTitle()+' Response',
+     'Body':(params['Body'] ? params['Body'] : 'Your request has been responded to by <<FormUser>>.') + '\n\n'+createEmailTableTemplateForForm(form),
+		 'To':params['To'] ? params['To'] : '%FieldNameHere',
+		 'Possible Fields':listFormItemTitles(form),
+		 'EmailKey':['Key1','Key2','Key3'],
+		 'EmailVal':['foo@bar.baz','foo@bar.bax','foo@bar.bay'],
+		 'onlyEmailIf':params['onlyEmailIf'] ? params['onlyEmailIf'] : '1'
+    }
+  ));
+  masterConfig.pushConfig(
+    form,
+    'Email',
+    emailConfigSheets);
+  createFormTrigger(form, controlSS);	
+}
+
 function createFormTrigger (form, master) {
   var alreadyHaveTrigger =  false
   ScriptApp.getProjectTriggers().forEach(function (t) {
