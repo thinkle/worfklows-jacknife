@@ -3,52 +3,202 @@
 <head>
   <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.js"></script>
-
+		<?!= include('Intercom.js'); ?>
 		<script>
+	    // Stuff to handle communication w/ Picker
+			//
+			// Borrowing from:
+			// https://github.com/diy/intercom.js/
+	    var intercom = Intercom.getInstance();
+			var DIALOG_TIMEOUT_MS = 2000;
+      var timeoutIds = {};
+
+			function forget(dialogId) {
+        if (timeoutIds[dialogId]) {
+          window.clearTimeout(timeoutIds[dialogId]);
+        }
+			}
+
+			function watch(dialogId) {
+        timeoutIds[dialogId] = window.setTimeout(function() {
+          intercom.emit(dialogId, 'lost');
+        }, DIALOG_TIMEOUT_MS);
+      }
+
+			function getPicker (callback) {
+			
+			function gotDialogId (dialogId) {
+			    console.log('Got ID %s',dialogId);
+					openDialog = dialogId
+					// Setup event listeners.
+					intercom.on(dialogId, function(state) {
+						switch(state) {
+            //case 'done':
+            //  $('#output').append('Dialog submitted.\n');
+            //  forget(dialogId);
+            //  break;
+            case 'aborted':
+              //$('#output').append('Dialog cancelled.\n');
+              forget(dialogId);
+              break;
+            case 'checkIn':
+              forget(dialogId);
+              watch(dialogId);
+              break;
+            case 'lost':
+              //$('#output').append('Dialog lost.\n');
+              break;
+            default:
+							docInfo = state
+			console.log('Got %s: call callback',docInfo);
+			console.log('Document: '+docInfo.url);
+			callback(docInfo);
+              //throw 'Unknown dialog state: ' + state;
+          }
+        });
+				}
+				
+			  google.script.run.withSuccessHandler(gotDialogId).showPicker()
+			
+			}
+
+
+		</script>
+		<script>
+
 			var wApp = angular.module('WorkflowJacknifeApp',[]);
 			console.log('created app:',wApp);
 			wApp.controller('MasterConfigCtrl', function ($scope) {
-			var vm = this;
-			vm.forms = ['none','yet']
-
-			vm.testCall = function () {
-			  console.log('Got testCall');
-			  google.script.run.testGasCall()
-			}
-
-            vm.testCalForm = function () {
-              console.log('Got testCalForm');
-              google.script.run.testGasCalForm()
-            }
+				var vm = this;
 
 
-            vm.doAction = function (action, form) {
-               google.script.run.sidebarDoAction(action,form);
-            }
+				// Picker stuff
+				var DEVELOPER_KEY = 'AIzaSyATrC5XEstMsIKMB2ExJ7EoHdPeuF0jvFs';
+				var DIALOG_DIMENSIONS = {width: 600, height: 425};
+				// var pickerApiLoaded = false;
+				
+				// function onApiLoad() {
+				// 	gapi.load('picker', {'callback': function() {
+				// 		pickerApiLoaded = true;
+				// 	}});
+				// }
 
-			vm.gotoSheet = function (id) {
-			  google.script.run.gotoSheet(id);
-			}
+				/**
+				 * Gets the user's OAuth 2.0 access token from the server-side script so that
+				 * it can be passed to Picker. This technique keeps Picker from needing to
+				 * show its own authorization dialog, but is only possible if the OAuth scope
+				 * that Picker needs is available in Apps Script. Otherwise, your Picker code
+				 * will need to declare its own OAuth scopes.
+				 */
+				function getOAuthToken() {
+					google.script.run.withSuccessHandler(getForm)
+						.withFailureHandler(showError).getOAuthToken();
+				}
 
-			function gotData (data) {
-			  console.log('Got new data '+data);
-			  vm.forms = data.config;
-              vm.actions = data.actions;
-        $scope.$apply();
+				vm.doSelectForm = function () {
+					getPicker(gotPickerCallback);
+					//console.log('select form!');
+					//getOAuthToken();
+				}
 
-			}
+			function gotPickerCallback (docInfo) {
+			  console.log('gotPickerCallback! %s',docInfo)
+			  vm.selectedForms.push(docInfo);
+			  $scope.$apply();
+				}
 
-			function gotError (err) {
-			  console.log('Got error: '+err);
-			  vm.forms = [err];
-        $scope.$apply();
-			}
+				function getForm(token) {
+					if (pickerApiLoaded && token) {
+						var picker = new google.picker.PickerBuilder()
+            // Instruct Picker to display only forms in Drive. For other
+            // views, see https://developers.google.com/picker/docs/#otherviews
+								.addView(google.picker.ViewId.FORMS)
+            // Hide the navigation panel so that Picker fills more of the dialog.
+								.enableFeature(google.picker.Feature.NAV_HIDDEN)
+            // Hide the title bar since an Apps Script dialog already has a title.
+								.hideTitleBar()
+								.setOAuthToken(token)
+								.setDeveloperKey(DEVELOPER_KEY)
+								.setCallback(getFormCallback)
+								.setOrigin(google.script.host.origin)
+            // Instruct Picker to fill the dialog, minus 2 pixels for the border.
+								.setSize(DIALOG_DIMENSIONS.width - 2,
+												 DIALOG_DIMENSIONS.height - 2)
+								.build();
+						picker.setVisible(true);
+					} else {
+						showError('Unable to load the file picker.');
+					}
+				}
+				vm.selectForm = getForm
+				vm.selectedForms = []
+				function getFormCallback (data) {
+					console.log('getForm!',data);
+					var action = data[google.picker.Response.ACTION];
+					if (action == google.picker.Action.PICKED) {
+						var doc = data[google.picker.Response.DOCUMENTS][0];
+						vm.selectedForms.push(
+							{doc : doc,
+							 id : doc[google.picker.Document.ID],
+							 url : doc[google.picker.Document.URL],
+							 title : doc[google.picker.Document.NAME]
+							})
+						console.log('Pushed data to selectedForms ',vm.selectedForms);
+					}
+					else if (action == google.picker.Action.CANCEL) {
+						//document.getElementById('result').innerHTML = 'Picker canceled.';
+						console.log('Picker canceled');
+					}
+					$scope.$apply();
+				}
+				
+
+				vm.forms = ['none','yet']
+				
+				// vm.testCall = function () {
+				// 	console.log('Got testCall');
+				// 	google.script.run.testGasCall()
+				// }
+
+        // vm.testCalForm = function () {
+        //   console.log('Got testCalForm');
+        //   google.script.run.testGasCalForm()
+        // }
+				
+				
+        vm.doAction = function (action, form) {
+          google.script.run.sidebarDoAction(action,form);
+        }
+				
+				vm.gotoSheet = function (id) {
+					google.script.run.gotoSheet(id);
+				}
+				
+				function gotData (data) {
+					console.log('Got new data '+data);
+					vm.forms = data.config;
+          vm.actions = data.actions;
+					$scope.$apply();
+				}
+
+				function gotError (err) {
+					console.log('Got error: '+err);
+					vm.forms = [err];
+					$scope.$apply();
+				}
 			
-			google.script.run.withSuccessHandler(gotData).withFailureHandler(gotError).
-			   getCurrentMasterConfig()			
+				
+				vm.refresh = function () {
+					google.script.run.withSuccessHandler(gotData).withFailureHandler(gotError).
+						getCurrentMasterConfig()
+					$scope.$apply();
+				}
+				
+				google.script.run.withSuccessHandler(gotData).withFailureHandler(gotError).
+					getCurrentMasterConfig()
 			})
 
-		</script>
+</script>
 
   <script>
     // IMPORTANT: Replace the value for DEVELOPER_KEY with the API key obtained
@@ -86,8 +236,9 @@
      * @param {string} token An OAuth 2.0 access token that lets Picker access the
      *     file type specified in the addView call.
      */
-    function getForm(token) {
-      if (pickerApiLoaded && token) {
+      function getForm(token) {
+				console.log('getForm!',token);
+				if (pickerApiLoaded && token) {
         var picker = new google.picker.PickerBuilder()
             // Instruct Picker to display only spreadsheets in Drive. For other
             // views, see https://developers.google.com/picker/docs/#otherviews
@@ -125,7 +276,7 @@
         var url = doc[google.picker.Document.URL];
         var title = doc[google.picker.Document.NAME];
         document.getElementById('result').innerHTML =
-            '<b>You chose:</b><br>Name: <a href="' + url + '">' + title +
+            '<b>You chose:</b><br>Name: <a target="_blank" href="' + url + '">' + title +
             '</a><br>ID: ' + id;
         
         //google.script.run
@@ -151,9 +302,10 @@
 <body ng-controller="MasterConfigCtrl as mcc">
   <div>
   <h3>Workflows Jacknife</h3>
-  <button ng-click="mcc.testCalForm()">Create Calendar Form</button>
+	<h4>Forms and Actions</h4>
+	<small><button ng-click="mcc.refresh()">Refresh List</button></small>
 	<ul>
-		<li ng-repeat="form in mcc.forms"><a href="{{form.Form}}">Form</a>: {{form.Action}}:
+	<li ng-repeat="form in mcc.forms"><a target="_blank" href="{{form.Form}}">{{form.Title}}</a>: {{form.Action}}:
 
 			<span ng-if="form.ConfigId1">
 				<a ng-click="mcc.gotoSheet(form.ConfigId1)">Config 1</a>
@@ -163,25 +315,28 @@
 			</span>
 			<span ng-if="form.ConfigId3">
 				<a ng-click="mcc.gotoSheet(form.ConfigId3)">Config 3</a>
-			</span>
-            <ul>
+	</span>
+	          <button ng-click="showActions = ! showActions">Actions</button>
+            <ul ng-show="showActions">
               <li ng-repeat="action in mcc.actions">
                 <a ng-click="mcc.doAction(action.action, form.Form)">{{action.name}}</a>
               </li>
             </ul>            
 		</li>
 	</ul>
-	<button ng-click="mcc.testCall()">Test Call w As</button>
   <p>Select a form to kick off your process</p>
-    <button onclick='getOAuthToken()'>Select a Form</button>
-    <div ng-if="form.SelectedForm">
-       <h3>Selected Form!</h3>
-       <ul>
-       <li ng-repeat="action in mcc.actions">
-           <a ng-click="mcc.doAction(action.action, form.SelectedForm)">{{action.name}}</a>
-              </li>
-              </ul>
-    </div>    
+    <button ng-click="mcc.doSelectForm()">Select a Form</button>
+    <!-- <div ng-if="form.selectedForms.length > 0"> -->
+			<h3>Selected Forms</h3>
+	<li ng-repeat="selectedForm in mcc.selectedForms"><a  target="_blank"  href="{{selectedForm.url}}">{{selectedForm.title}}</a>
+	   <button ng-click="showActions = ! showActions">Actions</button>
+					 <ul ng-show="showActions">
+						 <li ng-repeat="action in mcc.actions">
+							 <a ng-click="mcc.doAction(action.action, selectedForm.url)">{{action.name}}</a>
+             </li>
+           </ul>
+				 </li>
+  <!-- </div>     -->
     <p id='result'></p>
   </div>
   <script src="https://apis.google.com/js/api.js?onload=onApiLoad"></script>
