@@ -84,7 +84,7 @@
                      <tr><th>From</th><th>To</th></tr>
                      <tr ng-repeat="conversion in pref.val">
                         <td>
-                          <input type="text" ng-model="conversion.from">
+                          <select ng-model="conversion.from" ng-options="field for field in pref.fields"></select>
                             <!--<option value="conversion.from">{{conversion.from}}</option>
                           </select>-->
                         </td>
