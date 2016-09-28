@@ -200,14 +200,21 @@ function getAllFormFields (form) {
 
 function getActionDetails (actionName, formUrl) {
   var action = sidebarActions[actionName];
-	var form = FormApp.openByUrl(formUrl);
+  try {var form = FormApp.openByUrl(formUrl);}
+  catch (err) {
+    Logger.log('Did we actually get a form?');
+    form = formUrl;
+  }
 	// let's jazz this baby up...
 	var options = undefined
 	for (var param in action.params) {
+      param = action.params[param]
+      Logger.log('Jazz up %s, %s',param,param.type);
 		if (param.type == FIELDLIST || param.type == FIELDCONVERSION) {			
 			if (! options) {
 				options = getAllFormFields(form)
 			}
+          Logger.log('Add the options!');
 			param.fields = options;
 		}
 	}
