@@ -8,6 +8,7 @@ FOLDER = 2
 FIELDCONVERSION = 3
 FIELDLIST = 4
 PARA = 5
+FIELD = 6
 
 function onOpen (e) {
   SpreadsheetApp.getUi().createAddonMenu()  
@@ -187,8 +188,30 @@ function getCurrentMasterConfig () {
   return {config: conf, actions: sbActions}
 }
 
-function getActionDetails (action, form) {
-  return sidebarActions[action]
+function getAllFormFields (form) {
+	var items = form.getItems();
+	ret = []
+	items.forEach(function (i) {
+		ret.push(ite.getTitle());
+	}
+							 );
+	return ret;
+}
+
+function getActionDetails (actionName, formUrl) {
+  var action = sidebarActions[actionName];
+	var form = FormApp.openByUrl(formUrl);
+	// let's jazz this baby up...
+	var options = undefined
+	for (var param in action.params) {
+		if (param.type == FIELDLIST || param.type == FIELDCONVERSION) {			
+			if (! options) {
+				options = getAllFormFields(form)
+			}
+			param.fields = options;
+		}
+	}
+	return action
 }
 
 function gotoSheet (id) {
