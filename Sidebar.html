@@ -176,7 +176,9 @@
 				
 				function gotData (data) {
 					console.log('Got new data '+data);
-					vm.forms = data.config;
+			    // vm.forms = data.config.splice(0,1);
+			vm.forms = data.config;
+			vm.forms.shift();
           vm.actions = data.actions;
 					$scope.$apply();
 				}
