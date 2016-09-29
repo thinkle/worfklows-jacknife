@@ -81,7 +81,8 @@ function addCalendarEventFromForm(responses,ceConfig) {
   params = {
     title : fields.Title,
     options: {
-      description : fields.Description,
+      description : applyTemplate(fields.Description,
+																	getTemplateFields(fields,responses)),
       location : fields.Location,     
       guests : fields.Guests,
       sendInvites : fields.SendInvites,
@@ -98,14 +99,16 @@ function addCalendarEventFromForm(responses,ceConfig) {
   return addEvent(fields.CalendarID, params);
 }
 
-function createCalEventConfig () {
-  return {
-    CalendarID:'PASTE_ID_HERE',
-    Title:'%Title',
-    Date:'%Date',
-    Location:'%Location',
-    Description:'%Description',    
+function createCalEventConfig (params) {
+  config = {
+    CalendarID:params.CalendarID ? params.CalendarID : 'PASTE_ID_HERE',
+    Title:params.Title ? params.Title : 'Title',
+    Date:params.Date ? params.Date : 'Date',
+    Location:params.Location ? params.Location : 'Location',
+    Description:params.Description ? params.Description : 'Description',    
   }
+	handleLookups(config,params);
+	return config
 }
 
 function createCalEventTestForm () {
