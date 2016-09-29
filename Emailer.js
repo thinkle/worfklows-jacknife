@@ -80,20 +80,7 @@ function sendFormResultEmail (results, settings) {
 		}
 	}
 	//
-	var templateFields = {}
-	for (var setting in results) {
-		templateFields[setting] = spreadsheetify(results[setting]);
-	} // end forEach result
-	for (var setting in config) {
-		if (templateFields[setting]) {
-			logAlways('sendFormResultsEmail - Potential conflict between results[%s]=>%s and settings[%s]=>%s; using results',
-								setting, templateFields[setting], setting, settings[setting]
-							 )
-		}
-		else {
-			templateFields[setting] = spreadsheetify(config[setting]);
-		}
-	} // end for each setting
+	templateFields = getTemplateFields(config, results);
 	logNormal('config=>%s',config);
 	if (config.emailFormUser) {
 		config.To = results.FormUser+','+config.To
@@ -122,6 +109,24 @@ function sendEmailFromTemplate (email, subj, template, fields, fixWhiteSpace) {
 		emailError(msg, 'No real error :)', {'subject':'Email Debug Info: '+applyTemplate(subj,fields)});
 	}
   sendEmail(email, applyTemplate(subj, fields), applyTemplate(template, fields, fixWhiteSpace));
+}
+
+function getTemplateFields (config, results) {
+	var templateFields = {}
+	for (var setting in results) {
+		templateFields[setting] = spreadsheetify(results[setting]);
+	} // end forEach result
+	for (var setting in config) {
+		if (templateFields[setting]) {
+			logAlways('sendFormResultsEmail - Potential conflict between results[%s]=>%s and config[%s]=>%s; using results',
+								setting, templateFields[setting], setting, config[setting]
+							 )
+		}
+		else {
+			templateFields[setting] = spreadsheetify(config[setting]);
+		}
+	} // end for each setting
+	return templateFields
 }
 
 function applyTemplate (template, fields, fixWhiteSpace) {
