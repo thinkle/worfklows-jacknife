@@ -138,22 +138,25 @@ function createGroupSettings (form, params) {
 	var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
 	var masterConfig = getMasterConfig(controlSS);
 	var configSheets = []
+	config = {'username':params.username ? params.username : '%Username',
+						'groups': params.groups ? params.username : '%Add to Google Groups', // should match default value in Groups.js
+						'NeedsAuthorization':params.NeedsAuthorization ? params.NeedsAuthorization : 'True',
+						'Authorize':params.Authorize ? params.Authorize : '@FormUser>>AuthorizedUser',
+						'AuthorizedUserKey':['user@foo.bar','user@boo.bang','Default'],
+						'AuthorizedUserVal':[1,1,0],
+					 }
+	handleLookups(config,params);
 	configSheets.push(
 		createConfigurationSheet(
 			controlSS, formTitle+' Group Fields',
-			{'username':'%Username',
-			 'groups':'%Add to Google Groups', // should match default value in Groups.js
-			 'NeedsAuthorization':'True',
-			 'Authorize':'@FormUser>>AuthorizedUser',
-			 'AuthorizedUserKey':['user@foo.bar','user@boo.bang','Default'],
-			 'AuthorizedUserVal':[1,1,0],
-			}
+			config
 		));
 	masterConfig.pushConfig(
 		form,
 		'Group',
 		configSheets
 	);
+	createFormTrigger(form,controlSS);
 }
 
 function createFolderSettings (form, config, params) {
@@ -410,27 +413,48 @@ function createApprovalForm (firstForm, params) {
  return approvalForm
 }
 
+function handleLookups (config, params, form) {
+	// Add lookups from params to config...
+	for (var p in params) {
+		val = params[p];
+		if (val[0] && val[0]=='@' && val.indexOf('>>')>-1) {
+			var vals = val.split('>>');
+			lookupVar = vals[1]
+			config[p+'Key'] = ['Default']
+			config[p+'Val'] = [true]
+		}
+	} // end for p in params
+	return params // for chaining
+}
+
 function createEmailTrigger (form, params) {
   var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
 	var masterConfig = getMasterConfig(controlSS);
-	emailConfigSheets = []
-  emailConfigSheets.push(createConfigurationSheet(
-    controlSS,
-    form.getTitle()+' Email Template',
-    {'Subject': params['EmailTitle'] ? params['EmailTitle'] : firstForm.getTitle()+' Response',
+	var emailConfigSheets = []
+	var config = {'Subject': params['EmailTitle'] ? params['EmailTitle'] : firstForm.getTitle()+' Response',
      'Body':(params['Body'] ? params['Body'] : 'Your request has been responded to by <<FormUser>>.') + '\n\n'+createEmailTableTemplateForForm(form),
 		 'To':params['To'] ? params['To'] : '%FieldNameHere',
 		 'Possible Fields':listFormItemTitles(form),
-		 'EmailKey':['Key1','Key2','Key3'],
-		 'EmailVal':['foo@bar.baz','foo@bar.bax','foo@bar.bay'],
+		 //'EmailKey':['Key1','Key2','Key3'],
+		 //'EmailVal':['foo@bar.baz','foo@bar.bax','foo@bar.bay'],
 		 'onlyEmailIf':params['onlyEmailIf'] ? params['onlyEmailIf'] : '1'
-    }
+							 }
+	handleLookups(config, params)
+  emailConfigSheets.push(createConfigurationSheet(
+    controlSS,
+    form.getTitle()+' Email Template',
+		config
   ));
   masterConfig.pushConfig(
     form,
     'Email',
     emailConfigSheets);
   createFormTrigger(form, controlSS);	
+}
+
+function createCalEventTrigger (form, params) {
+	config = createCalEventConfig(params);
+	return createCalendarEventSettings(form,config,params);
 }
 
 function createFormTrigger (form, master) {
@@ -660,4 +684,11 @@ function clearAll () {
 } // end clearAll
 
             
-
+function createTestTriggerTomTom () {
+  form = FormApp.openByUrl("https://docs.google.com/a/innovationcharter.org/forms/d/1wd-8BsJztO-502w-XzBlbt0KwLdzpNlCtskKE2tJk6M/edit");
+  form2 = FormApp.openByUrl('https://docs.google.com/a/innovationcharter.org/forms/d/1QOuOBah01kZ9_HyLd-fX4AIM37Lfp5242miP5NJl304/edit')
+  //form2 = FormApp.openById('1FAIpQLSc0yfoJyypDbXXpTakbQUrk34bwg4uAKQJxP8gQkPGq1qWuwg')  
+  ss = SpreadsheetApp.openByUrl('https://docs.google.com/spreadsheets/d/13J7v8UvtHFB0L7k0qJrDPIuZHRMaT01Ayas47jxion8/edit')
+  createFormTrigger(form,ss)
+  createFormTrigger(form2,ss)
+}
