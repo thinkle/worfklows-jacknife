@@ -107,7 +107,7 @@
               type="text" ng-model="pref.val" size="80">
 	      <div ng-if="pref.type==cc.type.PARA">
              <textarea ng-model="pref.val"></textarea><br>
-	Add field: <select ng-model="pref.selectedField" ng-options="field for field in pref.fields"> </select><button ng-click="addFieldToVal(pref,pref.selectedField)">Add Field to Paragraph</button><hr><button ng-click='pref.val = pref.val+"<<"+pref.selectedField+">>"'>Foo</button>
+	Add field: <select ng-model="pref.selectedField" ng-options="field for field in pref.fields"> </select><button ng-click='pref.val = pref.val+"<<"+pref.selectedField+">>"'>Add Field to Paragraph</button>
          </div> <!-- end PARA -->
                 <div ng-if="pref.type==cc.type.FIELDCONVERSION">
                    Convert from...
