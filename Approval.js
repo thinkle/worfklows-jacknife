@@ -15,7 +15,7 @@ function preFillApprovalForm (params) {
   //Logger.log('There are '+items.length+' items.');
   for (var i=0; i < items.length; i++) {
     item = items[i]
-    go_on = false; isNumber = false;
+    go_on = false; isNumber = false; isDate = false;
     if (item.getType() == 'TEXT') {
       item = item.asTextItem();
       go_on = true
@@ -28,11 +28,27 @@ function preFillApprovalForm (params) {
       item = item.asMultipleChoiceItem();
       go_on = true
     }
+		if (item.getType() == 'LIST') {
+			item = item.asListItem();
+			go_on = true;
+		}
     if (item.getType()== 'SCALE') {
       item = item.asScaleItem();
       go_on = true;
       isNumber = true;
     }
+		if (item.getType()=='DATETIME') {
+			item = item.asDateTimeItem();
+			go_on = true;
+			isNumber = false;
+			isDate = true;
+		}
+		if (item.getType()=='DATE') {
+			item = item.asDateItem();
+			go_on = true;
+			isNumber = false;
+			isDate = true;
+		}
     if (go_on) {
       Logger.log('Working with '+item.getType()+item.getTitle())
       itemTitle = item.getTitle()      
@@ -46,6 +62,9 @@ function preFillApprovalForm (params) {
         if (isNumber) {
           value = Number(value);
         }
+				if (isDate) {
+					value = toDate(value);
+				}
         //Logger.log('Creating response with value '+JSON.stringify(value));
         try {
           itemResponse = item.createResponse(value); // Create a response
