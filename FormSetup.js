@@ -382,7 +382,7 @@ function createApprovalForm (firstForm, params) {
     {'Subject': firstForm.getTitle()+' Response',
      'Body':'Your request has been responded to by <<FormUser>>.\n\n'+createEmailTableTemplateForForm(approvalForm),
 		 'To':'%Requester',
-		 'Possible Fields':'listFormItemTitles(approvalForm)',
+		 'Possible Fields':listFormItemTitles(approvalForm),
 		 'EmailKey':['Key1','Key2','Key3'],
 		 'EmailVal':['foo@bar.baz','foo@bar.bax','foo@bar.bay'],
 		 'onlyEmailIf':'%Signature'
