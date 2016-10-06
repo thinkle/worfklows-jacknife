@@ -385,6 +385,39 @@ triggerActions = {
 	}, // end Log Trigger
 }
 
+function listTriggers () {
+	var forms = []
+	ScriptApp.getProjectTriggers().forEach(
+		function (t) {
+			forms.push(t.getTriggerSourceId())
+		}
+	);
+	return forms
+}
+
+function setupTriggers (ss) {
+  if (!ss) {
+    ss = SpreadsheetApp.getActiveSpreadsheet();
+    var conf = getMasterConfig(SpreadsheetApp.getActiveSpreadsheet());
+  }
+  else {
+    conf = getMasterConfig(ss);
+  }
+	existingTriggers = listTriggers();
+	for (var i=1; i<conf.length; i++) {
+		var row = conf[i]
+		var formId = row['FormID'];
+      Logger.log('For form %s',formId);
+		if (existingTriggers.indexOf(formId)==-1) {
+			Logger.log('Missing trigger for form %s',formId);
+			createFormTrigger(FormApp.openById(formId),ss);
+		}
+		else {
+			Logger.log('Trigger already exists for form %s',formId);
+		}
+	}
+}
+
 function getFormFromTrigger (source) {
   var form = undefined;  
   ScriptApp.getProjectTriggers().forEach(function (trigger) {
@@ -491,6 +524,12 @@ function onFormSubmitTrigger (event) {
     }
   }
                      )// end forEach action
+	
+	// Log this baby...
+	var logDoc = DocumentApp.openById('1mSdNItUTyONo5ZX6kaHXMlgVghKypeMzJpjydzEVk9w')
+	var body = logDoc.getBody()
+	body.appendParagraph(Logger.getLog());
+	body.appendParagraph(JSON.stringify(actionResults));
 }
 
 function testPrefillForm () {
