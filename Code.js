@@ -118,6 +118,7 @@ sidebarActions = {
 			Date:{label:'Date',val:'',type:FIELD,mode:'field'},
 			Location:{label:'Location',val:'',type:FIELD,mode:'field'},
 			Description:{label:'Description',val:'',type:PARA,mode:'field'},
+			onlyAddIf: {label:'Only Add If Value is True (not No or False or Empty):',val:'',type:FIELD,mode:'field'},
 		},
 	},
   email : {
@@ -130,7 +131,7 @@ sidebarActions = {
 			'EmailTitle':{val:'Form Received','type':FIELD,'label':'Title',mode:'value'},
 			'Body':{val:'Email body? Use fields like this: <<Field Title>>.','type':PARA,'label':'Body'},
 			'To':{val:'',type:FIELD,label:'To',mode:'field'},
-			'onlyEmailIf':{val:'',type:FIELD,label:'To',mode:'field'}
+			'onlyEmailIf':{val:'',type:FIELD,label:'Only Email If Value is True (not No or False or empty)',mode:'field'}
 		},
 	}, // end email
   approval : {
