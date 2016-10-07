@@ -68,13 +68,42 @@ function getEmail (addressSettings, results) {
   }
 }
 
+function checkBool (value) {
+	switch (value) {
+	case false:
+		return false;
+		break;
+	case 'no':
+		return false;
+		break;
+	case 'No':
+		return false;
+		break;
+	case 'false':
+		return false;
+		break
+	case 'False':
+		return false;
+		break
+	case 0:
+		return false;
+		break
+	case 'untrue':
+		return false;
+		break;
+	default:
+		return value;
+		break
+	}
+}
+
 function sendFormResultEmail (results, settings) {
   Logger.log('sendFormResultEmail'+shortStringify([results,settings]));
 	var config = lookupFields(settings, results)
 	// Add support for conditional email...
 	if (config.hasOwnProperty('onlyEmailIf')) {
 		Logger.log('Checking onlyEmailIf field!');
-		if (! config.onlyEmailIf) {
+		if (! checkBool(config.onlyEmailIf)) {
 			logNormal('Not sending email: \nresults:%s \nsettings:%s',results,settings);
 			return 'No Email Sent';
 		}
@@ -135,6 +164,11 @@ function applyTemplate (template, fields, fixWhiteSpace) {
   }
   for (var target in fields) {
     var replacement = spreadsheetify(fields[target]);
+		if (fixWhiteSpace) {
+			if (typeof replacement == 'string') {
+				replacement = replacement.replace(/\n/g,'<br>')
+			}
+		}
     template = template.replace(new RegExp(escapeRegExp('<<'+target+'>>'),'g'),replacement);
   }
   return template
