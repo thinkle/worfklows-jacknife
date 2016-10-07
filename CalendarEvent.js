@@ -6,6 +6,13 @@ function toDate (timeString) {
 }
 
 function addEvent (calId, eventParams) {
+	if (eventParams.hasOwnProperty('onlyAddIf')) {
+		logNormal('Checking onlyAddIf');
+		if (! checkBool(eventParams.onlyAddIf)) {
+			logNormal('Not adding event: %s',eventParams)
+			return 'No Event Added'
+		}
+	}
   var cal = CalendarApp.getCalendarById(calId);
   logVerbose('cal.createEvent - cal=%s params=%s',cal,eventParams);
   if (eventParams.startTime && eventParams.endTime) {
@@ -88,12 +95,15 @@ function addCalendarEventFromForm(responses,ceConfig) {
       sendInvites : fields.SendInvites,
     }
   }
+	if (fields.hasOwnProperty('onlyAddIf')) {
+		params.onlyAddIf = fields.onlyAddIf
+	}
   if (ceConfig.Date) {
     params.date = fields.Date
   }
   else {
-    params.startTime = fields.StartTime
-    params.endTime = fields.EndTime
+    params.startTime = fields.startTime
+    params.endTime = fields.endTime
   }
   Logger.log('addEvent(%s,%s)',fields.CalendarID,params);
   return addEvent(fields.CalendarID, params);
@@ -105,7 +115,8 @@ function createCalEventConfig (params) {
     Title:params.Title ? params.Title : 'Title',
     Date:params.Date ? params.Date : 'Date',
     Location:params.Location ? params.Location : 'Location',
-    Description:params.Description ? params.Description : 'Description',    
+    Description:params.Description ? params.Description : 'Description',
+		onlyAddIf:params.hasOwnProperty('onlyAddIf') ? params.onlyAddIf : true,
   }
 	handleLookups(config,params);
 	return config
