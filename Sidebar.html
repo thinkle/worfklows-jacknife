@@ -66,139 +66,155 @@
 		</script>
 		<script>
 
-			var wApp = angular.module('WorkflowJacknifeApp',[]);
-			console.log('created app:',wApp);
-			wApp.controller('MasterConfigCtrl', function ($scope) {
-				var vm = this;
+var wApp = angular.module('WorkflowJacknifeApp',[]);
+console.log('created app:',wApp);
+wApp.controller('MasterConfigCtrl', function ($scope) {
+	var vm = this;
 
 
-				// Picker stuff
-				var DEVELOPER_KEY = 'AIzaSyATrC5XEstMsIKMB2ExJ7EoHdPeuF0jvFs';
-				var DIALOG_DIMENSIONS = {width: 600, height: 425};
-				// var pickerApiLoaded = false;
-				
-				// function onApiLoad() {
-				// 	gapi.load('picker', {'callback': function() {
-				// 		pickerApiLoaded = true;
-				// 	}});
-				// }
+	// Picker stuff
+	var DEVELOPER_KEY = 'AIzaSyATrC5XEstMsIKMB2ExJ7EoHdPeuF0jvFs';
+	var DIALOG_DIMENSIONS = {width: 600, height: 425};
+	// var pickerApiLoaded = false;
+	
+	// function onApiLoad() {
+	// 	gapi.load('picker', {'callback': function() {
+	// 		pickerApiLoaded = true;
+	// 	}});
+	// }
 
-				/**
-				 * Gets the user's OAuth 2.0 access token from the server-side script so that
-				 * it can be passed to Picker. This technique keeps Picker from needing to
-				 * show its own authorization dialog, but is only possible if the OAuth scope
-				 * that Picker needs is available in Apps Script. Otherwise, your Picker code
-				 * will need to declare its own OAuth scopes.
-				 */
-				function getOAuthToken() {
-					google.script.run.withSuccessHandler(getForm)
-						.withFailureHandler(showError).getOAuthToken();
-				}
+	/**
+	 * Gets the user's OAuth 2.0 access token from the server-side script so that
+	 * it can be passed to Picker. This technique keeps Picker from needing to
+	 * show its own authorization dialog, but is only possible if the OAuth scope
+	 * that Picker needs is available in Apps Script. Otherwise, your Picker code
+	 * will need to declare its own OAuth scopes.
+	 */
+	function getOAuthToken() {
+		google.script.run.withSuccessHandler(getForm)
+			.withFailureHandler(showError).getOAuthToken();
+	}
 
-				vm.doSelectForm = function () {
-					getPicker(gotPickerCallback);
-					//console.log('select form!');
-					//getOAuthToken();
-				}
+	vm.doSelectForm = function () {
+		getPicker(gotPickerCallback);
+		//console.log('select form!');
+		//getOAuthToken();
+	}
 
-			function gotPickerCallback (docInfo) {
-			  console.log('gotPickerCallback! %s',docInfo)
-			  vm.selectedForms.push(docInfo);
-			  $scope.$apply();
-				}
+	function gotPickerCallback (docInfo) {
+		console.log('gotPickerCallback! %s',docInfo)
+		vm.selectedForms.push(docInfo);
+		$scope.$apply();
+	}
 
-				function getForm(token) {
-					if (pickerApiLoaded && token) {
-						var picker = new google.picker.PickerBuilder()
-            // Instruct Picker to display only forms in Drive. For other
-            // views, see https://developers.google.com/picker/docs/#otherviews
-								.addView(google.picker.ViewId.FORMS)
-            // Hide the navigation panel so that Picker fills more of the dialog.
-								.enableFeature(google.picker.Feature.NAV_HIDDEN)
-            // Hide the title bar since an Apps Script dialog already has a title.
-								.hideTitleBar()
-								.setOAuthToken(token)
-								.setDeveloperKey(DEVELOPER_KEY)
-								.setCallback(getFormCallback)
-								.setOrigin(google.script.host.origin)
-            // Instruct Picker to fill the dialog, minus 2 pixels for the border.
-								.setSize(DIALOG_DIMENSIONS.width - 2,
-												 DIALOG_DIMENSIONS.height - 2)
-								.build();
-						picker.setVisible(true);
-					} else {
-						showError('Unable to load the file picker.');
-					}
-				}
-				vm.selectForm = getForm
-				vm.selectedForms = []
-				function getFormCallback (data) {
-					console.log('getForm!',data);
-					var action = data[google.picker.Response.ACTION];
-					if (action == google.picker.Action.PICKED) {
-						var doc = data[google.picker.Response.DOCUMENTS][0];
-						vm.selectedForms.push(
-							{doc : doc,
-							 id : doc[google.picker.Document.ID],
-							 url : doc[google.picker.Document.URL],
-							 title : doc[google.picker.Document.NAME]
-							})
-						console.log('Pushed data to selectedForms ',vm.selectedForms);
-					}
-					else if (action == google.picker.Action.CANCEL) {
-						//document.getElementById('result').innerHTML = 'Picker canceled.';
-						console.log('Picker canceled');
-					}
-					$scope.$apply();
-				}
-				
+	function getForm(token) {
+		if (pickerApiLoaded && token) {
+			var picker = new google.picker.PickerBuilder()
+      // Instruct Picker to display only forms in Drive. For other
+      // views, see https://developers.google.com/picker/docs/#otherviews
+					.addView(google.picker.ViewId.FORMS)
+      // Hide the navigation panel so that Picker fills more of the dialog.
+					.enableFeature(google.picker.Feature.NAV_HIDDEN)
+      // Hide the title bar since an Apps Script dialog already has a title.
+					.hideTitleBar()
+					.setOAuthToken(token)
+					.setDeveloperKey(DEVELOPER_KEY)
+					.setCallback(getFormCallback)
+					.setOrigin(google.script.host.origin)
+      // Instruct Picker to fill the dialog, minus 2 pixels for the border.
+					.setSize(DIALOG_DIMENSIONS.width - 2,
+									 DIALOG_DIMENSIONS.height - 2)
+					.build();
+			picker.setVisible(true);
+		} else {
+			showError('Unable to load the file picker.');
+		}
+	}
+	vm.selectForm = getForm
+	vm.selectedForms = []
+	function getFormCallback (data) {
+		console.log('getForm!',data);
+		var action = data[google.picker.Response.ACTION];
+		if (action == google.picker.Action.PICKED) {
+			var doc = data[google.picker.Response.DOCUMENTS][0];
+			vm.selectedForms.push(
+				{doc : doc,
+				 id : doc[google.picker.Document.ID],
+				 url : doc[google.picker.Document.URL],
+				 title : doc[google.picker.Document.NAME]
+				})
+			console.log('Pushed data to selectedForms ',vm.selectedForms);
+		}
+		else if (action == google.picker.Action.CANCEL) {
+			//document.getElementById('result').innerHTML = 'Picker canceled.';
+			console.log('Picker canceled');
+		}
+		$scope.$apply();
+	}
+	
 
-				vm.forms = ['none','yet']
-				
-				// vm.testCall = function () {
-				// 	console.log('Got testCall');
-				// 	google.script.run.testGasCall()
-				// }
+	vm.forms = ['none','yet']
+	
+	// vm.testCall = function () {
+	// 	console.log('Got testCall');
+	// 	google.script.run.testGasCall()
+	// }
 
-        // vm.testCalForm = function () {
-        //   console.log('Got testCalForm');
-        //   google.script.run.testGasCalForm()
-        // }
-				
-				
-        vm.doAction = function (action, form) {
-          google.script.run.sidebarDoAction(action,form);
-        }
-				
-				vm.gotoSheet = function (id) {
-					google.script.run.gotoSheet(id);
-				}
-				
-				function gotData (data) {
-					console.log('Got new data '+data);
-			    // vm.forms = data.config.splice(0,1);
-			vm.forms = data.config;
-			vm.forms.shift();
-          vm.actions = data.actions;
-					$scope.$apply();
-				}
+  // vm.testCalForm = function () {
+  //   console.log('Got testCalForm');
+  //   google.script.run.testGasCalForm()
+  // }
+	
+	
+  vm.doAction = function (action, form) {
+    google.script.run.sidebarDoAction(action,form);
+  }
+	
+	vm.gotoSheet = function (id) {
+		google.script.run.gotoSheet(id);
+	}
+	
+	function gotData (data) {
+		console.log('Got new data '+data);
+		// vm.forms = data.config.splice(0,1);
+		vm.forms = data.config;
+		vm.forms.shift();
+    vm.actions = data.actions;
+		$scope.$apply();
+	}
 
-				function gotError (err) {
-					console.log('Got error: '+err);
-					vm.forms = [err];
-					$scope.$apply();
-				}
-			
-				
-				vm.refresh = function () {
-					google.script.run.withSuccessHandler(gotData).withFailureHandler(gotError).
-						getCurrentMasterConfig()
-					$scope.$apply();
-				}
-				
-				google.script.run.withSuccessHandler(gotData).withFailureHandler(gotError).
-					getCurrentMasterConfig()
-			})
+	function gotError (err) {
+		console.log('Got error: '+err);
+		vm.forms = [err];
+		$scope.$apply();
+	}
+	
+	function gotTriggers (forms) {
+		console.log('gotTriggers %s',forms);
+		vm.triggers = forms;
+		$scope.$apply()
+	}
+
+	vm.getTriggers = function () {
+		console.log('go get triggers');
+		google.script.run.withSuccessHandler(gotTriggers)
+			.listTriggers()
+	}
+
+	vm.setupTriggers = function () {
+		google.script.run.withSuccessHandler(vm.getTriggers)
+		  .setupTriggers()
+	}
+	
+	vm.refresh = function () {
+		google.script.run.withSuccessHandler(gotData).withFailureHandler(gotError).
+			getCurrentMasterConfig()
+		$scope.$apply();
+	}
+	
+	google.script.run.withSuccessHandler(gotData).withFailureHandler(gotError).
+		getCurrentMasterConfig()
+})
 
 </script>
 
@@ -341,6 +357,13 @@
   <!-- </div>     -->
     <p id='result'></p>
   </div>
+	<button ng-click="mcc.getTriggers()">List Triggers</button>
+	<button ng-click="mcc.setupTriggers()">Set up triggers again...</button>
+	<ul>
+		<li ng-repeat="trigger in mcc.triggers">
+			{{trigger}}
+		</li>
+	</ul>
   <script src="https://apis.google.com/js/api.js?onload=onApiLoad"></script>
 </body>
 </html>
