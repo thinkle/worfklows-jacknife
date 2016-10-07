@@ -71,7 +71,7 @@ function lookupFields (settings, results) {
 			// Syntax = %FieldnameFromForm
 			val = val.substr(1);
 			fields[settingKey] = results[val];
-			logVerbose('fields[%s]=%s',settingKey,fields[settingKey]);
+			logNormal('fields[%s]=%s (results[%s])',settingKey,fields[settingKey],val);
 			break;
 		case '@':
 			if (val.indexOf('>>')==-1) {
