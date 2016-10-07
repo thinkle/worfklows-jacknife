@@ -63,7 +63,7 @@ function preFillApprovalForm (params) {
           value = Number(value);
         }
 				if (isDate) {
-					value = toDate(value);
+					value = toFormDate(value);
 				}
         //Logger.log('Creating response with value '+JSON.stringify(value));
         try {
@@ -252,6 +252,24 @@ function listProps () {
   for (var key in allProps) {Logger.log('%s:%s',key,allProps[key]);}
   
 }
+
+
+// NOTE: For reasons that don't make sense to me, google forms treats dates as
+// if they had no time zone information attached :(
+// 
+// So, we have to get the date out, which will have timezone, then adjust it, as if
+// we were in GMT, then feed that date object back to createResponse
+function toFormDate (timeString) {  
+  timeString = timeString.replace(/-/g,"/");
+  var d = new Date(timeString);
+  var offset = new Date().getTimezoneOffset();
+  function addMinutes(date, minutes) {
+    return new Date(date.getTime() + minutes*60000);
+  }    
+  return addMinutes(d,offset*-1);
+} 
+
+
 function startoverProp () {
     PropertiesService.getUserProperties().deleteProperty('FY16-06-###');
     var scriptCache = CacheService.getScriptCache();
