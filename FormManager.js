@@ -529,7 +529,7 @@ function onFormSubmitTrigger (event) {
 	try {
 		var logDoc = DocumentApp.openById('1mSdNItUTyONo5ZX6kaHXMlgVghKypeMzJpjydzEVk9w')
 		var body = logDoc.getBody()
-		body.appendParagraph(Logger.getLog());
+		//body.appendParagraph(Logger.getLog()); // too much...
 		body.appendParagraph(JSON.stringify(actionResults));
 	}
 	catch (err) {
