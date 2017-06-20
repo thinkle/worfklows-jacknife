@@ -526,10 +526,15 @@ function onFormSubmitTrigger (event) {
                      )// end forEach action
 	
 	// Log this baby...
-	var logDoc = DocumentApp.openById('1mSdNItUTyONo5ZX6kaHXMlgVghKypeMzJpjydzEVk9w')
-	var body = logDoc.getBody()
-	body.appendParagraph(Logger.getLog());
-	body.appendParagraph(JSON.stringify(actionResults));
+	try {
+		var logDoc = DocumentApp.openById('1mSdNItUTyONo5ZX6kaHXMlgVghKypeMzJpjydzEVk9w')
+		var body = logDoc.getBody()
+		body.appendParagraph(Logger.getLog());
+		body.appendParagraph(JSON.stringify(actionResults));
+	}
+	catch (err) {
+		Logger.log('Error logging to google doc :( %s',err)
+	}
 }
 
 function testPrefillForm () {
