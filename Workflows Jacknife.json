@@ -104,6 +104,16 @@
             "type": "html", 
             "id": "ce155a96-d7f3-474d-925a-6b1dddcce814", 
             "name": "ConfigurationDialog"
+        }, 
+        {
+            "type": "server_js", 
+            "id": "bc6426b8-b5cb-4dda-9684-8072f5103dd4", 
+            "name": "Validator"
+        }, 
+        {
+            "type": "server_js", 
+            "id": "fcebf573-32f5-4d31-9645-358dc9092cf5", 
+            "name": "Scratch"
         }
     ], 
     "id": "1rWoDJhnstrwiN3MBZXOJjg5yX2zsoNLlZLRO-Vp7gSX1za7UNSzENJBO"
