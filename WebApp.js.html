@@ -1,4 +1,41 @@
 // Component
+
+Vue.component('field-config',{
+    name : 'field-config',
+    props : ['type','value','formfields'],
+    data : function () {return {mode:'field',field:''}},
+    methods : {
+	updateVal : function (event) {
+	    console.log('updateVal %s',event.target.value);
+	    this.$emit('input',event.target.value);
+	},
+	setVal : function (v) {
+	    console.log('Set value: %s',v);
+	    //this.value = v;
+	    this.$emit('input',v);
+	},
+	updateField : function () {
+	    console.log('updateField');
+	    if (this.mode=='field') {
+		this.setVal('%'+this.field);
+	    }
+	}
+    },
+     watch : {
+     	field : function (v) {
+     	    console.log('field watcher triggered!');
+     	    if (this.mode=='field') {
+     		console.log('Field updated: %s',v);
+     		this.setVal('%'+v);
+     	    }
+     	},
+     },
+    template:'#field-config',
+    
+
+
+});
+
 Vue.component('picker', {
     name : 'picker',
     props : ['apiInfo','type'],
@@ -124,6 +161,10 @@ Vue.component('master-config',{
 	    error : '',
 	    master : {},
 	    details : false,
+	    selectedForm : false,
+	    selectedAction : undefined,
+	    actionParameters : undefined,
+	    actionConfig : {},
 	}
     },
     created : function () {this.loadData()},
@@ -158,6 +199,35 @@ Vue.component('master-config',{
 		.getActionDetails(action,form)
 	},
 
+	setForm : function (form) {
+	    var self = this;
+	    console.log('Got a form %s',form);
+	    self.selectedForm = form;
+	},
+
+
+	getActionDetails : function () {
+	    var self = this;
+	    google.script.run
+	        .withFailureHandler(function (e) {self.error = e})
+		.withSuccessHandler(function (parameters) {
+		    self.actionConfig['SpreadsheetApp'] = self.configSheet;
+		    self.actionParameters = parameters;
+		    self.actionParameters.params.forEach(function (p) {
+			if (p.val) {
+			    self.actionConfig[p.field]=p.val;
+			}
+		    })
+		})
+		.getActionDetails(self.selectedAction.action,self.selectedForm.doc.url)
+	},
+
+	createAction : function () {
+	    var self = this;
+	    console.log('Creating action! %s %s',self.selectedAction.action,self.selectedForm);
+	    var self = this;
+	    google.script.run.sidebarDoAction(self.selectedAction.action,self.selectedForm.doc.url,self.actionConfig);
+	},
 
     }
 });
@@ -165,6 +235,7 @@ Vue.component('master-config',{
 MyApp = new Vue({
     el : '#appName',
     data : {
+	'test':'Foo',
 	error:'',
 	configSheet : '',
 	apiInfo: {pickerApiLoaded:false,authToken:undefined}},
