@@ -1,7 +1,7 @@
-/*function doGet() {
-  var html = HtmlService.createTemplateFromFile('dataInterface');
-  return html.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME);
-  }*/
+function doGet() {
+    var html = HtmlService.createTemplateFromFile('WebApp');
+    return html.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME);
+}
 
 TEXT = 1
 FOLDER = 2
@@ -106,8 +106,21 @@ function getLookupsForField (form, fieldName) {
 
 sidebarActions = {
     // Organize information for sidebar UI
+    log : {
+	shortname: 'Log',
+	name : 'Log'
+    },
+    calendar : {
+	shortname : 'Calendar',
+	name : 'Share Calendar',
+    },
+    folder : {
+	shortname: 'Folder',
+	name : 'Share Folder'
+    },
     calendarEvent : {
 	name : 'Create Event',
+	shortname : 'CalendarEvent',
 	callback : function (formUrl, params) {
 	    var form = FormApp.openByUrl(formUrl)
 	    return createCalEventTrigger(form, params);
@@ -123,6 +136,7 @@ sidebarActions = {
     },
     email : {
 	name : "Send Email",
+	shortname : 'Email',
 	callback : function (formUrl, params) {
 	    form = FormApp.openByUrl(formUrl);
 	    createEmailTrigger(form, params);
@@ -136,6 +150,7 @@ sidebarActions = {
     }, // end email
     approval : {
 	name : "Create Approval Form",
+	shortname : 'Approval',
 	callback : createApprovalFormFromUrl,
 	params : {
 	    titleSuffix : {'label':'Approval Form Title Suffix',
@@ -171,6 +186,7 @@ sidebarActions = {
     }, // end approval
     addToGroup : {
 	name : 'Add to groups',
+	shortname : 'Group',
 	params : {
 	    'username':{'label':'User to be added to group',
 			'type':FIELD,
@@ -192,6 +208,15 @@ sidebarActions = {
     // } // end calEvent
 } // end sidebarActions
 
+
+var actionLookup = {};
+for (var key in sidebarActions) {
+    act = sidebarActions[key]
+    if (act.shortname) {
+	actionLookup[act.shortname] = act;
+    }
+}
+
 function getSidebarActions () {
     actions = []
     for (var sa in sidebarActions) {
@@ -200,9 +225,14 @@ function getSidebarActions () {
     return actions
 }
 
-function getCurrentMasterConfig () {
+function getCurrentMasterConfig (sid) {
     Logger.log('get data config...');
-    conf = getMasterConfig(SpreadsheetApp.getActiveSpreadsheet());
+    if (!sid) {
+	conf = getMasterConfig(SpreadsheetApp.getActiveSpreadsheet());
+    }
+    else {
+	conf = getMasterConfig(SpreadsheetApp.openById(sid));
+    }
     Logger.log('Config of length: %s',conf.length);
     for (var i=1; i<conf.length; i++) {
 	table = conf[i];
@@ -243,6 +273,9 @@ function getAllFormFields (form) {
 
 function getActionDetails (actionName, formUrl) {
     var action = sidebarActions[actionName];
+    if (!action) {
+	action = actionLookup[actionName];
+    }
     try {var form = FormApp.openByUrl(formUrl);}
     catch (err) {
 	Logger.log('Did we actually get a form?');
