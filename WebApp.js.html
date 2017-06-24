@@ -2,8 +2,11 @@
 
 Vue.component('field-config',{
     name : 'field-config',
-    props : ['type','value','formfields'],
-    data : function () {return {mode:'field',field:''}},
+    props : ['type','value','formfields','lookups'],
+    data : function () {return {mode:'field',field:'',
+				lookupField:'',lookupDict:'',
+				newLookupKey:'',newLookupVal:'',
+			       }},
     methods : {
 	updateVal : function (event) {
 	    console.log('updateVal %s',event.target.value);
@@ -16,10 +19,38 @@ Vue.component('field-config',{
 	},
 	updateField : function () {
 	    console.log('updateField');
-	    if (this.mode=='field') {
+	    if (this.mode=='field' && this.field) {
 		this.setVal('%'+this.field);
 	    }
+	},
+	updateForVal : function () {
+	     console.log('Watched field config with value %s',this.value);
+	     if (this.value && this.type==globals.FIELD) {
+		 this.mode = 'raw';
+		 if (this.value[0]=='%') {
+		     this.mode = 'field'
+		     this.field = this.value.substr(1)
+		 }
+		 else if (this.value[0]=='@') {
+		     this.mode = 'lookup'
+		     var vals = this.value.substr(1).split('>>')
+		     this.lookupField = vals[0].trim();
+		     this.lookupDict = vals[1].trim();
+		 }
+		 else if (this.value.substr(0,3)=='*#*') {
+		     this.mode == 'magic'
+		 }
+	     }
+	},
+
+	addLookupKey : function () {
+	    Vue.set(this.lookups[this.lookupDict],this.newLookupKey,this.newLookupVal);
+	    this.newLookupKey = ''; this.newLookupVal = '';
+	    this.$forceUpdate()
 	}
+	
+    },
+    created : function () {this.updateForVal()
     },
      watch : {
      	field : function (v) {
@@ -29,6 +60,7 @@ Vue.component('field-config',{
      		this.setVal('%'+v);
      	    }
      	},
+	 value : function (v) {this.updateForVal()},
      },
     template:'#field-config',
     
@@ -104,12 +136,13 @@ Vue.component('picker', {
 Vue.component('config-sheet',{
     name:'config-sheet',
     template:'#config-sheet',
-    props : ['sheetId','ssId','n'],
+    props : ['sheetId','ssId','n','form','action'],
     created: function () {this.loadData()},
-    data : function () {return {config:undefined,error:'',show:false}},
+    data : function () {return {config:undefined,error:'',show:false,details:undefined,fieldLookup:{}}},
     methods : {
 	loadData : function () {
 	    var self = this;
+	    this.getActionDetails();
 	    google.script.run
 		.withSuccessHandler(function (data) {
 		    self.config = {raw:data}
@@ -133,6 +166,9 @@ Vue.component('config-sheet',{
 			    })
 			    self.config.lookups[lookupName]=lookup;
 			}
+			else if (key.length>3&&key.indexOf('Val')==key.length-3) {
+			    console.log('Skip val - part of lookup');
+			}
 			else if (key) {
 			    self.config.fields.push(key);
 			}
@@ -148,8 +184,27 @@ Vue.component('config-sheet',{
 		    self.sheetId
 		);
 	},
+	getActionDetails : function () {
+	    var self = this;
+	    google.script.run
+		.withSuccessHandler(function (d) {
+		    self.details = d
+		    self.fieldLookup = {}
+		    self.details.params.forEach(function (p) {
+			self.fieldLookup[p.field]=p
+		    });
+		})
+	        .withFailureHandler(function (e) {self.error = e})
+		.getActionDetails(this.action,this.form)
+	},
     } // end methods
 }) // end config-sheet component
+
+Vue.component('debug',{
+    name:'debug',
+    template:'#debug',
+    data : function () {return {show:false}}
+})
 
 Vue.component('master-config',{
     name:'master-config',
@@ -232,12 +287,13 @@ Vue.component('master-config',{
     }
 });
 
-MyApp = new Vue({
+JacknifeApp = new Vue({
     el : '#appName',
     data : {
-	'test':'Foo',
+	'test':'Not a field - should be raw :)',
 	error:'',
 	configSheet : '',
+	chosenSheet : '',
 	apiInfo: {pickerApiLoaded:false,authToken:undefined}},
     
     methods : {
@@ -246,7 +302,8 @@ MyApp = new Vue({
 	// CALLBACKS
 	setConfig : function (form) {
 	    console.log('Got form info: %s',form);
-	    this.configSheet = form;
+	    this.chosenSheet = form;
+	    this.configSheet = form.doc.id;
 	},
 
 	gotSheet : function (sheet) {
@@ -283,7 +340,18 @@ MyApp = new Vue({
 
 });
 
+// Handle URL parameters
+google.script.url.getLocation(
+    function (l) {
+	if (l.parameter.doc) {
+	    console.log('Got config in URL: %s',l.parameter.doc)
+	    //var master = JacknifeApp.$refs.master;
+	    //master.configSheet = l.parameter.doc
+	    //master.loadData();
+	    JacknifeApp.configSheet = l.parameter.doc;
 
+	}
+    }
+); // end getLocation callback
 
-
-//MyApp.loadData()
+//JacknifeApp.loadData()
