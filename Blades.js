@@ -160,7 +160,7 @@ Blade({
 	form = FormApp.openByUrl(formUrl);
 	createEmailTrigger(form, params);
     }, // end email callback
-    params :[{field:'EmailTitle',val:'Form Received','type':FIELD,'label':'Title',mode:'value'},
+    params :[{field:'Subject',val:'Form Received','type':FIELD,'label':'Subject',mode:'value'},
 	     {field:'Body',val:'Your request has been responded to by <<FormUser>>.','type':PARA,'label':'Body'},
 	     {field:'To',val:'',type:FIELD,label:'To',mode:'field'},
 	     {field:'onlyEmailIf',val:'',type:FIELD,label:'Only Email If Value is True (not No or False or empty)',mode:'field'}
