@@ -115,6 +115,7 @@
 
 <script type="text/x-template" id="config-sheet">
   <div>
+    <span v-if="saved">SAVED</span><span v-else>UNSAVED <button v-on:click="save">save</button></span>
     <button v-on:click="show=!show">{{n}}</button>
     <div v-if="show">
       <debug><p>CONFIG SHEET {{sheetId}}</p></debug>
