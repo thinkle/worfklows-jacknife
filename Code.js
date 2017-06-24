@@ -5,9 +5,30 @@ function doGet() {
 
 function onOpen (e) {
     SpreadsheetApp.getUi().createAddonMenu()  
-	.addItem('Open Workflows','showSidebar')
-	.addItem('Test Config','testConf')
+	.addItem('Open Workflows','openWebApp')
+    .addItem('Gather documents into folder','doGatherIntoFolder')
+	//.addItem('Test Config','testConf')
 	.addToUi();
+}
+
+
+function openWebApp (){
+  var baseUrl = ScriptApp.getService().getUrl()
+  // for development
+  var baseUrl = 'https://script.google.com/a/macros/innovationcharter.org/s/AKfycbxz21oZsPEflnuNbqlZZmgco4PRDezHT4AFrj8NHlY/dev'  
+  showAnchor('Open Workflows Jacknife Web App',baseUrl+'?doc='+SpreadsheetApp.getActiveSpreadsheet().getId());
+}
+
+function doGatherIntoFolder () {
+    var foldername = SpreadsheetApp.getUi().prompt('Folder name?');
+    gatherWorkflow(SpreadhseetApp.getActiveSpreadsheet().getId(),foldername);
+}
+
+
+function showAnchor(name,url) {
+    var html = '<html><body><a href="'+url+'" target="blank" onclick="google.script.host.close()">'+name+'</a></body></html>';
+    var ui = HtmlService.createHtmlOutput(html)
+    SpreadsheetApp.getUi().showModelessDialog(ui,"Open");
 }
 
 function showSidebar () {
