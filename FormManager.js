@@ -277,6 +277,13 @@ function setupTriggers (ss) {
 	}
 	else {
 	    Logger.log('Trigger already exists for form %s',formId);
+	    // Let's make sure it's right though...
+	    controlSheet = PropertiesService.getUserProperties().getProperty(formId);
+	    if (controlSheet != master.getId()) {
+		var err =  'Conflicting trigger: each form can only be managed by one control sheet.'
+		err += '\n'+'Was '+controlSheet
+		err += '\n'+'Shoud be '+master.getId()
+	    }
 	}
     }
 }
