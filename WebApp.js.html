@@ -138,7 +138,13 @@ Vue.component('config-sheet',{
     template:'#config-sheet',
     props : ['sheetId','ssId','n','form','action'],
     created: function () {this.loadData()},
-    data : function () {return {config:undefined,error:'',show:false,details:undefined,fieldLookup:{}}},
+    data : function () {return {
+	config:undefined,
+	error:'',
+	show:false,
+	details:undefined,
+	saved:true,
+	fieldLookup:{}}},
     methods : {
 	loadData : function () {
 	    var self = this;
@@ -184,6 +190,26 @@ Vue.component('config-sheet',{
 		    self.sheetId
 		);
 	},
+
+	save : function () {
+	    var self = this;
+	    google.script.run
+		.withSuccessHandler(
+		    function (d) {
+			self.saved = true;
+		    })
+		.withFailureHandler(
+		    function (e) {
+			self.error = e;
+		    })
+		.updateConfigurationSheet(
+		    self.ssId,
+		    self.sheetId,
+		    self.config.raw,
+		    self.lookups
+		);
+	},
+
 	getActionDetails : function () {
 	    var self = this;
 	    google.script.run
@@ -197,7 +223,13 @@ Vue.component('config-sheet',{
 	        .withFailureHandler(function (e) {self.error = e})
 		.getActionDetails(this.action,this.form)
 	},
-    } // end methods
+    }, // end methods
+    watch : {
+	lookups : {deep: true,
+		   handler : function (v) {this.saved = false}},
+	'config.raw' : {deep:true,
+		      handler : function (v) {this.saved = false}}
+    },
 }) // end config-sheet component
 
 Vue.component('debug',{
