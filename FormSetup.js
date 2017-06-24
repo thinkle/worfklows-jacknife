@@ -431,7 +431,7 @@ function createEmailTrigger (form, params) {
   var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
 	var masterConfig = getMasterConfig(controlSS);
 	var emailConfigSheets = []
-	var config = {'Subject': params['EmailTitle'] ? params['EmailTitle'] : firstForm.getTitle()+' Response',
+	var config = {'Subject': params['Subject'] ? params['Subject'] : firstForm.getTitle()+' Response',
      'Body':(params['Body'] ? params['Body'] : 'Your request has been responded to by <<FormUser>>.') + '\n\n'+createEmailTableTemplateForForm(form),
 		 'To':params['To'] ? params['To'] : '%FieldNameHere',
 		 'Possible Fields':listFormItemTitles(form),
@@ -462,8 +462,15 @@ function createFormTrigger (form, master) {
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (t.getTriggerSourceId()==form.getId()) {
       if (t.getEventType()==ScriptApp.EventType.ON_FORM_SUBMIT) {
-        Logger.log('trigger already installed -- no need for another');
-        alreadyHaveTrigger = true
+          Logger.log('trigger already installed -- no need for another');
+          alreadyHaveTrigger = true
+	  var controlSheet = PropertiesService.getUserProperties().getProperty(form.getId())
+	  if (controlSheet != master.getId) {
+	      var err =  'Conflicting trigger: each form can only be managed by one control sheet.'
+	      err += '\n'+'Was '+controlSheet
+	      err += '\n'+'Shoud be '+master.getId()
+	      throw err;
+	  }
       }
     }
   }) // end forEach trigger
