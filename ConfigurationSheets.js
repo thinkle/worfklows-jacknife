@@ -140,6 +140,7 @@ function formatLKeys (sheet, colnum) {
 function ConfigurationSheet (sheet, settings) {
   
   function overwriteConfiguration (keyValues, listValues) {
+    console.log('overwriteConfiguration(%s,%s)',keyValues,listValues);
     sheet.clear();
     for (var k in keyValues) {
       if (keyValues.hasOwnProperty(k)) {
@@ -147,11 +148,9 @@ function ConfigurationSheet (sheet, settings) {
         //logVerbose('Pushing row: '+k+'=>'+v);
         sheet.appendRow([k,v]);
         // Now format the sheet...
-        formatKeys(sheet,sheet.getLastRow())
-        
       }
     } // en for each key
-    
+    formatKeys(sheet,sheet.getLastRow())    
     // Now handle list values...
     var column = 3; 
     for (var k in listValues) {
@@ -193,9 +192,11 @@ function ConfigurationSheet (sheet, settings) {
         listValues[lname+'Key'] = []
         listValues[lname+'Val'] = []
         for (var k in d) {
-          var v = d[k];
-          listValues[lname+'Key'].push(k);
-          listValues[lname+'Val'].push(v);
+            var v = d[k];
+	    if (k) {
+		listValues[lname+'Key'].push(k);
+		listValues[lname+'Val'].push(v);
+	    }
         }
       }
       overwriteConfiguration(keyValues, listValues);
@@ -453,8 +454,8 @@ function testLookupFieldsStuff () {
 }
 
 function updateConfigurationSheet (ssid, sheetid, props, lookups) {
+  console.log('Pushing config update: SSID: %s, sheetID: %s, props: %s, lookups: %s',ssid,sheetid,props,lookups);
   cs = getConfigurationSheetById(ssid,sheetid);
-  cs.loadConfigurationTable()
   cs.writeConfigurationTable(props,lookups);
 }
 
