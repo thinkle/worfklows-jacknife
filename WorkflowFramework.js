@@ -87,7 +87,7 @@ function Blade (data) {
 
 
 function gatherFiles (controlss) {
-    var fileList = [];
+    var fileList = [DriveApp.getFileById(controlss.getId())];
     var configTabs = [];
     var config = getMasterConfig(controlss);
     Logger.log(JSON.stringify(controlss));
@@ -140,8 +140,11 @@ function gatherWorkflow (ssid, foldername) {
     //Gather a workflow associated with a spreadsheet into a folder, then return the ID of the folder that contains it;
     if (ssid) {var controlss = SpreadsheetApp.openById(ssid)}
     else {var controlss = SpreadsheetApp.getActiveSpreadsheet()}
-    
-    if (!folder) {
+    var fid = PropertiesService.getScriptProperties().getProperty(ssid+' folder');
+    if (fid) {
+	var folder = DriveApp.getFolderById(fid);
+    }
+    else {
 	var topId = PropertiesService.getScriptProperties().getProperty("Toplevel Folder");
 	if (!topId) {
 	    var top = DriveApp.createFolder("Workflows Jacknife Workflows")
@@ -154,6 +157,7 @@ function gatherWorkflow (ssid, foldername) {
 	var folder = DriveApp.createFolder(foldername)
 	top.addFolder(folder);
 	DriveApp.removeFolder(folder); // remove from root
+	PropertiesService.getScriptProperties().setProperty(ssid+' folder',folder.getId())
     }
     return gatherWorkflowInFolder(controlss, folder).getId()
 }
