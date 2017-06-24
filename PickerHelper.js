@@ -10,6 +10,6 @@
  * @return {string} The user's OAuth 2.0 access token.
  */
 function getOAuthToken() {
-    DriveApp.getRootFolder();
-    return ScriptApp.getOAuthToken();
+  DriveApp.getRootFolder();
+  return ScriptApp.getOAuthToken();
 }
