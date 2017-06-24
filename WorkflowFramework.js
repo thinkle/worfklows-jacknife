@@ -84,59 +84,94 @@ function Blade (data) {
     }
 
 } // end workflow
-    
+
 
 function gatherFiles (controlss) {
-  fileList = []
-  var config = getMasterConfig(controlss);
-  Logger.log(JSON.stringify(controlss));
-  config.shift();
-  config.forEach(function (masterRow) {
-    try {
-      fileList.push(DriveApp.getFileById(masterRow.FormID));
-      Logger.log('Pushed: %s',masterRow.FormID);
-    }
-    catch (e) {
-      Logger.log('Trouble fetching: %s',masterRow.FormID);
-      Logger.log('Error: %s',e);
-    }
-  });
-  console.log('Gathered list: %s',fileList);
-  return fileList;
+    var fileList = [];
+    var configTabs = [];
+    var config = getMasterConfig(controlss);
+    Logger.log(JSON.stringify(controlss));
+    config.shift();
+    config.forEach(function (masterRow) {
+	[1,2,3].forEach(function (n) {
+	    var configId = masterRow['Config '+n+' ID'];
+	    if (configId && configId!='NOT_FOUND') {
+		configTabs.push(
+		    getConfigTable(
+			controlss.getId(),
+			configId
+		    )
+		);
+            }
+	}) // end configId harvest
+	try {
+	    fileList.push(DriveApp.getFileById(masterRow.FormID));
+	    Logger.log('Pushed: %s',masterRow.FormID);
+	}
+	catch (e) {
+	    Logger.log('Trouble fetching: %s',masterRow.FormID);
+	    Logger.log('Error: %s',e);
+	}
+    });
+    configTabs.forEach(function (configTab) {
+	//Logger.log('Looking at configTab %s',JSON.stringify(configTab));
+	['SpreadsheetId','Approval Form ID'].forEach(
+	    function (prop) {
+		Logger.log('Checking for prop: %s',prop);
+		if (configTab[prop]) {
+		    try {
+			fileList.push(DriveApp.getFileById(configTab[prop]));
+			console.log('Added file %s %s',prop,configTab[prop]);
+		    }
+		    catch (e) {
+			console.log('Error adding %s: %s',
+				    configTab.prop,
+				    e);
+		    }
+		}
+	    });
+	
+    })
+    //console.log('Gathered list: %s',fileList);
+    return fileList;
 }
 
 function gatherWorkflow (ssid, foldername) {
-  if (ssid) {var controlss = SpreadsheetApp.openById(ssid)}
-  else {var controlss = SpreadsheetApp.getActiveSpreadsheet()}
-  
-  if (!folder) {
-    var topId = PropertiesService.getScriptProperties().getProperty("Toplevel Folder");
-    if (!topId) {
-      var top = DriveApp.createFolder("Workflows Jacknife Workflows")
-      PropertiesService.getScriptProperties().setProperty("Toplevel Folder",top.getId())
+    //Gather a workflow associated with a spreadsheet into a folder, then return the ID of the folder that contains it;
+    if (ssid) {var controlss = SpreadsheetApp.openById(ssid)}
+    else {var controlss = SpreadsheetApp.getActiveSpreadsheet()}
+    
+    if (!folder) {
+	var topId = PropertiesService.getScriptProperties().getProperty("Toplevel Folder");
+	if (!topId) {
+	    var top = DriveApp.createFolder("Workflows Jacknife Workflows")
+	    PropertiesService.getScriptProperties().setProperty("Toplevel Folder",top.getId())
+	}
+	else {
+	    var top = DriveApp.getFolderById(topId)
+	}
+	if (!foldername) {foldername = controlss.getName()+' Files'}
+	var folder = DriveApp.createFolder(foldername)
+	top.addFolder(folder);
+	DriveApp.removeFolder(folder); // remove from root
     }
-    else {
-      var top = DriveApp.getFolderById(topId)
-    }
-    if (!foldername) {foldername = controlss.getName()+' Files'}
-    var folder = DriveApp.createFolder(foldername)
-    top.addFolder(folder);
-  }
-  gatherWorkflowInFolder(controlss, folder)
+    return gatherWorkflowInFolder(controlss, folder).getId()
 }
 
 // Gather
 function gatherWorkflowInFolder (controlss, folder) {
     var files = gatherFiles(controlss)
     files.forEach(function (f) {
-      folder.addFile(f);
+	folder.addFile(f);
     });
+    return folder;
 }
 
 function testGatherWorkflow () {
-  gatherWorkflowInFolder(
-    SpreadsheetApp.openById('10yauqDvNnG2iQwoaIWbRs_3HKVJkYcx0HK3MRCL2bRE'),
-    DriveApp.getFolderById('0BysJP8Am5UC3aDMxN1F2RVVCV2s')// 'FY17 Budget Workflow'
-    );
+    Logger.log('gatherWorkflow=>%s',gatherWorkflow('13J7v8UvtHFB0L7k0qJrDPIuZHRMaT01Ayas47jxion8'));
+    //gatherWorkflowInFolder(
+    //SpreadsheetApp.openById('10yauqDvNnG2iQwoaIWbRs_3HKVJkYcx0HK3MRCL2bRE'),
+    //DriveApp.getFolderById('0BysJP8Am5UC3aDMxN1F2RVVCV2s')// 'FY17 Budget Workflow'
+    //);
 }
 
