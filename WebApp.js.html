@@ -171,6 +171,9 @@ Vue.component('config-sheet',{
 				lookup[lookupKey] = lookupVals[i]
 			    })
 			    self.config.lookups[lookupName]=lookup;
+			    self.$watch('config.lookups.'+lookupName,
+					function () {self.saved = false},
+					{deep:true});
 			}
 			else if (key.length>3&&key.indexOf('Val')==key.length-3) {
 			    console.log('Skip val - part of lookup');
@@ -206,7 +209,7 @@ Vue.component('config-sheet',{
 		    self.ssId,
 		    self.sheetId,
 		    self.config.raw,
-		    self.lookups
+		    self.config.lookups
 		);
 	},
 
