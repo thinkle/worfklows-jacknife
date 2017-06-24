@@ -49,7 +49,7 @@ function Blade (data) {
     // register trigger
     triggerActions[data.shortname] = function (a1,a2,a3,a4) {
 	Logger.log('%s trigger (%s,%s,%s,%s)',data.shortname,a1,a2,a3,a4);
-	triggerActions[data.trigger](a1,a2,a3,a4)
+	data.trigger(a1,a2,a3,a4)
     }
 
     if (!data.create) {
@@ -143,6 +143,9 @@ function gatherWorkflow (ssid, foldername) {
     var fid = PropertiesService.getScriptProperties().getProperty(ssid+' folder');
     if (fid) {
 	var folder = DriveApp.getFolderById(fid);
+	if (foldername) {
+	    folder.setName(foldername)
+	}
     }
     else {
 	var topId = PropertiesService.getScriptProperties().getProperty("Toplevel Folder");
