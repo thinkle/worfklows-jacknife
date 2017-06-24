@@ -1,0 +1,218 @@
+// Component
+Vue.component('picker', {
+    name : 'picker',
+    props : ['apiInfo','type'],
+    data : function () {
+	return {
+	    DEVELOPER_KEY : 'AIzaSyATrC5XEstMsIKMB2ExJ7EoHdPeuF0jvFs',
+	    DIALOG_DIMENSIONS : {width: 790, height: 525},
+	    error:'',
+	}
+    },
+    methods : {
+
+	getForm : function () {
+	    this.getFile(google.picker.ViewId.FORMS)
+	},
+
+	getSheet : function () {
+	    this.getFile(google.picker.ViewId.SPREADSHEETS)
+	},
+
+	getFile : function (viewId) {
+	    var self = this;
+	    if (self.apiInfo.pickerApiLoaded && self.apiInfo.authToken) {
+		var picker = new google.picker.PickerBuilder()
+		    .addView(viewId)
+		    .enableFeature(google.picker.Feature.NAV_HIDDEN)
+		// Hide the title bar since an Apps Script dialog already has a title.
+		    //.hideTitleBar()
+		    .setOAuthToken(self.apiInfo.authToken)
+		    .setDeveloperKey(self.DEVELOPER_KEY)
+		    .setCallback(self.gotFileCallback)
+		    .setOrigin(google.script.host.origin)
+		// Instruct Picker to fill the dialog, minus 2 pixels for the border.
+		    .setSize(self.DIALOG_DIMENSIONS.width - 2,
+			     self.DIALOG_DIMENSIONS.height - 2)
+		    .build();
+		picker.setVisible(true);
+      } else {
+          showError('Unable to load the file picker.');
+      }
+	}, // end getFile
+
+	gotFileCallback : function (data) {
+	    var self = this;
+	    var action = data[google.picker.Response.ACTION];
+	    if (action == google.picker.Action.PICKED) {
+		var doc = data[google.picker.Response.DOCUMENTS][0];
+		var docInfo = {doc : doc,
+			       id : doc[google.picker.Document.ID],
+			       url : doc[google.picker.Document.URL],
+			       title : doc[google.picker.Document.NAME]
+			      }
+		console.log('Got file: %s',JSON.stringify(docInfo));
+		self.$emit('picked', docInfo)
+	    } else if (action == google.picker.Action.CANCEL) {
+		document.getElementById('result').innerHTML = 'Picker canceled.';
+		console.log('Canceled');
+		self.$emit('canceled');
+	    }
+      	},
+	
+    }, // end methods
+    template: '#picker-template',
+});
+
+Vue.component('config-sheet',{
+    name:'config-sheet',
+    template:'#config-sheet',
+    props : ['sheetId','ssId','n'],
+    created: function () {this.loadData()},
+    data : function () {return {config:undefined,error:'',show:false}},
+    methods : {
+	loadData : function () {
+	    var self = this;
+	    google.script.run
+		.withSuccessHandler(function (data) {
+		    self.config = {raw:data}
+		    // Now let's do some parsing...
+		    self.config.lookups = {}
+		    self.config.fields = []
+		    for (var key in data) {
+			var val = data[key];
+			if (key.length>3&&key.indexOf('Key')==key.length-3) { // If it ends in key...
+			    // then let's assume there is also a 'Val'
+			    var lookupName = key.substr(0,key.length-3)
+			    var lookup = {};
+			    console.log('Making a lookup from %s,%s',key,val);
+			    self.config.lookups[lookupName] = lookup;
+			    var lookupKeys = val;
+			    var lookupVals = data[lookupName+'Val']
+			    console.log('Looking at values: %s',lookupVals);
+			    lookupKeys.forEach(function (lookupKey,i) {
+				// Loop through lookup keys and create
+				lookup[lookupKey] = lookupVals[i]
+			    })
+			    self.config.lookups[lookupName]=lookup;
+			}
+			else if (key) {
+			    self.config.fields.push(key);
+			}
+		    }
+
+
+		})
+		.withFailureHandler (function (e) {
+		    self.error = e;
+		})
+		.getConfigTable(
+		    self.ssId,
+		    self.sheetId
+		);
+	},
+    } // end methods
+}) // end config-sheet component
+
+Vue.component('master-config',{
+    name:'master-config',
+    template : '#master-config',
+    props:['configSheet','apiInfo'],
+    data : function () {
+	return {
+	    expand : false,
+	    error : '',
+	    master : {},
+	    details : false,
+	}
+    },
+    created : function () {this.loadData()},
+    methods : 	{
+	loadData : function () {
+	    var self = this;
+	    //var ID = '13J7v8UvtHFB0L7k0qJrDPIuZHRMaT01Ayas47jxion8'
+	    console.log("Loading ID %s",this.configSheet);
+	    google.script.run
+		.withSuccessHandler(function (data) {
+		    console.log('Got data: %s',JSON.stringify(data));
+		    self.master = data;
+		    console.log('Populated master with data');
+		})
+		.withFailureHandler(function (e) {
+		    console.log('Got error : %s',e);
+		    self.error = e
+		})
+		.getCurrentMasterConfig(this.configSheet);
+	},
+
+	getAction : function (action, form) {
+	    var self = this;
+	    console.log('Getting action: %s',action);
+	    google.script.run
+		.withSuccessHandler(function (data) {
+		    self.details = data;
+		})
+		.withFailureHandler(function (error) {
+		    self.error = error;
+		})
+		.getActionDetails(action,form)
+	},
+
+
+    }
+});
+
+MyApp = new Vue({
+    el : '#appName',
+    data : {
+	error:'',
+	configSheet : '',
+	apiInfo: {pickerApiLoaded:false,authToken:undefined}},
+    
+    methods : {
+
+
+	// CALLBACKS
+	setConfig : function (form) {
+	    console.log('Got form info: %s',form);
+	    this.configSheet = form;
+	},
+
+	gotSheet : function (sheet) {
+	    this.sheet = sheet;
+	    console.log('Got sheet info: %s',sheet);
+	},
+
+	// PICKER API CALLS...
+	loadApi : function () {
+	    var self = this;
+	    gapi.load('picker',{'callback':function () {
+		self.apiInfo.pickerApiLoaded = true;
+	    }});
+	},
+	getOAuthToken : function () {
+	    var self = this;
+	    google.script.run.withSuccessHandler(
+		function (token) {self.apiInfo.authToken = token}
+	    )
+		.withFailureHandler(function (e) {self.error = e}).getOAuthToken();
+	},
+
+	loadPickerApi : function () {
+	    this.loadApi()
+	    this.getOAuthToken()
+	}
+    }, // end methods
+
+    created : function () {
+	this.loadPickerApi()
+    },
+    
+
+
+});
+
+
+
+
+//MyApp.loadData()

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <script src="https://unpkg.com/vue/dist/vue.js"></script> <!-- vue -->
+  <script src="https://apis.google.com/js/platform.js"></script> <!-- gapi -->
+
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css"> <!-- add-ons styles -->
+  <style><?!=include( 'WebApp.css'); ?></style> <!-- style -->
+</head>
+
+<body>
+  <!-- Simple Sidebar -->
+  <div id="appName">
+    <h1>Workflows Jacknife</h1>
+
+    
+    <span class="error" v-if="error">{{error}}</span>
+    <br>Pick Master Config Sheet: <picker type="spreadsheet" :api-info="apiInfo" v-on:picked="setConfig"></picker>
+
+    <div  v-if="configSheet"><a :href="configSheet.doc.url">{{configSheet.title}}</a>
+      
+      <master-config
+	:config-sheet="configSheet.doc.id"
+	:api-info="apiInfo"
+	ref="master"
+	>
+      </master-config>
+    </div>
+    <h3>FOR TESTING</h3>
+      <!-- config-sheet="13J7v8UvtHFB0L7k0qJrDPIuZHRMaT01Ayas47jxion8" -->
+    <master-config
+      config-sheet="10yauqDvNnG2iQwoaIWbRs_3HKVJkYcx0HK3MRCL2bRE"
+      :api-info="apiInfo"
+      ref="test"
+      >
+    </master-config>
+    
+    
+  </div>
+</body>
+
+<script type="text/x-template" id="picker-template">
+  <div class="pickerButton">
+    <span v-if="error">{{error}}</span>
+    <span v-if="!apiInfo.pickerApiLoaded">Loading API...</span>
+    <span v-if="!apiInfo.authToken">Loading Authorization token...</span>
+    
+    <span v-if="apiInfo.pickerApiLoaded&&apiInfo.authToken">
+      <button v-if="type=='form'" v-on:click="getForm()">Select Form</button>
+      <button v-if="type=='spreadsheet'" v-on:click="getSheet()" >Select Sheet</button>
+    </span>
+  </div>
+</script>
+
+
+<script type="text/x-template" id="master-config">
+  <div class="master">
+    <div class="error" v-if="error">{{error}}</div>
+    <div v-if="master.config">
+      <div v-for="form,i in master.config">
+	<div v-if="i>0">
+	  <a :href="form.Form">{{form.Title}}</a> {{form.Action}}:
+	  <!-- (get action details <button v-on:click="getAction(form.Action,form.Form)">GetAction</button> 
+	  <div v-if="details">{{details}}</div> -->
+	  (Config <span v-for="n in 3">
+	    <config-sheet :ref="'config'+n" v-if="form['ConfigId'+n]"
+			  :n="n"
+			  :sheet-id="form['ConfigId'+n]"
+			  :ss-id="configSheet"
+			  :href="form['ConfigLink'+n]">{{n}}</config-sheet>
+	  </span>)
+	</div>
+      </div>
+    </div>
+    <div v-if="master.actions">
+      <div v-for="action in master.actions">
+	{{action.action}}
+      </div>
+    </div>
+  </div>
+</script>
+
+<script type="text/x-template" id="config-sheet">
+  <div>
+    <button v-on:click="show=!show">{{n}}</button>
+    <div v-if="show">
+      <p>CONFIG SHEET {{sheetId}}</p>
+      <div v-if="error" class="error">{{error}}</div>
+      <table v-if="config">
+	{{config}}
+	<tr v-for="key in config.fields">
+	  <td>{{key}}</td><td> <input v-model="config.raw[key]"></td>
+	</tr>
+      </table>
+
+      <div v-if="config && config.lookups">{lval}}</td>
+	    </tr>
+	  </table>
+	</div>
+      </div>
+      
+      <div v-else>
+	Loading data...
+      </div>
+    </div>
+  </div>
+</script>
+
+</html>
+<script>
+<?!=include( 'WebApp.js'); ?>
+</script>
