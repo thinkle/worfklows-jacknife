@@ -3,23 +3,6 @@ function doGet() {
     return html.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME);
 }
 
-TEXT = 1
-FOLDER = 2
-FIELDCONVERSION = 3
-FIELDLIST = 4
-PARA = 5
-FIELD = 6
-/* Note: the FIELD set necessitates a *mode* to be specified...
-
-   Modes consist of...
-
-   field -> %fieldName 
-   value -> Raw Value
-   lookup -> @lookup
-   magic -> %magic?
-*/
-
-
 function onOpen (e) {
     SpreadsheetApp.getUi().createAddonMenu()  
 	.addItem('Open Workflows','showSidebar')
@@ -64,7 +47,10 @@ function createApprovalFormFromUrl (formId, params) {
 function sidebarDoAction (action, form, params) {
     Logger.log('Do Action %s to form %s params %s',action,form,params);
     Logger.log('Action = %s',sidebarActions[action])
-    Logger.log('Calling! with params needed %s',sidebarActions[action].params);
+    //Logger.log('Calling! with params needed %s',sidebarActions[action].params);
+    if (params.SpreadsheetApp) {
+	params.SpreadsheetApp = SpreadsheetApp.openById(params.SpreadsheetApp);
+    }
     if (sidebarActions[action].params && (! params)) {
 	Logger.log('do Modal');
 	sidebarDoModal(action, form);
@@ -104,118 +90,7 @@ function getLookupsForField (form, fieldName) {
 }
 
 
-sidebarActions = {
-    // Organize information for sidebar UI
-    log : {
-	shortname: 'Log',
-	name : 'Log'
-    },
-    calendar : {
-	shortname : 'Calendar',
-	name : 'Share Calendar',
-    },
-    folder : {
-	shortname: 'Folder',
-	name : 'Share Folder'
-    },
-    calendarEvent : {
-	name : 'Create Event',
-	shortname : 'CalendarEvent',
-	callback : function (formUrl, params) {
-	    var form = FormApp.openByUrl(formUrl)
-	    return createCalEventTrigger(form, params);
-	},
-	params : {
-	    CalendarID:{label:'Calendar ID',val:'',type:TEXT,},
-	    Title:{label:'Title',val:'',type:FIELD,mode:'field'},
-	    Date:{label:'Date',val:'',type:FIELD,mode:'field'},
-	    Location:{label:'Location',val:'',type:FIELD,mode:'field'},
-	    Description:{label:'Description',val:'',type:PARA,mode:'field'},
-	    onlyAddIf: {label:'Only Add If Value is True (not No or False or Empty):',val:'',type:FIELD,mode:'field'},
-	},
-    },
-    email : {
-	name : "Send Email",
-	shortname : 'Email',
-	callback : function (formUrl, params) {
-	    form = FormApp.openByUrl(formUrl);
-	    createEmailTrigger(form, params);
-	}, // end email callback
-	params : {
-	    'EmailTitle':{val:'Form Received','type':FIELD,'label':'Title',mode:'value'},
-	    'Body':{val:'Email body? Use fields like this: <<Field Title>>.','type':PARA,'label':'Body'},
-	    'To':{val:'',type:FIELD,label:'To',mode:'field'},
-	    'onlyEmailIf':{val:'',type:FIELD,label:'Only Email If Value is True (not No or False or empty)',mode:'field'}
-	},
-    }, // end email
-    approval : {
-	name : "Create Approval Form",
-	shortname : 'Approval',
-	callback : createApprovalFormFromUrl,
-	params : {
-	    titleSuffix : {'label':'Approval Form Title Suffix',
-			   'type':TEXT,
-			   'val':' Approval'},
-	    destinationFolder : {'label':'Folder',
-				 'type':FOLDER,
-				 'val':undefined,},
-	    convertFields : {'label':'Fields to Convert',
-			     type:FIELDCONVERSION,
-			     'val':[{'from':'FormUser','to':'Requester','type':FormApp.ItemType.TEXT},
-				    {'from':'Timestamp','to':'Request Timestamp','type':FormApp.ItemType.TEXT},
-				    {'from':'*#*FY16-MM-###','to':'PO Number','type':FormApp.ItemType.TEXT},
-				   ],},
-	    'approvalHeader.title':{'label':'Header Title for Approval Form',
-				    'type':TEXT,
-				    'val':'The above information was filled out by the requester. Use the section below to indicate your approval.',},
-	    'approvalHeader.helpText':{
-		'label':'Approval Form Help Text',
-		'type':TEXT,
-		'val':'The above information was filled out by the requester. Use the section below to indicate your approval.'
-	    },
-	    newFields: {'label':'New Fields',
-			'type':FIELDLIST,
-			'val':[{'type':'textField','title':'Signature','helpText':'Write initials and date here to approve.'}]},
-	    emailInformBody : {'label':'Body of email to requester.',
-			       'type':PARA,
-			       'val':'Your request has been submitted for approval to <<Approver>>. You have been issued an initial PO number <<PO Number>>, to be active upon approval.\n\nHere are the details of your request:'},
-	    emailRequestBody : {'label':'Body of email to approver.',
-				'type':PARA,
-				'val':'We have received a request and need your approval. <a href="<<link>>">Click here</a> to approve.'},
-	} // end params
-    }, // end approval
-    addToGroup : {
-	name : 'Add to groups',
-	shortname : 'Group',
-	params : {
-	    'username':{'label':'User to be added to group',
-			'type':FIELD,
-		       },
-	    'groups':{'label':'Groups to add user to',
-		      'type':FIELD,},
-	},
-	callback : function (formUrl, params) {
-	}, // end addToGroup callback
-    },
-    // calEvent : {
-    // 	name : "Create Calendar Event",
-    // 	callback: function (formId) {
-    // 		Logger.log('Cal Event Callback!');
-    // 		var calConfig = createCalEventConfig();       
-    // 		var params = {};
-    // 		createCalendarEventSettings(FormApp.openByUrl(formId), calConfig, params);
-    // 	} // end calEvent callback
-    // } // end calEvent
-} // end sidebarActions
-
-
-var actionLookup = {};
-for (var key in sidebarActions) {
-    act = sidebarActions[key]
-    if (act.shortname) {
-	actionLookup[act.shortname] = act;
-    }
-}
+sidebarActions = {}
 
 function getSidebarActions () {
     actions = []
