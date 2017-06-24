@@ -173,7 +173,7 @@ function ConfigurationSheet (sheet, settings) {
     sheet.getDataRange().setWrap(true);
   } // end overwriteConfiguration
   
-  function overwriteConfigurationTable (table) {
+  function overwriteConfigurationTable (table, lookups) {
     keyValues = {}
     listValues = {}
     for (var key in table) {
@@ -181,13 +181,25 @@ function ConfigurationSheet (sheet, settings) {
         var value = table[key];
         if (Array.isArray(value)) {
           listValues[key] = value;
-        }        
+        }
         else {
           keyValues[key] = value;
         }
       }
     }
-    overwriteConfiguration(keyValues, listValues);
+    if (lookups) {
+      for (var lname in lookups) {
+        var d = lookups[lname]
+        listValues[lname+'Key'] = []
+        listValues[lname+'Val'] = []
+        for (var k in d) {
+          var v = d[k];
+          listValues[lname+'Key'].push(k);
+          listValues[lname+'Val'].push(v);
+        }
+      }
+      overwriteConfiguration(keyValues, listValues);
+    }
   }
   
   function getConfigurationTable () {
@@ -243,9 +255,9 @@ function ConfigurationSheet (sheet, settings) {
       this.table = getConfigurationTable();
     },    
     
-    writeConfigurationTable: function (table) {
+    writeConfigurationTable: function (table, lookups) {
       if (table) { this.table = table };
-      overwriteConfigurationTable(this.table);
+      overwriteConfigurationTable(this.table,lookups);
     },
   } // end configurationSheet
   
@@ -438,6 +450,33 @@ function testLookupFieldsStuff () {
 		 'Colors':['Red','Blue','Green'],
 		}
 	)));
+}
+
+function updateConfigurationSheet (ssid, sheetid, props, lookups) {
+  cs = getConfigurationSheetById(ssid,sheetid);
+  cs.loadConfigurationTable()
+  cs.writeConfigurationTable(props,lookups);
+}
+
+function testUpdateConfigSheet () {
+  updateConfigurationSheet(
+    '1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk',
+    '1515612828',
+    {'Regular Key':'Updated value is different for regular only'},
+    {'Foo':{'Fruit':'Kiwi','Protein':'Soy Beans','Grain':'Quinoa'},
+     Squares:{3:9,5:25,7:49,9:81}
+    });      
+}
+
+function testMagicDictTwo () {
+    var ss = SpreadsheetApp.openById('1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk');
+  var config = createConfigurationSheet(ss,'Test 2',
+                                        {Foo:1,
+                                         Bar:'okay',
+                                         dthing:{1:1,2:2,3:3,7:7},
+                                         otherDThing:{hi:1,there:2,what:3,is:4,up:5},
+                                         arrayThing:[1,2,7,'hi']
+                                        })
 }
 
 function testMagicDictionaryStuff () {
