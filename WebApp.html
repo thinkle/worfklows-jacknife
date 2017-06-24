@@ -5,7 +5,7 @@
   <base target="_top">
   <script src="https://unpkg.com/vue/dist/vue.js"></script> <!-- vue -->
   <script src="https://apis.google.com/js/platform.js"></script> <!-- gapi -->
-
+  <script><?!=exportGlobals();?></script>
   <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css"> <!-- add-ons styles -->
   <style><?!=include( 'WebApp.css'); ?></style> <!-- style -->
 </head>
@@ -14,9 +14,12 @@
   <!-- Simple Sidebar -->
   <div id="appName">
     <h1>Workflows Jacknife</h1>
+    {{test}}
+    CONFIG: <field-config type="1" v-model="test"></field-config>
+    <field-config v-model="test" type="6" :formfields='["hi","there","test"]'></field-config>
 
-    
     <span class="error" v-if="error">{{error}}</span>
+
     <br>Pick Master Config Sheet: <picker type="spreadsheet" :api-info="apiInfo" v-on:picked="setConfig"></picker>
 
     <div  v-if="configSheet"><a :href="configSheet.doc.url">{{configSheet.title}}</a>
@@ -75,12 +78,27 @@
       </div>
     </div>
     <div v-if="master.actions">
-      <div v-for="action in master.actions">
-	{{action.action}}
+      NEW ACTION?
+      Pick form: <picker type="form" :api-info="apiInfo" v-on:picked="setForm"></picker> <span v-if="selectedForm">{{selectedForm}}</span>
+      <select v-model="selectedAction">
+	<option  v-for="action in master.actions" :value="action">{{action.action}}</option>
+      </select>
+      <button v-if="selectedForm" v-on:click="getActionDetails">Go</button>
+      <div v-if="actionParameters">
+	{{actionParameters}}
+	<table>
+	  <tr v-for="param in actionParameters.params">
+	    <td>{{param.label}}</td>
+	    <td><field-config :formfields="param.fields" v-model="actionConfig[param.field]" :type="param.type" ref="fc"></field-config></td>
+	  </tr>
+	</table>
+	<button v-on:click="createAction">Set up action</button>
       </div>
     </div>
   </div>
 </script>
+
+
 
 <script type="text/x-template" id="config-sheet">
   <div>
@@ -95,7 +113,7 @@
 	</tr>
       </table>
 
-      <div v-if="config && config.lookups">{lval}}</td>
+      <div v-if="config && config.lookups">{{lval}}</td>
 	    </tr>
 	  </table>
 	</div>
@@ -107,6 +125,43 @@
     </div>
   </div>
 </script>
+
+<script type="text/x-template" id="field-config">
+  <span>
+    VAL: {{value}}
+    <span v-if="type==1"><!--text-->
+      <input type="text" :value="value" @input="updateVal">
+    </span>
+    <span v-if="type==2"> <!--folder-->
+      Folder {{value}} (not yet implemented)
+    </span>
+    <span v-if="type==5"> <!-- PARA -->
+      <textarea :value="value" @input="updateVal">
+      </textarea>
+    </span>
+    <span v-if="type==6">
+      <select v-model="mode">
+	<option value="raw" default>Enter value</option>
+	<option value="field">Choose field</option>
+	<option value="lookup">Field lookup</option>
+	<option value="magic">Magic field</option>
+      </select>
+      <span v-if="mode=='field'">
+	<select v-model="field"> <!-- @input="updateField">-->
+	  <option v-for="f in formfields" :value="f">{{f}}</option>
+	</select>
+      </span>
+      <span v-else="mode=='raw'">
+	<input type="text" :value="value" @input="updateVal">
+      </span>
+    </span>
+    <span v-if="type==8">
+      <input type="checkbox" :value="value" @input="updateVal">
+    </span>
+    
+  </span>
+</script>
+
 
 </html>
 <script>
