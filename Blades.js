@@ -137,14 +137,14 @@ Blade({
 	var form = FormApp.openByUrl(formUrl)
 	return createCalEventTrigger(form, params);
     },
-    params : {
-	CalendarID:{label:'Calendar ID',val:'',type:TEXT,},
-	Title:{label:'Title',val:'',type:FIELD,mode:'field'},
-	Date:{label:'Date',val:'',type:FIELD,mode:'field'},
-	Location:{label:'Location',val:'',type:FIELD,mode:'field'},
-	Description:{label:'Description',val:'',type:PARA,mode:'field'},
-	onlyAddIf: {label:'Only Add If Value is True (not No or False or Empty):',val:'',type:FIELD,mode:'field'},
-    },
+    params : [
+	{field:'CalendarID',label:'Calendar ID',val:'',type:TEXT,},
+	{field:'Title',label:'Title',val:'',type:FIELD,mode:'field'},
+	{field:'Date',label:'Date',val:'',type:FIELD,mode:'field'},
+	{field:'Location',label:'Location',val:'',type:FIELD,mode:'field'},
+	{field:'Description',label:'Description',val:'',type:PARA,mode:'field'},
+	{field:'onlyAddIf',label:'Only Add If Value is True (not No or False or Empty):',val:'',type:FIELD,mode:'field'},
+    ],
     trigger:function (event, masterSheet, actionRow, actionResults) {
 	responses = getResponseItems(event.response);
 	var ceConfig = actionRow['Config1'].table;
