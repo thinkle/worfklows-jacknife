@@ -274,6 +274,7 @@ Vue.component('master-config',{
 	    error : '',
 	    master : {},
 	    details : false,
+	    folder : {},
 	    selectedForm : false,
 	    selectedAction : undefined,
 	    actionParameters : undefined,
@@ -326,9 +327,10 @@ Vue.component('master-config',{
 	    google.script.run
 		.withSuccessHandler(
 		    function (d) {
+			console.log('Got response: %s',JSON.stringify(d));
 			self.duplicating = false;
-			this.duplicate.folder = d.folder;
-			this.duplicate.config = d.file;
+			self.duplicate.folder = d.folder;
+			self.duplicate.config = d.file;
 		    })
 	        .withFailureHandler(
 		    function (e) {
@@ -336,13 +338,13 @@ Vue.component('master-config',{
 			self.error = e;
 		    })
 		.copyWorkflow(self.configSheet)
-
-	    configSheet
 	},
 
 	gatherDocs : function () {
 	    var self = this;
-	    google.script.run.withFailureHandler(function (e) {self.error = e}).gatherWorkflow(this.configSheet);
+	    google.script.run
+		.withSuccessHandler(function (d) {self.folder = f})
+		.withFailureHandler(function (e) {self.error = e}).gatherWorkflow(this.configSheet);
 	},
 
 	getActionDetails : function () {
