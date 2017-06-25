@@ -182,3 +182,43 @@ function testGatherWorkflow () {
     //);
 }
 
+function copyWorkflow (ssid) {
+    // to copy a workflow, we duplicate all the sheets involved...
+    // we do not set up the triggers by default
+    if (ssid) {
+	var ss = SpreadsheetApp.openById(ssid);
+    }
+    else {
+	var ss = SpreadsheetApp.getActiveSpreadsheet();
+	ssid = ss.getId()
+    }
+    // Files to copy...
+    var newSS = ss.copy();
+    var copied = {}
+    // much like gatherFiles now...
+    var config = getMasterConfig(newSS);
+    config.shift(); // remove header
+    config.forEach(function (masterRow) {
+	var formId = masterRow.FormID
+	if (!copied[formId]) {
+	    copied[formId] = DriveApp.getFileById(formId).makeCopy();
+	}
+	masterRow.FormId.formId = copied[formId].getId();
+	masterRow.Form = copied[formId].getUrl();
+	[1,2,3].forEach(function (n) {
+	    var configId = masterRow['Config '+n+' ID'];
+	    if (configId && configId!='NOT_FOUND') {
+		var table = getConfigTable(newSS.getId(),configId);
+		['SpreadsheetId','Approval Form ID'].forEach(
+		    function (prop) {
+			if (table[prop]) {
+			    // we have a file property... let's make a copy
+			    table[prop] = DriveApp.getFileById(table[prop]).makeCopy();
+			}
+		    });
+	    }
+	}); // done with config sheets...
+    }) // done with each row...
+    return {folder:gatherWorkflowInFolder(newSS),
+	    file:newSS}
+}
