@@ -168,6 +168,7 @@ function gatherWorkflow (ssid, foldername) {
 // Gather
 function gatherWorkflowInFolder (controlss, folder) {
     var files = gatherFiles(controlss)
+    Logger.log('Gathering files: %s',files);
     files.forEach(function (f) {
 	folder.addFile(f);
     });
@@ -175,11 +176,17 @@ function gatherWorkflowInFolder (controlss, folder) {
 }
 
 function testGatherWorkflow () {
-    Logger.log('gatherWorkflow=>%s',gatherWorkflow('13J7v8UvtHFB0L7k0qJrDPIuZHRMaT01Ayas47jxion8'));
+    Logger.log('gatherWorkflow=>%s',DriveApp.getFolderById(gatherWorkflow('13J7v8UvtHFB0L7k0qJrDPIuZHRMaT01Ayas47jxion8')));
     //gatherWorkflowInFolder(
     //SpreadsheetApp.openById('10yauqDvNnG2iQwoaIWbRs_3HKVJkYcx0HK3MRCL2bRE'),
     //DriveApp.getFolderById('0BysJP8Am5UC3aDMxN1F2RVVCV2s')// 'FY17 Budget Workflow'
     //);
+}
+
+function testEndOfGather () {
+  var ssid = '1lldMEo4F5K_T8Zb2kURh2CZfgL4-K1yesILGrnmDT5Q'
+  //var ss = SpreadsheetApp.openById(ssid);
+  Logger.log(gatherWorkflow(ssid).getUrl())
 }
 
 function copyWorkflow (ssid) {
@@ -193,7 +200,7 @@ function copyWorkflow (ssid) {
 	ssid = ss.getId()
     }
     // Files to copy...
-    var newSS = ss.copy();
+    var newSS = ss.copy(ss.getName()+' Copy');
     var copied = {}
     // much like gatherFiles now...
     var config = getMasterConfig(newSS);
@@ -203,22 +210,29 @@ function copyWorkflow (ssid) {
 	if (!copied[formId]) {
 	    copied[formId] = DriveApp.getFileById(formId).makeCopy();
 	}
-	masterRow.FormId.formId = copied[formId].getId();
+	masterRow.FormID = copied[formId].getId();
 	masterRow.Form = copied[formId].getUrl();
 	[1,2,3].forEach(function (n) {
 	    var configId = masterRow['Config '+n+' ID'];
 	    if (configId && configId!='NOT_FOUND') {
-		var table = getConfigTable(newSS.getId(),configId);
+          var cs = getConfigurationSheetById (newSS.getId(), configId)
+          cs.loadConfigurationTable()
+          
+          var modified = false;
 		['SpreadsheetId','Approval Form ID'].forEach(
 		    function (prop) {
-			if (table[prop]) {
+			if (cs.table[prop]) {
 			    // we have a file property... let's make a copy
-			    table[prop] = DriveApp.getFileById(table[prop]).makeCopy();
+			    cs.table[prop] = DriveApp.getFileById(cs.table[prop]).makeCopy();
+              modified = true;
 			}
 		    });
+          if (modified) {
+            cs.writeConfigurationTable()
+          }
 	    }
 	}); // done with config sheets...
     }) // done with each row...
-    return {folder:gatherWorkflowInFolder(newSS),
+    return {folder:DriveApp.getFolderById(gatherWorkflow(newSS.getId())),
 	    file:newSS}
 }
