@@ -71,6 +71,17 @@
 <script type="text/x-template" id="master-config">
   <div class="master">
     <div class="error" v-if="error">{{error}}</div>
+    <div v-if="!duplicate.config">
+      <span v-if="!duplicating">
+	<button v-on:click="duplicateWorkflow">Make a Copy of Workflow</button>
+      </span>
+      <span v-else>
+	Making copies...
+      </span>
+    </div>
+    <div><button v-on:click="gatherDocs">Gather documents into a folder</button>
+    </div>
+      
     <div v-if="master.config">
       <div v-for="form,i in master.config">
 	<div v-if="i>0">
