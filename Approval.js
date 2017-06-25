@@ -2,7 +2,9 @@
 // Form2Form Stuff for Approval Forms
 ///////////////////////////////////
 
-
+supported_approval_field_types = [
+    'TEXT','PARAGRAPH_TEXT','MULTIPLE_CHOICE','LIST','DATETIME','DATE'
+    ]
 function preFillApprovalForm (params) {
   // Pre-Fill Out approval form and return editUrl
   // params.targetForm = form object
