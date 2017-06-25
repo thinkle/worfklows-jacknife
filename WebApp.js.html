@@ -278,6 +278,8 @@ Vue.component('master-config',{
 	    selectedAction : undefined,
 	    actionParameters : undefined,
 	    actionConfig : {},
+	    duplicating : false,
+	    duplicate : {config : '', folder: ''},
 	}
     },
     created : function () {this.loadData()},
@@ -318,6 +320,30 @@ Vue.component('master-config',{
 	    self.selectedForm = form;
 	},
 
+	duplicateWorkflow : function () {
+	    var self = this;
+	    self.duplicating = true;
+	    google.script.run
+		.withSuccessHandler(
+		    function (d) {
+			self.duplicating = false;
+			this.duplicate.folder = d.folder;
+			this.duplicate.config = d.file;
+		    })
+	        .withFailureHandler(
+		    function (e) {
+			self.duplicating = false;
+			self.error = e;
+		    })
+		.copyWorkflow(self.configSheet)
+
+	    configSheet
+	},
+
+	gatherDocs : function () {
+	    var self = this;
+	    google.script.run.withFailureHandler(function (e) {self.error = e}).gatherWorkflow(this.configSheet);
+	},
 
 	getActionDetails : function () {
 	    var self = this;
