@@ -6,7 +6,8 @@ function doGet() {
 function onOpen (e) {
     SpreadsheetApp.getUi().createAddonMenu()  
 	.addItem('Open Workflows','openWebApp')
-    .addItem('Gather documents into folder','doGatherIntoFolder')
+	.addItem('Gather documents into folder','doGatherIntoFolder')
+	.addItem('Duplicate workflow','doCopyWorkflow')
 	//.addItem('Test Config','testConf')
 	.addToUi();
 }
@@ -21,9 +22,24 @@ function openWebApp (){
 
 function doGatherIntoFolder () {
     var foldername = SpreadsheetApp.getUi().prompt('Folder name?');
-    gatherWorkflow(SpreadhseetApp.getActiveSpreadsheet().getId(),foldername);
+    gatherWorkflow(SpreadsheetApp.getActiveSpreadsheet().getId(),foldername);
 }
 
+function doCopyWorkflow () {
+    var ui =SpreadsheetApp.getUi()
+    result = ui.alert('Copy the entire workflow? This will make a copy of this spreadsheet and all forms and other documents referenced in this configuration.',
+		      ui.ButtonSet.YES_NO)
+    if (result==ui.Button.YES) {
+	var ret = copyWorkflow()
+	var html = '<html><body><a href="'+ret.file.getUrl()+'">Control Sheet</a>'
+	html += '<br><a href="'+ret.folder.getUrl()+'">Folder with all files</a>'
+	var htmlOut = HtmlService.createHtmlOutput(html)
+	ui.showModelessDialog(htmlOut,"Open");
+    }
+    else {
+	ui.alert('Ok -- canceled');
+    }
+}
 
 function showAnchor(name,url) {
     var html = '<html><body><a href="'+url+'" target="blank" onclick="google.script.host.close()">'+name+'</a></body></html>';
