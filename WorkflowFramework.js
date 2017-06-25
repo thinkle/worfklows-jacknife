@@ -6,6 +6,7 @@ PARA = 5
 FIELD = 6
 FOLDERLIST = 7
 BOOL = 8
+FILE = 9;
 
 function exportGlobals () {
     return "globals="+JSON.stringify({
@@ -16,7 +17,8 @@ function exportGlobals () {
 	PARA:PARA,
 	FIELD:FIELD,
 	FOLDERLIST:FOLDERLIST,
-	BOOL:BOOL
+	BOOL:BOOL,
+      FILE:FILE,
     });
 }
 
@@ -223,8 +225,10 @@ function copyWorkflow (ssid) {
 		    function (prop) {
 			if (cs.table[prop]) {
 			    // we have a file property... let's make a copy
+              console.log('Copying file: %s',cs.table[prop]);
 			    cs.table[prop] = DriveApp.getFileById(cs.table[prop]).makeCopy();
               modified = true;
+              console.log('Copied to: %s',cs.table[prop]);
 			}
 		    });
           if (modified) {
@@ -235,4 +239,13 @@ function copyWorkflow (ssid) {
     }) // done with each row...
     return {folder:DriveApp.getFolderById(gatherWorkflow(newSS.getId())),
 	    file:newSS}
+}
+
+function testConfigFix () {
+  cs = getConfigurationSheetById('146cgFmQ55S2jTJ3OP6biLrM_UYvDueQwV71Ce11luKM',1461439748);
+  cs.loadConfigurationTable();
+  console.log('Started w: ',cs.table.SpreadsheetId);
+  cs.table['SpreadsheetId'] = "1fzjHq5kxM_bYQU08XrheEYVLm5xR_MZf7lkGhm0AmF0";
+  cs.table['foo']='bar'
+  cs.writeConfigurationTable();
 }
