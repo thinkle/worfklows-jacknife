@@ -181,7 +181,8 @@
 	  <option v-for="dict,name in lookups" :value="name">{{name}}</option>
 	  <option value="MAKE_NEW">Create New Lookup</option>
 	</select>
-	<span v-if="lookupDict">
+	<span v-on:click="showLookup=!showLookup"><span v-if="showLookup">Hide</span><span v-else>Show</span> Lookup Table</span>
+	<span v-if="lookupDict" v-show="showLookup">
 	  <span v-if="lookupDict!='MAKE_NEW'">
 	    <table>
 	      <tr v-for="val,key in lookups[lookupDict]" v-if="key">
@@ -194,7 +195,7 @@
 	    </table>
 	  </span>
 	  <span v-else>
-	    New Table Not Yet Implemented :(
+	    Lookup Name: <input v-model="newLookupDictName"> <button v-on:click="makeNewLookupDict()">Create</button>
 	  </span>
 	</span>
       </span>
