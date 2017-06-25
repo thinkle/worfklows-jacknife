@@ -6,7 +6,7 @@ PARA = 5
 FIELD = 6
 FOLDERLIST = 7
 BOOL = 8
-FILE = 9;
+SPREADSHEET = 9;
 
 function exportGlobals () {
     return "globals="+JSON.stringify({
@@ -18,7 +18,7 @@ function exportGlobals () {
 	FIELD:FIELD,
 	FOLDERLIST:FOLDERLIST,
 	BOOL:BOOL,
-      FILE:FILE,
+	SPREADSHEET:SPREADSHEET,
     });
 }
 
