@@ -23,7 +23,7 @@
     <br>Pick Master Config Sheet: <picker type="spreadsheet" :api-info="apiInfo" v-on:picked="setConfig"></picker>
 
     <div  v-if="configSheet">
-      <a v-if="chosenSheet" :href="chosenSheet.url">{{chosenSheet.title}}</a>
+      <a v-if="chosenSheet" :href="chosenSheet.url" target="_BLANK">{{chosenSheet.title}}</a>
       <master-config
 	:config-sheet="configSheet"
 	:api-info="apiInfo"
@@ -79,13 +79,17 @@
 	Making copies...
       </span>
     </div>
-    <div><button v-on:click="gatherDocs">Gather documents into a folder</button>
+    <div else>
+      {{duplicate.config}} {{duplicate.folder}}
+    </div>
+    <div><button v-on:click="gatherDocs">Gather documents into a folder</button> 
+      <span v-if="folder">{{folder}}</span>
     </div>
       
     <div v-if="master.config">
       <div v-for="form,i in master.config">
 	<div v-if="i>0">
-	  <a :href="form.Form">{{form.Title}}</a> {{form.Action}}:
+	  <a target="_BLANK" :href="form.Form">{{form.Title}}</a> {{form.Action}}:
 	  <!-- (get action details <button v-on:click="getAction(form.Action,form.Form)">GetAction</button> 
 	  <div v-if="details">{{details}}</div> -->
 	  (Config <span v-for="n in 3">
