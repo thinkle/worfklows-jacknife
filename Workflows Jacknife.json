@@ -139,6 +139,11 @@
             "type": "server_js", 
             "id": "656a68cb-da1d-4167-ba1b-26c50006e221", 
             "name": "Blades"
+        }, 
+        {
+            "type": "server_js", 
+            "id": "bc895a66-1346-4ad6-955b-88bdbf8c00d1", 
+            "name": "TestSuite"
         }
     ], 
     "id": "1rWoDJhnstrwiN3MBZXOJjg5yX2zsoNLlZLRO-Vp7gSX1za7UNSzENJBO"
