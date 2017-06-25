@@ -3,10 +3,16 @@
 Vue.component('field-config',{
     name : 'field-config',
     props : ['type','value','formfields','lookups'],
-    data : function () {return {mode:'field',field:'',
-				lookupField:'',lookupDict:'',
-				newLookupKey:'',newLookupVal:'',
-			       }},
+    data : function () {return {
+	mode:'field',
+	field:'',
+	showLookup:false,
+	lookupField:'',
+	lookupDict:'',
+	newLookupDictName:'',
+	newLookupKey:'',
+	newLookupVal:'',
+    }},
     methods : {
 	updateVal : function (event) {
 	    console.log('updateVal %s',event.target.value);
@@ -22,6 +28,10 @@ Vue.component('field-config',{
 	    if (this.mode=='field' && this.field) {
 		this.setVal('%'+this.field);
 	    }
+	},
+	updateLookup : function () {
+	    val = '@' + this.lookupField+'>>'+this.lookupDict;
+	    this.setVal(val);
 	},
 	updateForVal : function () {
 	     console.log('Watched field config with value %s',this.value);
@@ -47,6 +57,13 @@ Vue.component('field-config',{
 	    Vue.set(this.lookups[this.lookupDict],this.newLookupKey,this.newLookupVal);
 	    this.newLookupKey = ''; this.newLookupVal = '';
 	    this.$forceUpdate()
+	},
+
+	makeNewLookupDict : function () {
+	    this.lookupDict = this.newLookupDictName;
+	    this.lookups[this.lookupDict] = {};
+	    this.newLookupDict = '';
+	    this.$forceUpdate();
 	}
 	
     },
@@ -60,6 +77,12 @@ Vue.component('field-config',{
      		this.setVal('%'+v);
      	    }
      	},
+	 lookupField : function (v) {
+	     this.updateLookup()
+				    },
+	 lookupDict : function (v) {
+	     this.updateLookup()
+				   },
 	 value : function (v) {this.updateForVal()},
      },
     template:'#field-config',
