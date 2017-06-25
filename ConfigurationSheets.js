@@ -173,6 +173,7 @@ function ConfigurationSheet (sheet, settings) {
   } // end overwriteConfiguration
   
   function overwriteConfigurationTable (table, lookups) {
+    console.log('overwriteConfigurationTable(%s,%s)',table,lookups);
     keyValues = {}
     listValues = {}
     for (var key in table) {
@@ -199,8 +200,8 @@ function ConfigurationSheet (sheet, settings) {
 	    }
         }
       }
-      overwriteConfiguration(keyValues, listValues);
     }
+    overwriteConfiguration(keyValues, listValues);
   }
   
   function getConfigurationTable () {
@@ -251,7 +252,8 @@ function ConfigurationSheet (sheet, settings) {
     getSheetLink : function () { return sheet.getParent().getUrl()+'#gid='+sheet.getSheetId();
 															 },
     getSheetId: function () { return sheet.getSheetId();
-														},
+			    },
+      getSpreadsheet : function () {return sheet.getParent()},
     loadConfigurationTable: function () {
       this.table = getConfigurationTable();
     },    
@@ -297,7 +299,7 @@ function LookupArray (array1, array2) {
 }
 
 
-function createConfigurationSheet (ss, sheetName, table) {
+function createConfigurationSheet (ss, sheetName, table, lookups) {
   //ss = SpreadsheetApp.getActiveSpreadsheet()
   var nameIterator = 1; var origSheetName = sheetName;
   while (ss.getSheetByName(sheetName)) {    
@@ -308,7 +310,7 @@ function createConfigurationSheet (ss, sheetName, table) {
   var cs = ConfigurationSheet(sheet)
   logVerbose('Writing data values'+shortStringify(table))
   cs.writeConfigurationTable(
-    table
+    table,lookups
   )  
   return cs
 }
@@ -469,15 +471,78 @@ function testUpdateConfigSheet () {
     });      
 }
 
-function testMagicDictTwo () {
-    var ss = SpreadsheetApp.openById('1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk');
-  var config = createConfigurationSheet(ss,'Test 2',
-                                        {Foo:1,
-                                         Bar:'okay',
-                                         dthing:{1:1,2:2,3:3,7:7},
-                                         otherDThing:{hi:1,there:2,what:3,is:4,up:5},
-                                         arrayThing:[1,2,7,'hi']
-                                        })
+function createTestSheet (p) {
+    var ss = SpreadsheetApp.openById(p.configSS);
+    return createConfigurationSheet(ss,'Test 2',
+                                              {NumProp:1,
+                                               StrProp:'okay',
+                                               Array1:[1,2,7,'hi'],
+                                               Array2:['foo',1,2,7,'hi']
+                                              },
+                                          {dic:{1:1,2:2,3:3,7:7},
+                                               mixedDic:{hi:1,there:2,what:3,is:4,up:5}
+                                          });
+    
+}
+
+baseTest = {
+    test : function (p) {
+	var config = createTestSheet(p);
+	var sid = config.getSheetId();
+	var cs = getConfigurationSheetById(p.configSS,sid);
+	cs.loadConfigurationTable();
+	assertEq(cs.table['NumProp'],1);
+	assertEq(cs.table['StrProp'],'okay')
+	assertEq(cs.table['Array1'][2],7)
+	assertEq(cs.table['Array2'][0],'foo')
+	assertEq(cs.table.dicLookup[7],7)
+	assertEq(cs.table.mixedDicLookup['hi'],1)
+	return {config:config,
+		link:config.getSheetLink(),
+		id:config.getSheetId()
+          
+               }
+    },
+    cleanup : function (p,r,success) {
+      console.log('Cleanup got: %s,%s,%s',p,r,success);
+	if (success) {
+	    ss = SpreadsheetApp.openById(p.configSS);
+        console.log('Deleting sheet %s %s',ss,r.id);
+	    ss.deleteSheet(getSheetById(ss,r.id))
+	}
+	else {
+	    console.log('Test failed, not deleting sheet. Investigate @ %s',r.link);
+	}
+    },
+    metadata : {name:'Config Sheet Test',
+	       }
+}
+
+Test(baseTest);
+
+var modTest = Test({
+    metadata : {name: 'Config - Modify Sheet'},
+    setup : baseTest.test,
+    test : function (p) {
+	var config = p.setupResult.config
+	config.loadConfigurationTable();
+	config.table['New Prop'] = 'New Val';
+	config.table['NumProp'] = 2; // change it
+	config.table.dicLookup[7] = 17; // change it
+	config.writeConfigurationTable(config.table,{newDic:{a:'a'}})
+	var cs = getConfigurationSheetById(p.configSS,config.getSheetId())
+	cs.loadConfigurationTable();
+	assertEq(cs.table.NumProp,2)
+	assertEq(cs.table.dicLookup[7],17)
+	assertEq(cs.table['New Prop'],'New Val')
+	assertEq(cs.table.newDicLookup.a,'a')
+    return {result:"Modificaiton worked",id:cs.getSheetId(),link:cs.getSheetLink()}
+    },
+    cleanup : baseTest.cleanup,
+})
+
+function testMod () {
+  console.log('Ran test: %s',modTest.run());;
 }
 
 function testMagicDictionaryStuff () {
