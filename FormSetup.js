@@ -465,7 +465,7 @@ function createFormTrigger (form, master) {
           Logger.log('trigger already installed -- no need for another');
           alreadyHaveTrigger = true
 	  var controlSheet = PropertiesService.getUserProperties().getProperty(form.getId())
-	  if (controlSheet != master.getId) {
+	  if (controlSheet != master.getId()) {
 	      var err =  'Conflicting trigger: each form can only be managed by one control sheet.'
 	      err += '\n'+'Was '+controlSheet
 	      err += '\n'+'Shoud be '+master.getId()
