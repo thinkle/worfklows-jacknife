@@ -226,7 +226,7 @@ Blade({
     shortname:'Log',
     name:'Log to File',
     params : [{field:'SheetId',type:TEXT,label:'ID of Spreadsheet Tab',help:'0 for main one'},
-	      {field:'SpreadsheetId',type:FILE,label:'ID of Spreadsheet'},
+	      {field:'SpreadsheetId',type:SPREADSHEET,label:'ID of Spreadsheet'},
 	     ],
     trigger:function (event, masterSheet, actionRow, actionResults) {
 	return logEvent(actionRow['Config1'].table,event,actionResults);
