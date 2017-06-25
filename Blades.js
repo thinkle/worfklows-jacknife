@@ -118,6 +118,7 @@ Blade({
 Blade({
     shortname:'Calendar',
     name:'Share Calendar',
+    params : [],
     trigger:function (event, masterSheet, actionRow) {
 	Logger.log('!!! CALENDAR TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
 	responses = getResponseItems(event.response);
@@ -133,6 +134,7 @@ Blade({
 Blade({
     shortname:'CalendarEvent',
     name : 'Create Event',
+    params : [],
     create : function (formUrl, params) {
 	var form = FormApp.openByUrl(formUrl)
 	return createCalEventTrigger(form, params);
@@ -223,12 +225,16 @@ Blade({
 Blade({
     shortname:'Log',
     name:'Log to File',
+    params : [{field:'SheetId',type:TEXT,label:'ID of Spreadsheet Tab',help:'0 for main one'},
+	      {field:'SpreadsheetId',type:FILE,label:'ID of Spreadsheet'},
+	     ],
     trigger:function (event, masterSheet, actionRow, actionResults) {
 	return logEvent(actionRow['Config1'].table,event,actionResults);
     }})
 
 Blade({
     shortname: 'NewUser',
+    params : [],
     trigger : function (event, masterSheet, actionRow) {
 	var responses = getResponseItems(event.response);
  	var usernameSettings = actionRow['Config1'].table;
