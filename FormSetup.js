@@ -256,6 +256,28 @@ function createUserForm (calendarIDs, groups, folderIDs,params) {
     return form
 } // end createUserForm
 
+
+function convertUnpushableFields (form) {
+  // Convert fields that we cannot copy data between :(
+  console.log('Convert unpushables in %s',form.getEditUrl());
+  existingItems = form.getItems();
+  existingItems.forEach(function (itm) {
+    supported = false;
+    supported_approval_field_types.forEach(function (t) {if (itm.getType()==t) {supported = true}});
+    if (!supported) {
+      console.log('Not supported: %s,%s (not in %s)',itm.getTitle(),itm.getType(),supported_approval_field_types)
+      var replacement = form.addTextItem()
+      replacement.setTitle(itm.getTitle());
+      replacement.setHelpText(itm.getHelpText());
+      form.moveItem(replacement.getIndex(),itm.getIndex())
+      form.deleteItem(itm)
+    }
+    else {
+      console.log('Supported : %s %s',itm.getTitle(),itm.getType())
+    }
+  });
+}
+
 /* newTextItems=['Approval'], convertFields={'Requester':'FormUser', 'Request Timestamp':'Timestamp'}, ) */
 function createApprovalForm (firstForm, params) {
     if (params == undefined) {params = {}}
@@ -306,7 +328,7 @@ function createApprovalForm (firstForm, params) {
 	Logger.log('Create from: '+fieldParams);
 	createFormItem(approvalForm,fieldParams)    
     }
-    
+    convertUnpushableFields(approvalForm);
     var fromFields = []; toFields = []; helpText = []; fieldTypes = [];
     function addField (f) {
 	fromFields.push(f.from ? f.from : '')
@@ -701,3 +723,20 @@ function createTestTriggerTomTom () {
     createFormTrigger(form,ss)
     createFormTrigger(form2,ss)
 }
+
+convertTest = Test({
+    metadata : {name:'Test field conversion'},
+    test : function (p) {
+      console.log('Run conversion test');
+      var f = DriveApp.getFileById(p.fileForm).makeCopy();
+      //f = DriveApp.getFileById('1jAnp-92wGxfihWvK9hgTcWBSmCZZEFHeAvfrP0UQqzs');
+      var form = FormApp.openById(f.getId());
+      console.log('Try converting unpushables...');
+      convertUnpushableFields(form)
+      console.log('Completed converting unpushables');
+      console.log('URL: %s',form.getEditUrl());
+      return {url:form.getEditUrl()}
+    },
+})
+
+function testFieldConversion () {convertTest.solo()}
