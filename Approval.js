@@ -152,26 +152,26 @@ function checkForApprovals (form, logsheet) {
 	var logTable = Table(logsheet.getDataRange(), 'OriginalResponseId');
 	var fixed = []
 	allResponses.forEach (function (resp) {
-		var respId = resp.getId();
-        // Here's some seriously f*ed up code thanks to google -- guess what, each form ID
-        // can actually be one of TWO different IDs, and the ID you get off of an object
-        // from resp.getId() is DIFFERENT than the ID you get from 
-        // form.getResponse(resp).getId() -- so yeah, thanks google, thanks a fucking lot.
-		if (! logTable.hasRow(respId) && ! logTable.hasRow(form.getResponse(resp.getId()).getId())) {
-			// We don't have the row! We better do this thing...
-			Logger.log('Do this thing! '+respId+' '+resp);
-            //foo = y + 7 + 23;
-			//
-			fakeEvent = {
-				'source':form,
-				'response':resp,
-			}
-			logNormal('checkForApprovals triggering fakeEvent: %s',fakeEvent);
-			onFormSubmitTrigger(fakeEvent);
+	    var respId = resp.getId();
+            // Here's some seriously f*ed up code thanks to google -- guess what, each form ID
+            // can actually be one of TWO different IDs, and the ID you get off of an object
+            // from resp.getId() is DIFFERENT than the ID you get from 
+            // form.getResponse(resp).getId() -- so yeah, thanks google, thanks a fucking lot.
+	    if (! logTable.hasRow(respId) && ! logTable.hasRow(form.getResponse(resp.getId()).getId())) {
+		// We don't have the row! We better do this thing...
+		Logger.log('Do this thing! '+respId+' '+resp);
+		//foo = y + 7 + 23;
+		//
+		fakeEvent = {
+		    'source':form,
+		    'response':resp,
 		}
-		else {
-			logNormal('checkForApprovals found perfectly good row: %s',respId);
-		}
+		logNormal('checkForApprovals triggering fakeEvent: %s',fakeEvent);
+		onFormSubmitTrigger(fakeEvent);
+	    }
+	    else {
+		logNormal('checkForApprovals found perfectly good row: %s',respId);
+	    }
 	}); // end forEach resp
 }
 
@@ -198,14 +198,14 @@ function approvalOnTimerCleanup () {
           return
 		}
 		var masterConfig = getMasterConfig(masterSheet);
-		masterConfig.getConfigsForId(fs).forEach( function (row) {
+	    masterConfig.getConfigsForId(fs).forEach( function (row,i) {
 			if (row.Action=='Approval') {
-				Logger.log('We should do something with Approval row: %s',row)
-				logSS = SpreadsheetApp.openById(row['Config3'].table.SpreadsheetId);
-				logSheet = getSheetById(logSS, row['Config3'].table.SheetId);
-				checkForApprovals(FormApp.openById(fs),logSheet);
+			    Logger.log('Checking approvals at config: %s',i)
+			    logSS = SpreadsheetApp.openById(row['Config3'].table.SpreadsheetId);
+			    logSheet = getSheetById(logSS, row['Config3'].table.SheetId);
+			    checkForApprovals(FormApp.openById(fs),logSheet);
 			}
-		});
+	    });
 	}) // end forEach formSource
 }
 			
@@ -285,3 +285,22 @@ function testWeirdness () {
    missingResp = 'ChMzMDQxODYzNjc5OTk2MjI3MzUzEOaJ4oW8yJGLjwE'
    Logger.log('missing id=>%s',form.getResponse(missingResp).getId());
 }
+
+approvalTest = Test({
+    metadata : {name : 'Test Approval Request'},
+    test : function () {resubmitForm('1WGKg3jEmRI4oGZIh1TfAEW4H8AlzNtttAEbWfEo989s',0)}     // this will be live soon -- change before we go to production FIXME
+})
+
+function runApprovalTrigger () {
+    approvalTest.solo()
+}
+
+approvalApprovedTest = Test({
+    metadata : {name : 'Test Approved Approval'},
+    test : function () {resubmitForm('1lVauucfWhU57sU_PVUY0j2oFcmBAbUTHnJVDLuyT0Tk',0)} // this will be live soon - change before we go into production
+});
+
+function runApprovedApprovalTrigger () {
+    approvalApprovedTest.solo();
+}
+		
