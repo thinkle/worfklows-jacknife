@@ -62,7 +62,6 @@ function Table (range, idHeader) {
                             {
                               'enumerable': true,
                               'set': function(v) {
-                                //row[i] = v;
                                 var cell = sheet.getRange(Number(rowOffset) + Number(rowNum),Number(colOffset) + Number(i))
                                 cell.setValue(v);
                                 row[i]=v;
@@ -116,6 +115,7 @@ function Table (range, idHeader) {
   table.pushRow = function (data) {
     logVerbose('pushRow got '+JSON.stringify(data))
     var pushArray = []
+    for (var i=0; i<headers.length; i++) {pushArray.push('')}
     for (var key in data) {  
       if (data.hasOwnProperty(key)) {
       logVerbose('look at key: '+key);
@@ -163,33 +163,41 @@ function Table (range, idHeader) {
   table.updateRow = function (data) {
     var id = data[idHeader]
     if (rowsById.hasOwnProperty(id)) {
-			var lock = LockService.getScriptLock()
-			try {
-				lock.waitLock(240000);
-				var row = rowsById[id];
-				for (var prop in data) {
-					if (data.hasOwnProperty(prop) && row.hasOwnProperty(prop)) {  
-						if (data[prop] !== undefined) {
-							row[prop] = data[prop]
-						}
-					}
-				}
-			}
-			catch (err) {
-				emailError('Error during table write',err);
-			}
-			finally {
-				lock.releaseLock();
-			}
+	var lock = LockService.getScriptLock()
+	try {
+	    lock.waitLock(240000);
+	    var row = rowsById[id];
+	    console.log('Updating table row %s with %s',row,data);
+	    for (var prop in data) {
+		if (data.hasOwnProperty(prop) && row.hasOwnProperty(prop)) {
+            if (data[prop]===undefined) {
+              //Logger.log('Undefined value :( %s',prop);
+              row[prop] = ''
+            }
+            else {
+              row[prop] = data[prop]
+            }
+		    //if (data[prop] !== undefined) {
+		    //row[prop] = data[prop]
+		    //}
+		}
+	    }
+	}
+	catch (err) {
+	    emailError('Error during table write',err);
+	}
+	finally {
+	    lock.releaseLock();
+	}
     }
-    else {
-      table.pushRow(data)
-    }
+      else {
+	  table.pushRow(data)
+      }
   }
-  
-  table.headers = headers;
-  
-  return table;
+    
+    table.headers = headers;
+    
+    return table;
 }
 
 function spreadsheetify (value) {
@@ -237,3 +245,30 @@ function testTable () {
     table[5]['Age'] = '28'
   logNormal('Table length is now: '+table.length)
 }
+
+updateTest=  Test( {
+    metadata : {name :'Update Table'},
+    setup : function (p) {
+	p.ss = p.getScratchSS();
+	[['ID','Name','Number','Foo','Bar'],
+	 [1,'Tom',82,'asdf','owiaeru'],
+	 [2,'Dick',82,'asdfqqq','zzz'],
+	 [3,'Harry',82,'asdfasdf','iii'],
+     [4,'Falsey',false,true,'bar bar bar '],
+	].forEach(function (r) {p.ss.appendRow(r)});
+    },
+    test : function (p) {
+	var t = Table(p.ss.getActiveSheet().getDataRange(),'ID');
+	t.updateRow({ID:2,Name:'Fred','Foo':undefined,Bar:false,Number:-72.123});
+    t.pushRow({ID:27,Name:"Foo",Bar:undefined,Foo:false});
+	//t.updateRow({ID:3,Number:17});
+	return {url:p.ss.getUrl()}
+    },
+
+})
+    
+function doUpdateTest () {
+  updateTest.solo();
+}
+    
+
