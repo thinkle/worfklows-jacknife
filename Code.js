@@ -75,6 +75,22 @@ function include(filename) {
 	.getContent();
 }
 
+function getFileInfo (id) {
+  try {var f = DriveApp.getFileById(id)}
+  catch (e) {
+    try {var f = DriveApp.getFolderById(id);}
+    catch (e) {
+      var f = FormApp.openByUrl(id).getId();
+      f = DriveApp.getFileById(f);
+    }
+  }
+    return {
+	id : id,
+	name : f.getName(),
+	type : f.getMimeType(),
+	url : f.getUrl(),
+    }
+}
 function createApprovalFormFromUrl (formId, params) {
     Logger.log('createApprovalForm(%s)',formId);
     firstForm = FormApp.openByUrl(formId);
