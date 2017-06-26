@@ -37,7 +37,7 @@ triggerActions = {} // registry of triggers by name, with functions
 
 
 // To be used as follows...
-// Workflow({
+// Blade({
 //     name : Create User, -> name of workflow for UI
 //     shortname : NewUser -> name of workflow for code purposes
 //     trigger : function (event, masterSheet, actionRow, actionResults) {},
@@ -150,7 +150,7 @@ function gatherWorkflow (ssid, foldername) {
 	}
     }
     else {
-	var topId = PropertiesService.getScriptProperties().getProperty("Toplevel Folder");
+	var topId = PropertiesService.getUserProperties().getProperty("Toplevel Folder");
 	if (!topId) {
 	    var top = DriveApp.createFolder("Workflows Jacknife Workflows")
 	    PropertiesService.getScriptProperties().setProperty("Toplevel Folder",top.getId())
@@ -202,33 +202,40 @@ function copyWorkflow (ssid) {
 	ssid = ss.getId()
     }
     // Files to copy...
-    var newSS = ss.copy(ss.getName()+' Copy');
+
     var copied = {}
+    function duplicate (id) {
+      if (!copied[id]) {
+        copied[id] = DriveApp.getFileById(id).makeCopy()
+      }
+      return copied[id];
+    }
+
+    var newSS = SpreadsheetApp.openById(duplicate(ssid).getId());
+    
     // much like gatherFiles now...
+  Logger.log('Grab master config');
     var config = getMasterConfig(newSS);
+  Logger.log('got config');
     config.shift(); // remove header
     config.forEach(function (masterRow) {
 	var formId = masterRow.FormID
-	if (!copied[formId]) {
-	    copied[formId] = DriveApp.getFileById(formId).makeCopy();
-	}
-	masterRow.FormID = copied[formId].getId();
+	masterRow.FormID = duplicate(formId).getId();
 	masterRow.Form = copied[formId].getUrl();
 	[1,2,3].forEach(function (n) {
 	    var configId = masterRow['Config '+n+' ID'];
 	    if (configId && configId!='NOT_FOUND') {
-          var cs = getConfigurationSheetById (newSS.getId(), configId)
-          cs.loadConfigurationTable()
-          
-          var modified = false;
+		var cs = getConfigurationSheetById (newSS.getId(), configId)
+		cs.loadConfigurationTable()
+		var modified = false;
 		['SpreadsheetId','Approval Form ID'].forEach(
 		    function (prop) {
 			if (cs.table[prop]) {
 			    // we have a file property... let's make a copy
-              console.log('Copying file: %s',cs.table[prop]);
-			    cs.table[prop] = DriveApp.getFileById(cs.table[prop]).makeCopy();
-              modified = true;
-              console.log('Copied to: %s',cs.table[prop]);
+			    console.log('Copying file: %s',cs.table[prop]);
+			    cs.table[prop] = duplicate(cs.table[prop]).getId();
+			    modified = true;
+			    console.log('Copied to: %s',cs.table[prop]);
 			}
 		    });
           if (modified) {
@@ -249,3 +256,12 @@ function testConfigFix () {
   cs.table['foo']='bar'
   cs.writeConfigurationTable();
 }
+
+var testCopy = Test({
+    metadata : {name:'Copy Workflow Test'},
+    test : function (p) {
+	return copyWorkflow(p.masterSS)
+    }
+})
+
+function runTestCopy () {testCopy.solo()}
