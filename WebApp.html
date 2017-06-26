@@ -13,50 +13,85 @@
 <body>
   <!-- Simple Sidebar -->
   <div id="appName">
+    <picker v-model="test"></picker>
     <h1>Workflows Jacknife</h1>
-    {{test}}
-    CONFIG: <field-config type="1" v-model="test"></field-config>
-    <field-config ref="testfield" v-model="test" type="6" :formfields='["hi","there","test","Foo"]'></field-config>
-
     <span class="error" v-if="error">{{error}}</span>
-
-    <br>Pick Master Config Sheet: <picker type="spreadsheet" :api-info="apiInfo" v-on:picked="setConfig"></picker>
-
-    <div  v-if="configSheet">
-      <a v-if="chosenSheet" :href="chosenSheet.url" target="_BLANK">{{chosenSheet.title}}</a>
-      <master-config
-	:config-sheet="configSheet"
-	:api-info="apiInfo"
-	ref="master"
-	>
-      </master-config>
+    <h2>Installed Workflows (with Triggers)</h2>
+    <collapser show-label="Show workflows w/ triggers set up">
+    <div v-for="formList,master in masters">
+      Master Sheet: <drive-file :id="master"></drive-file>
+      <collapser show-label="Show forms" hide-label="Hide forms">Forms: <li v-for="form in formList"><drive-file :id="form"></drive-file></li></collapser>
+      <collapser show-label="Show Full Config" hide-label="Hide">
+	<div>Config Sheet: <picker api-info="apiInfo" v-model="master"></picker>
+	<master-config :config-sheet="master"
+		       :api-info="apiInfo"
+		       :ref="master">
+	</master-config></div>
+      </collapser>
     </div>
-    <!-- <h3>FOR TESTING</h3> -->
-      <!-- config-sheet="13J7v8UvtHFB0L7k0qJrDPIuZHRMaT01Ayas47jxion8" -->
-      <!-- <master-config
-      config-sheet="10yauqDvNnG2iQwoaIWbRs_3HKVJkYcx0HK3MRCL2bRE"
-      :api-info="apiInfo"
-      ref="test"
-      >
-    </master-config> -->
-    
-    
+    </collapser>
+
+
+    <h2>Non-Active/New Workflows</h2>
+    <i>Or workflows w/ triggers under another account</i>
+    <collapser>
+      <div>
+	Config Sheet: <picker type="sheet" :api-info="apiInfo" v-model="configSheet"></picker>
+	  <master-config
+	    :config-sheet="configSheet"
+	    :api-info="apiInfo"
+	    ref="master"
+	    >
+	  </master-config>
+      </div>
+    </collapser>
   </div>
 </body>
 
 <script type="text/x-template" id="picker-template">
-  <div class="pickerButton">
+  <div class="picker">
     <span v-if="error">{{error}}</span>
-    <span v-if="!apiInfo.pickerApiLoaded">Loading API...</span>
-    <span v-if="!apiInfo.authToken">Loading Authorization token...</span>
-    
-    <span v-if="apiInfo.pickerApiLoaded&&apiInfo.authToken">
-      <button v-if="type=='form'" v-on:click="getForm()">Select Form</button>
-      <button v-if="type=='spreadsheet'" v-on:click="getSheet()" >Select Sheet</button>
+    <span v-if="value">
+      FILE: <drive-file :id="value">
+      </drive-file>
+    </span>
+    <span>
+      <span v-if="!apiInfo.pickerApiLoaded">Loading API...</span>
+      <span v-if="!apiInfo.authToken">Loading Authorization token...</span>
+      <!-- picker button -->
+      <span v-if="apiInfo.pickerApiLoaded&&apiInfo.authToken">
+	<button v-if="type=='form'" v-on:click="getForm()">
+	  <span v-if="value">Change</span>
+	  <span v-else>Select</span>
+	  Form
+	</button>
+	<button v-else v-on:click="getSheet()" >
+	  <span v-if="value">Change</span><span v-else>Select</span> Sheet
+	</button>
+      </span>
     </span>
   </div>
 </script>
 
+
+<script type="text/x-template" id="drive-file">
+  <div>
+    <div v-if="error" class="error">{{error}}</div>
+    <div v-if="id&&!file.id">Loading file data... ({{id}})</div>
+    <div v-else-if="id">
+      <a :href="file.url">{{file.name}}</a>
+    </div>
+  </div>
+</script>
+
+<script type="text/x-template" id="collapser">
+  <div>
+    <div v-on:click="show=!show">{{label||show&&(hideLabel||'Hide')||(showLabel||'Show')}}</div>
+    <div v-if="show">
+      <slot></slot>
+    </div>
+  </div>
+</script>
 
 <script type="text/x-template" id="debug">
   <span>
@@ -70,44 +105,49 @@
 
 <script type="text/x-template" id="master-config">
   <div class="master">
+    <!-- Master Sheet: -->
     <div class="error" v-if="error">{{error}}</div>
-    <div v-if="!duplicate.config">
-      <span v-if="!duplicating">
-	<button v-on:click="duplicateWorkflow">Make a Copy of Workflow</button>
+    <div class="menu" v-if="master.config">
+      <button v-on:click="setupTriggers()">Set Up Triggers for Workflow</button>
+      <span v-if="!duplicate.config">
+	<span v-if="!duplicating">
+	  <button v-on:click="duplicateWorkflow">Make a Copy of Workflow</button>
+	</span>
+	<button v-on:click="gatherDocs">Gather documents into a folder</button> 
       </span>
-      <span v-else>
-	Making copies...
-      </span>
     </div>
-    <div else>
-      {{duplicate.config}} {{duplicate.folder}}
+    <div v-if="duplicate.config">
+      Duplication results:
+      Config: <drive-file :id="duplicate.config"></drive-file>
+      <br>Folder: <drive-file :id="duplicate.folder"></drive-file>
     </div>
-    <div><button v-on:click="gatherDocs">Gather documents into a folder</button> 
-      <span v-if="folder">{{folder}}</span>
+    <div v-if="folder">
+      Gathered documents in folder: <drive-file :id="folder"></drive-file>
     </div>
-      
-    <div v-if="master.config">
-      <div v-for="form,i in master.config">
-	<div v-if="i>0">
-	  <a target="_BLANK" :href="form.Form">{{form.Title}}</a> {{form.Action}}:
-	  <!-- (get action details <button v-on:click="getAction(form.Action,form.Form)">GetAction</button> 
-	  <div v-if="details">{{details}}</div> -->
-	  (Config <span v-for="n in 3">
+
+    <div v-for="form,i in master.config">
+      <div v-if="i>0">
+	<drive-file :id="form.Form"></drive-file> {{form.Action}}:
+	<!-- (get action details <button v-on:click="getAction(form.Action,form.Form)">GetAction</button> 
+	     <div v-if="details">{{details}}</div> -->
+	  <span v-for="n in 3">
 	    <config-sheet :ref="'config'+n" v-if="form['ConfigId'+n]"
-			  :n="n"
-			  :sheet-id="form['ConfigId'+n]"
-			  :ss-id="configSheet"
-			  :form="form.Form"
-			  :action="form.Action"
-			  :href="form['ConfigLink'+n]">{{n}}</config-sheet>
-	  </span>)
-	</div>
+			:n="n"
+			:sheet-id="form['ConfigId'+n]"
+			:ss-id="configSheet"
+			:form="form.Form"
+			:action="form.Action"
+			:href="form['ConfigLink'+n]">Config {{n}}</config-sheet>
+	  </span>
       </div>
     </div>
+    
     <div v-if="master.actions">
       NEW ACTION?
-      Pick form: 
-      <picker type="form" :api-info="apiInfo" v-on:picked="setForm"></picker> <span v-if="selectedForm">{{selectedForm}}</span>
+      <span v-for="form in master.config"><button v-if="form.Form" type="checkbox" v-on:click="selectedForm=form.Form">Use {{form.Title}}</button></span>
+      <button v-on:click="selectedForm=''">Pick other form:</button>
+      <span v-if="!selectedForm"><picker type="form" :api-info="apiInfo" v-on:picked="setForm"></picker> <span v-if="selectedForm">{{selectedForm}}</span></span>
+      
       <select v-model="selectedAction">
 	<option  v-for="action in master.actions" :value="action">{{action.action}}</option>
       </select>
@@ -145,14 +185,24 @@
 	  <td>
 	    <span v-if="fieldLookup[key]">
 	      <field-config v-model="config.raw[key]"
-			    :type="fieldLookup[key].type"
+			    :type="fieldLookup[key]&&fieldLookup[key].type||key.indexOf('Body')>-1&&5||6"
 			    :formfields="fieldLookup[key].fields"
 			    :lookups="config.lookups"
 			    :ref="'fl_'+key"
 			    >
-	      </field-config>
+	      </field-config> <!-- use fields for everything -->
 	    </span>
-	    <span v-else><input v-model="config.raw[key]"></span>
+	    <span v-else> <!--<input v-model="config.raw[key]">-->
+	      <field-config v-model="config.raw[key]"
+			    :type="key.indexOf('Body')>-1&&5||6"
+			    :formfields="formFields"
+			    :lookups="formLookups"
+			    :ref="'fl_'+key"
+			    >
+	      </field-config> <!-- use fields for everything -->
+
+
+	    </span>
 	  </td>
 	</tr>
       </table>
