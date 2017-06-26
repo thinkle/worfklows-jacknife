@@ -1,38 +1,37 @@
 function logEvent (configTable, event, actionResults, extraConfig) {
-  // DEBUG CODE
-  //msg = 'logEvent('+JSON.stringify(configTable)+','+JSON.stringify(event)+',';
-  //msg += JSON.stringify(actionResults)+','+JSON.stringify(extraConfig)+')';
-  //emailError (msg, "NO ERROR",{'subject':'logEvent debug info'})
-  // END DEBUG CODE
-	var settings = lookupFields(configTable,getResponseItems(event.response, actionResults));	
-	settings.Triggers = {};
-	for (var key in actionResults) {
-		settings[key+'Action'] = actionResults[key]
-		settings.Triggers[key] = actionResults[key]
-	}
-	for (var key in extraConfig) {
-		settings[key] = extraConfig[key];
-	}
-	settings.ResponseId = event.response.getId()
-    try {
-      var sheet = getSheetById(SpreadsheetApp.openById(settings.SpreadsheetId),settings.SheetId);
+    // DEBUG CODE
+    //msg = 'logEvent('+JSON.stringify(configTable)+','+JSON.stringify(event)+',';
+    //msg += JSON.stringify(actionResults)+','+JSON.stringify(extraConfig)+')';
+    //emailError (msg, "NO ERROR",{'subject':'logEvent debug info'})
+    // END DEBUG CODE
+    var settings = lookupFields(configTable,getResponseItems(event.response, actionResults));	
+    settings.Triggers = {};
+    for (var key in actionResults) {
+	settings[key+'Action'] = actionResults[key]
+	settings.Triggers[key] = actionResults[key]
     }
-  catch (err) {
-    emailError('Unable to fetch sheet '+settings.SpreadsheetId+' + '+settings.SheetId,
-               err)
-    throw err;
-  }
-  var idCol = configTable.idCol ? configTable.idCol : undefined
-  var table = Table(sheet.getDataRange(),idCol);
-  Logger.log('Updating row with %s',shortStringify(settings));
-	//emailError('logEvent updating table '+shortStringify(table)+'row with settings: '+shortStringify(settings),'No error'); // DEBUG
-  try {
-    table.updateRow(settings) // we just push our settings -- the set up of the table then becomes the key...
-
-  }
-  catch (err) {
-    emailError('Error updating '+settings.SpreadsheetId+' with '+JSON.stringify(settings), err);
-    throw err;
+    for (var key in extraConfig) {
+	settings[key] = extraConfig[key];
+    }
+    settings.ResponseId = event.response.getId()
+    try {
+	var sheet = getSheetById(SpreadsheetApp.openById(settings.SpreadsheetId),settings.SheetId);
+    }
+    catch (err) {
+	emailError('Unable to fetch sheet '+settings.SpreadsheetId+' + '+settings.SheetId,
+		   err)
+	throw err;
+    }
+    var idCol = configTable.idCol ? configTable.idCol : undefined
+    var table = Table(sheet.getDataRange(),idCol);
+    //Logger.log('Updating row with %s',shortStringify(settings));
+    //emailError('logEvent updating table '+shortStringify(table)+'row with settings: '+shortStringify(settings),'No error'); // DEBUG
+    try {
+	table.updateRow(settings) // we just push our settings -- the set up of the table then becomes the key...
+    }
+    catch (err) {
+      emailError('Error updating '+settings.SpreadsheetId+' with '+JSON.stringify(settings), err);
+	throw err;
   }
   return settings
 }
