@@ -1,5 +1,9 @@
 // Component
 
+var fileRegistry = {
+}
+
+
 Vue.component('field-config',{
     name : 'field-config',
     props : ['type','value','formfields','lookups'],
@@ -93,7 +97,7 @@ Vue.component('field-config',{
 
 Vue.component('picker', {
     name : 'picker',
-    props : ['apiInfo','type'],
+    props : ['apiInfo','type','value'],
     data : function () {
 	return {
 	    DEVELOPER_KEY : 'AIzaSyATrC5XEstMsIKMB2ExJ7EoHdPeuF0jvFs',
@@ -144,7 +148,8 @@ Vue.component('picker', {
 			       title : doc[google.picker.Document.NAME]
 			      }
 		console.log('Got file: %s',JSON.stringify(docInfo));
-		self.$emit('picked', docInfo)
+		self.$emit('picked', docInfo);
+		self.$emit('input',docInfo.id);
 	    } else if (action == google.picker.Action.CANCEL) {
 		document.getElementById('result').innerHTML = 'Picker canceled.';
 		console.log('Canceled');
@@ -167,6 +172,8 @@ Vue.component('config-sheet',{
 	show:false,
 	details:undefined,
 	saved:true,
+	formLookups : {},
+	formFields : [],
 	fieldLookup:{}}},
     methods : {
 	loadData : function () {
@@ -244,6 +251,12 @@ Vue.component('config-sheet',{
 		    self.fieldLookup = {}
 		    self.details.params.forEach(function (p) {
 			self.fieldLookup[p.field]=p
+			if (p.fields) {
+			    self.formFields = p.fields;
+			}
+			if (p.lookups) {
+			    self.formLookups = p.lookups;
+			}
 		    });
 		})
 	        .withFailureHandler(function (e) {self.error = e})
@@ -263,6 +276,41 @@ Vue.component('debug',{
     template:'#debug',
     data : function () {return {show:false}}
 })
+
+Vue.component('collapser',{
+    name:'collapser',
+    props : ['label','showLabel','hideLabel'],
+    template:'#collapser',
+    data : function () {return {show:false}}
+})
+
+Vue.component('drive-file',{
+    name : 'drive-file',
+    props: ['id'],
+    data : function () {return {
+	error : '',
+	file : {
+	    id:'',
+	    name:'',
+	    type:'',
+	    url:'',
+	}}},
+    template : '#drive-file',
+    created : function () {
+	var self = this;
+	if (fileRegistry[self.id]) {
+	    self.file = fileRegistry[self.id]
+	}
+	google.script.run
+	    .withSuccessHandler(function (f) {
+		self.file = f;
+		fileRegistry[self.id] = self.file;
+	    })
+	    .withFailureHandler(function (e) {self.error = e})
+	    .getFileInfo(this.id)
+    },
+})
+
 
 Vue.component('master-config',{
     name:'master-config',
@@ -284,6 +332,11 @@ Vue.component('master-config',{
 	}
     },
     created : function () {this.loadData()},
+    watch : {
+	configSheet : function () {if (this.configSheet) {this.loadData()}
+				   else {self.master = {}}
+				  },
+    },
     methods : 	{
 	loadData : function () {
 	    var self = this;
@@ -318,7 +371,7 @@ Vue.component('master-config',{
 	setForm : function (form) {
 	    var self = this;
 	    console.log('Got a form %s',form);
-	    self.selectedForm = form;
+	    self.selectedForm = form.doc.url;
 	},
 
 	duplicateWorkflow : function () {
@@ -343,7 +396,7 @@ Vue.component('master-config',{
 	gatherDocs : function () {
 	    var self = this;
 	    google.script.run
-		.withSuccessHandler(function (d) {self.folder = f})
+		.withSuccessHandler(function (d) {self.folder = d})
 		.withFailureHandler(function (e) {self.error = e}).gatherWorkflow(this.configSheet);
 	},
 
@@ -360,18 +413,25 @@ Vue.component('master-config',{
 			}
 		    })
 		})
-		.getActionDetails(self.selectedAction.action,self.selectedForm.doc.url)
+		.getActionDetails(self.selectedAction.action,self.selectedForm)
 	},
 
 	createAction : function () {
 	    var self = this;
 	    console.log('Creating action! %s %s',self.selectedAction.action,self.selectedForm);
 	    var self = this;
-	    google.script.run.sidebarDoAction(self.selectedAction.action,self.selectedForm.doc.url,self.actionConfig);
+	    google.script.run.sidebarDoAction(self.selectedAction.action,self.selectedForm,self.actionConfig);
 	},
 
-    }
-});
+	setupTriggers : function () {
+	    var self=this;
+	    google.script.run
+		.withFailureHandler(function (e) {self.error = e})
+	        .withSuccessHandler(function (d) {console.log('Triggers set up!');})
+		.setupTriggers(self.configSheet);
+	},
+    } // end methods
+}); // end master 
 
 JacknifeApp = new Vue({
     el : '#appName',
@@ -380,10 +440,11 @@ JacknifeApp = new Vue({
 	error:'',
 	configSheet : '',
 	chosenSheet : '',
-	apiInfo: {pickerApiLoaded:false,authToken:undefined}},
+	apiInfo: {pickerApiLoaded:false,authToken:undefined},
+	masters: {'':[]},
+    },
     
     methods : {
-
 
 	// CALLBACKS
 	setConfig : function (form) {
@@ -419,7 +480,13 @@ JacknifeApp = new Vue({
     }, // end methods
 
     created : function () {
-	this.loadPickerApi()
+	var self  = this;
+	self.loadPickerApi()
+	console.log('Get triggers');
+	google.script.run
+	    .withFailureHandler(function (e){ self.error = e})
+	    .withSuccessHandler(function (d) {console.log('got masters: %s',d);self.masters = d})
+	    .listTriggers();
     },
     
 
