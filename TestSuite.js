@@ -1,7 +1,35 @@
+function resubmitForm (formId,i) {
+    Logger.log('Resubmit form: %s',formId);
+    var form = FormApp.openById(formId);
+    var firstResp = form.getResponses()[i];
+    fakeEvent = {
+	source : form,
+	response : firstResp
+    }
+    onFormSubmitTrigger(fakeEvent)
+}
 
+function getProp () {
+Logger.log(PropertiesService.getUserProperties().getProperty('scratchSS'));//,'1MVfqdE8Y5R_3Ua2fm3L6FHahv4yM8dc6u-pYzTn2nOg'));
+}
 function addDefaultParams (params) {
     var defaults = {
-      configSS : '1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk',
+	configSS : '1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk',
+	fileForm : '1iXj_oTMfPhjBeYDYbkQptf-MafpFdKp-Ml3eY9hwvaY',
+	masterSS : '1lldMEo4F5K_T8Zb2kURh2CZfgL4-K1yesILGrnmDT5Q',
+	getScratchSS : function () {
+	    var ssid = PropertiesService.getUserProperties().getProperty('scratchSS');
+	    if (!ssid) {
+          var ss = SpreadsheetApp.create('Scratch Spreadsheet for Testing');
+          PropertiesService.getUserProperties().setProperty('scratchSS',ss.getId())
+          return ss
+	    }
+	    else{
+		var ss = SpreadsheetApp.openById(ssid);
+		ss.getActiveSheet().clear();
+		return ss;
+	    }
+	},
     }
     for (var key in defaults) {
       if (!params[key]) {
@@ -12,10 +40,10 @@ function addDefaultParams (params) {
 
 function setupTests () {
   try {
-    Logger.log("Already %s",setup);
+    setup;
   }
   catch (err) {
-    Logger.log('Do setup!');
+    //Logger.log('Do setup!');
     tests = [] // global
     setup = true; // global
   }
@@ -23,8 +51,8 @@ function setupTests () {
 
 function Test (o) { // test, params, metadata) {
   setupTests();
-  Logger.log('Registering test: %s',o);
-  Logger.log('We have %s tests so far',tests.length);
+  //Logger.log('Registering test: %s',o);
+  //Logger.log('We have %s tests so far',tests.length);
   
   if (!o.params) {o.params = {}}
     addDefaultParams(o.params);
@@ -46,6 +74,12 @@ function Test (o) { // test, params, metadata) {
 		result:result,
 		success:success
 	    }
+	},
+	solo : function () {
+	    if (o.setup) {o.setup(o.params)}
+	    r = o.test(o.params);
+	    if (o.cleanup) {o.cleanup(o.params)}
+	    Logger.log('Got result: %s',r);
 	},
 	metadata : o.metadata,
 	params : o.params,
