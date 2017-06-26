@@ -38,7 +38,7 @@ function lookupFields (settings, results) {
     }
     logNormal('lookupFields(%s,%s)',settings,results);
     logVerbose('Starting with settings: %s, results: %s',shortStringify(settings),shortStringify(results));
-    fields = {}
+    var fields = {}
     if (results.FormUser) { fields.FormUser=results.FormUser }
     if (results.Timestamp) { fields.Timestamp = results.Timestamp }
     for (var settingKey in settings) {
@@ -131,7 +131,7 @@ function getYearString (d,n) {
 }
 
 function padNum (n, digits) {
-    numString = ""+n
+    var numString = ""+n
     while (numString.length < digits) {
 	numString = "0"+numString
     }
@@ -227,13 +227,27 @@ function lookupMagic (config, responses, form) {
 /////////////
 // Triggers & Such
 
-function getResponseItems (resp, actionResults) {
+function getResponse (itemResp) {
+    // get our usable response from an item. Usually just the response
+    if (itemResp.getItem().getType()=='FILE_UPLOAD') {
+	// we get an array of filetypes...
+	fileArray = itemResp.getResponse()
+	return fileArray.map(
+	    function (id) {
+		return DriveApp.getFileById(id).getUrl()
+	    })
+    }
+    else {
+	return itemResp.getResponse();
+    }
+}
 
-    responseItems = {}
+function getResponseItems (resp, actionResults) {
+    var responseItems = {}
     // attach action results so we can act on those as well :)
     if (actionResults) { responseItems.actionResults = actionResults; }
     resp.getItemResponses().forEach(function (itemResp) {
-	responseItems[itemResp.getItem().getTitle()]=itemResp.getResponse();
+	responseItems[itemResp.getItem().getTitle()]=getResponse(itemResp); // maps oddball types to something more normal
     }) // end forEach itemResp
     responseItems['Timestamp'] = resp.getTimestamp();
     responseItems['FormUser'] = resp.getRespondentEmail();
@@ -255,10 +269,19 @@ function listTriggers () {
 	    forms.push(t.getTriggerSourceId())
 	}
     );
-    return forms
+    var masters = {}
+    forms.forEach(function (f) {
+	var master = PropertiesService.getUserProperties().getProperty(f)
+	if (!masters[master]) {masters[master] = []}
+	masters[master].push(f)
+    });
+    return masters
 }
 
 function setupTriggers (ss) {
+    if (typeof ss === 'string' || ss instanceof String) {
+	var ss = SpreadsheetApp.openById(ss);
+    }
     if (!ss) {
 	ss = SpreadsheetApp.getActiveSpreadsheet();
 	var conf = getMasterConfig(SpreadsheetApp.getActiveSpreadsheet());
@@ -266,7 +289,7 @@ function setupTriggers (ss) {
     else {
 	conf = getMasterConfig(ss);
     }
-    existingTriggers = listTriggers();
+    var existingTriggers = listTriggers()[ss.getId()] || [];
     for (var i=1; i<conf.length; i++) {
 	var row = conf[i]
 	var formId = row['FormID'];
@@ -278,11 +301,11 @@ function setupTriggers (ss) {
 	else {
 	    Logger.log('Trigger already exists for form %s',formId);
 	    // Let's make sure it's right though...
-	    controlSheet = PropertiesService.getUserProperties().getProperty(formId);
-	    if (controlSheet != master.getId()) {
+	    var controlSheet = PropertiesService.getUserProperties().getProperty(formId);
+	    if (controlSheet != ss.getId()) {
 		var err =  'Conflicting trigger: each form can only be managed by one control sheet.'
 		err += '\n'+'Was '+controlSheet
-		err += '\n'+'Shoud be '+master.getId()
+		err += '\n'+'Shoud be '+ss.getId()
 	    }
 	}
     }
@@ -308,9 +331,10 @@ function getFormFromTrigger (source) {
 function testFormWeirdness () {
     //var id="1FAIpQLSfeCwEnjOTljgGnbZVVif1z6xgMZ30m2v7SAAonZ15fRGCsZQ"
     //Logger.log('Got form %s',FormApp.openById(id));
-    source = {
-	triggerUid : 6464680668718090000}
-    form = getFormFromTrigger (source);
+    var source = {
+	triggerUid : 6464680668718090000
+    }
+    var form = getFormFromTrigger (source);
     Logger.log('Got form %s',form)
 }
 
@@ -369,7 +393,7 @@ function onFormSubmitTrigger (event) {
     Logger.log('onFormSubmitTrigger got event: '+JSON.stringify(event))
     event = fixBrokenEvent(event)
     var form = event.source;
-    masterSheetId = PropertiesService.getUserProperties().getProperty(form.getId())
+    var masterSheetId = PropertiesService.getUserProperties().getProperty(form.getId())
     if (!masterSheetId) {
 	throw "No Master Sheet ID associated with form that triggered us ;("
     }  
@@ -530,7 +554,7 @@ function testAllIACSOptions () {
 	var choices  = allOpts[key];
 	choices.forEach(function (c) { 
 	    Logger.log('%s=%s',key,c);
-	    vals = {
+	    var vals = {
 		'Total Cost': (Math.random() * 1000).toFixed(2),
 		'Vendor': randomChoice(["CDW",'Amazon','Staples','WB Mason']),
 		'Total Type': randomChoice(allOpts['Total Type']),
