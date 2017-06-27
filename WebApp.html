@@ -13,7 +13,6 @@
 <body>
   <!-- Simple Sidebar -->
   <div id="appName">
-    <picker v-model="test"></picker>
     <h1>Workflows Jacknife</h1>
     <span class="error" v-if="error">{{error}}</span>
     <h2>Installed Workflows (with Triggers)</h2>
@@ -125,19 +124,21 @@
       Gathered documents in folder: <drive-file :id="folder"></drive-file>
     </div>
 
-    <div v-for="form,i in master.config">
+    <div v-for="configRow,i in master.config">
       <div v-if="i>0">
-	<drive-file :id="form.Form"></drive-file> {{form.Action}}:
-	<!-- (get action details <button v-on:click="getAction(form.Action,form.Form)">GetAction</button> 
+	<drive-file :id="configRow.Form"></drive-file> {{configRow.Action}}:
+	<!-- (get action details <button v-on:click="getAction(configRow.Action,configRow.Form)">GetAction</button> 
 	     <div v-if="details">{{details}}</div> -->
 	  <span v-for="n in 3">
-	    <config-sheet :ref="'config'+n" v-if="form['ConfigId'+n]"
-			:n="n"
-			:sheet-id="form['ConfigId'+n]"
-			:ss-id="configSheet"
-			:form="form.Form"
-			:action="form.Action"
-			:href="form['ConfigLink'+n]">Config {{n}}</config-sheet>
+	    <config-sheet :ref="'config'+n" v-if="configRow['ConfigId'+n]"
+			  :n="n"
+			  :sheet-id="configRow['ConfigId'+n]"
+			  :ss-id="configSheet"
+			  :form="configRow.Form"
+			  :action="configRow.Action"
+			  :raw-config="configRow['Config'+n]"
+			  :upstream-forms="configRow.upstreamForms"
+			  :href="configRow['ConfigLink'+n]">Config {{n}}</config-sheet>
 	  </span>
       </div>
     </div>
@@ -170,8 +171,8 @@
 
 <script type="text/x-template" id="config-sheet">
   <div>
-    <span v-if="saved">SAVED</span><span v-else>UNSAVED <button v-on:click="save">save</button></span>
-    <button v-on:click="show=!show">{{n}}</button>
+    <span v-if="saved">SAVED</span><span v-else>UNSAVED</span> <button v-on:click="save">Save Changes</button>
+    <button v-on:click="show=!show">Config {{n}}</button>
     <div v-if="show">
       <debug><p>CONFIG SHEET {{sheetId}}</p></debug>
       <div v-if="error" class="error">{{error}}</div>
@@ -186,7 +187,8 @@
 	    <span v-if="fieldLookup[key]">
 	      <field-config v-model="config.raw[key]"
 			    :type="fieldLookup[key]&&fieldLookup[key].type||key.indexOf('Body')>-1&&5||6"
-			    :formfields="fieldLookup[key].fields"
+			    :formfields="details.formFields"
+			    :formfieldoptions="details.formFieldOptions"
 			    :lookups="config.lookups"
 			    :ref="'fl_'+key"
 			    >
@@ -195,13 +197,12 @@
 	    <span v-else> <!--<input v-model="config.raw[key]">-->
 	      <field-config v-model="config.raw[key]"
 			    :type="key.indexOf('Body')>-1&&5||6"
-			    :formfields="formFields"
-			    :lookups="formLookups"
+			    :formfields="details.formFields"
+			    :formfieldoptions="details.formFieldOptions"
+			    :lookups="config.lookups"
 			    :ref="'fl_'+key"
 			    >
 	      </field-config> <!-- use fields for everything -->
-
-
 	    </span>
 	  </td>
 	</tr>
@@ -247,15 +248,35 @@
 	  <option value="MAKE_NEW">Create New Lookup</option>
 	</select>
 	<span v-on:click="showLookup=!showLookup"><span v-if="showLookup">Hide</span><span v-else>Show</span> Lookup Table</span>
-	<span v-if="lookupDict" v-show="showLookup">
+	<span v-if="lookupDict && showLookup">
 	  <span v-if="lookupDict!='MAKE_NEW'">
 	    <table>
 	      <tr v-for="val,key in lookups[lookupDict]" v-if="key">
-		<td>{{key}}</td><td><input v-model="val"></td>
+		<td>{{key}}</td>
+		<td v-if="formfieldoptions[lookupField]">
+		  <span v-if="formfieldoptions[lookupField].indexOf(key)>-1">
+		    In form!
+		  </span>
+		  <span v-else>
+		    ?
+		  </span>
+		</td>
+		<td><input v-model="val"></td>
 	      </tr>
 	      <tr v-if="!lookups[lookupDict].Default"><td>Default</td><td><input v-model="lookups[lookupDict]['Default']"></td>
 	      </tr>
-	      <tr><td><input v-model="newLookupKey"></td><td><input v-model="newLookupVal"><button v-on:click="addLookupKey()">+</button></td>
+	      <tr>
+		<td>
+		  <span v-if="formfieldoptions[lookupField]">
+		    <select v-model="newLookupKey">
+		      <option v-for="key in formfieldoptions[lookupField]" v-if="!lookups[lookupDict][key]" :value="key">{{key}}</option>
+		    </select>
+		  </span>
+		  <input v-model="newLookupKey">
+		</td>
+
+
+		<td><input v-model="newLookupVal"><button v-on:click="addLookupKey()">+</button></td>
 	      </tr>
 	    </table>
 	  </span>
