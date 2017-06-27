@@ -1,1 +1,40 @@
 .debug {font-size: 7pt; color: #0033a0;}
+.collapser {border: 1px solid #777; padding: 1em;}
+.collapserLabel {border-bottom: 3px solid #77b; padding: 0.5em; background-color: #242464; color: #ddf;}
+.up::after {
+content: "\25BC"
+}
+.down::after {
+content: "\25B2"
+}
+.debug {font-family: mono}
+.debugLabel {background-color: red; border-radius: 50%; color: white}
+
+.loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 2s linear infinite;
+}
+.mini {
+    width: 10px; height: 10px;
+    border: 4px solid #f3f3f3; /* Light grey */
+    border-top: 4px solid #3498db; /* Blue */
+}
+
+span.loader {display: inline-block}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.picker {display: inline-block;}
+.file {display: inline-block; background-color: #dfdfdf}
+.sheet::before {content: url("https://ssl.gstatic.com/docs/doclist/images/mediatype/icon_1_spreadsheet_x16.png")}
+.form::before {content: url("https://ssl.gstatic.com/docs/doclist/images/mediatype/icon_2_form_x16.png")}
+
+.configrow {border: 1px solid black; padding: 0.5em;}
+.configrow h3 {background-color: #2f2f2f; color: white; padding: 0.5em;}
