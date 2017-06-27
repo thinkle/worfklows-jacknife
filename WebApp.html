@@ -14,14 +14,17 @@
   <!-- Simple Sidebar -->
   <div id="appName">
     <h1>Workflows Jacknife</h1>
+    <tabs>
+      <div v-for="n in 3" :slot="n">This is the {{n}} slot: {{testarr[n]}}</div>
+    </tabs>
     <span class="error" v-if="error">{{error}}</span>
     <h2>Installed Workflows (with Triggers)</h2>
     <collapser show-label="Show workflows w/ triggers set up">
     <div v-for="formList,master in masters">
-      Master Sheet: <drive-file :id="master"></drive-file>
-      <collapser show-label="Show forms" hide-label="Hide forms">Forms: <li v-for="form in formList"><drive-file :id="form"></drive-file></li></collapser>
+      Master Sheet: <drive-file type="sheet" :id="master"></drive-file>
+      <collapser show-label="Show forms" hide-label="Hide forms">Forms: <li v-for="form in formList"><drive-file type="form" :id="form"></drive-file></li></collapser>
       <collapser show-label="Show Full Config" hide-label="Hide">
-	<div>Config Sheet: <picker api-info="apiInfo" v-model="master"></picker>
+	<div>Config Sheet: <picker :api-info="apiInfo" v-model="master"></picker>
 	<master-config :config-sheet="master"
 		       :api-info="apiInfo"
 		       :ref="master">
@@ -51,12 +54,12 @@
   <div class="picker">
     <span v-if="error">{{error}}</span>
     <span v-if="value">
-      FILE: <drive-file :id="value">
+      <drive-file  :type="type" :id="value">
       </drive-file>
     </span>
     <span>
-      <span v-if="!apiInfo.pickerApiLoaded">Loading API...</span>
-      <span v-if="!apiInfo.authToken">Loading Authorization token...</span>
+      <span  v-if="!apiInfo.pickerApiLoaded"><span class="loader mini"></span>Loading API...</span>
+      <span  v-if="!apiInfo.authToken"><span class="loader mini"></span>Loading Authorization token...</span>
       <!-- picker button -->
       <span v-if="apiInfo.pickerApiLoaded&&apiInfo.authToken">
 	<button v-if="type=='form'" v-on:click="getForm()">
@@ -76,25 +79,36 @@
 <script type="text/x-template" id="drive-file">
   <div>
     <div v-if="error" class="error">{{error}}</div>
-    <div v-if="id&&!file.id">Loading file data... ({{id}})</div>
-    <div v-else-if="id">
+    <div v-if="id&&!file.id"><span class="loader mini"></span>Loading file data... ({{id}})</div>
+    <div  :class="'file'+' '+type" v-else-if="id">
       <a :href="file.url" target="_BLANK">{{file.name}}</a>
     </div>
   </div>
 </script>
 
 <script type="text/x-template" id="collapser">
-  <div>
-    <div v-on:click="show=!show">{{label||show&&(hideLabel||'Hide')||(showLabel||'Show')}}</div>
-    <div v-if="show">
+  <div class="block collapser">
+    <div :class="'collapserLabel '+(show&&'down'||'up')" v-on:click="show=!show">{{label||show&&(hideLabel||'Hide')||(showLabel||'Show')}}</div>
+    <div class="collapserInside" v-if="show">
       <slot></slot>
     </div>
   </div>
 </script>
 
+<script type="text/x-template" id="tabs">
+  <div class="tabs">
+  <div class="labels">
+    <button v-for="n in 3" v-on:click="active=n" v-if="$slots[n]">{{n}}</button>
+  </div>
+  <slot v-if="active==1" name="1">  </slot>
+  <slot v-else-if="active==2" name="2"> </slot>
+  <slot v-else-if="active==3" name="3"> </slot>
+  </div>
+</script>
+
 <script type="text/x-template" id="debug">
-  <span>
-    <span class="debug" v-on:click="show = !show">(d)</span>
+  <span class="debug">
+    <span class="debugLabel" v-on:click="show = !show">(d)</span>
     <span v-if="show">
       <slot>
       </slot>
@@ -103,34 +117,34 @@
 </script>
 
 <script type="text/x-template" id="master-config">
-  <div class="master">
+  <div class="master block">
     <!-- Master Sheet: -->
     <div class="error" v-if="error">{{error}}</div>
     <div class="menu" v-if="master.config">
-      <button v-on:click="setupTriggers()">Set Up Triggers for Workflow</button>
+      <button class="action" v-on:click="setupTriggers()">Set Up Triggers for Workflow</button>
       <span v-if="!duplicate.config">
-	<span v-if="!duplicating">
-	  <button v-on:click="duplicateWorkflow">Make a Copy of Workflow</button>
+	<span  v-if="!duplicating">
+	  <button class="create" v-on:click="duplicateWorkflow">Make a Copy of Workflow</button>
 	</span>
-	<button v-on:click="gatherDocs">Gather documents into a folder</button> 
+	<button class="action" v-on:click="gatherDocs">Gather documents into a folder</button> 
       </span>
     </div>
     <div v-if="duplicate.config">
       Duplication results:
-      Config: <drive-file :id="duplicate.config"></drive-file>
-      <br>Folder: <drive-file :id="duplicate.folder"></drive-file>
+      Config: <drive-file type="sheet" :id="duplicate.config"></drive-file>
+      <br>Folder: <drive-file type="folder" :id="duplicate.folder"></drive-file>
     </div>
     <div v-if="folder">
-      Gathered documents in folder: <drive-file :id="folder"></drive-file>
+      Gathered documents in folder: <drive-file type="folder" :id="folder"></drive-file>
     </div>
 
     <div v-for="configRow,i in master.config">
       <div v-if="i>0">
-	<drive-file :id="configRow.Form"></drive-file> {{configRow.Action}}:
-	<!-- (get action details <button v-on:click="getAction(configRow.Action,configRow.Form)">GetAction</button> 
-	     <div v-if="details">{{details}}</div> -->
-	  <span v-for="n in 3">
-	    <config-sheet :ref="'config'+n" v-if="configRow['ConfigId'+n]"
+	<h3 class="configrow"><drive-file type="form" :id="configRow.Form"></drive-file> {{configRow.Action}}:</h3>
+	<collapser show-label="Show Config" hide-label="Hide Config">
+	  <tabs>
+	    <config-sheet v-for="n in 3"
+			  :slot="n" :ref="'config'+n" v-if="configRow['ConfigId'+n]"
 			  :n="n"
 			  :sheet-id="configRow['ConfigId'+n]"
 			  :ss-id="configSheet"
@@ -138,8 +152,10 @@
 			  :action="configRow.Action"
 			  :raw-config="configRow['Config'+n]"
 			  :upstream-forms="configRow.upstreamForms"
-			  :href="configRow['ConfigLink'+n]">Config {{n}}</config-sheet>
-	  </span>
+			  :href="configRow['ConfigLink'+n]">Config {{n}}
+	    </config-sheet>
+	  </tabs>
+	</collapser>
       </div>
     </div>
     
@@ -152,7 +168,7 @@
       <select v-model="selectedAction">
 	<option  v-for="action in master.actions" :value="action">{{action.action}}</option>
       </select>
-      <button v-if="selectedForm" v-on:click="getActionDetails">Go</button>
+      <button class="action" v-if="selectedForm" v-on:click="getActionDetails">Go</button>
       <div v-if="actionParameters">
 	<debug>{{actionParameters}}</debug>
 	<table>
@@ -161,7 +177,7 @@
 	    <td><field-config :formfields="param.fields" v-model="actionConfig[param.field]" :type="param.type" ref="fc"></field-config></td>
 	  </tr>
 	</table>
-	<button v-on:click="createAction">Set up action</button>
+	<button class="create" v-on:click="createAction">Set up action</button>
       </div>
     </div>
   </div>
@@ -170,13 +186,15 @@
 
 
 <script type="text/x-template" id="config-sheet">
-  <div>
-    <span v-if="saved">SAVED</span><span v-else>UNSAVED</span> <button v-on:click="save">Save Changes</button>
-    <button v-on:click="show=!show">Config {{n}}</button>
-    <div v-if="show">
+  <div class="block">
+    <span v-if="saved">SAVED</span><span v-else>UNSAVED</span> <button class="action" v-on:click="save">Save Changes</button>
+    <!--<button v-on:click="show=!show">Config {{n}}</button>-->
+    <h4>Config {{n}}</h4>
+    <!--<div v-if="show">-->
+    <div>
       <debug><p>CONFIG SHEET {{sheetId}}</p></debug>
       <div v-if="error" class="error">{{error}}</div>
-      <debug>{{config}}</debug>
+      <debug>CONFIG: {{config}}; RAWCONFIG: {{rawConfig}}</debug>
       <table v-if="config">
 	<tr v-for="key in config.fields">
 	  <td>
@@ -209,7 +227,7 @@
 	  </td>
 	</tr>
       </table>
-      <div v-else>
+      <div  v-else><span class="loader"></span>
 	Loading data...
       </div>
     </div>
