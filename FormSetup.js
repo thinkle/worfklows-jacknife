@@ -55,13 +55,17 @@ function testListFormItemTitles() {
     Logger.log('listFormItemTitles=>'+listFormItemTitles(form));
 }
 
+function testTableThing (){
+Logger.log('Got template: %s',createEmailTableTemplateForForm('1WGKg3jEmRI4oGZIh1TfAEW4H8AlzNtttAEbWfEo989s'));
+}
 
 function createEmailTableTemplateForForm (form, extras) {
+    form = getForm(form);
     var htmlOut = '<table>'
     var everyOther = true
     form.getItems().forEach( function (item) {
-	var txt = item.getTitle();
-	if (item.getType() == FormApp.ItemType.SECTION_HEADER) {
+	var txt = item.getTitle(); Logger.log('%s %s',item.getTitle(),item.getType());
+	if (item.getType() == FormApp.ItemType.SECTION_HEADER || item.getType() == FormApp.ItemType.PAGE_BREAK) {
 	    htmlOut += '<tr style="background-color:#222;color:#ddf;font-weight:bold;><td colspan=2>'
 	    htmlOut += txt
 	    htmlOut += '</td></tr>'
@@ -74,7 +78,7 @@ function createEmailTableTemplateForForm (form, extras) {
 		htmlOut += '<tr style="background-color:#ddf">'
 	    }
 	    everyOther = (! everyOther);
-	    htmlOut += '<th style="text-align: right;">'+txt+'</th><td><<'+txt+'>></td></tr>';
+	    htmlOut += '<th style="text-align: right;">'+txt+'</th><td>{{'+txt+'}}</td></tr>';
 	}
     }) // end forEach item
     if (extras) {
@@ -86,7 +90,7 @@ function createEmailTableTemplateForForm (form, extras) {
 		htmlOut += '<tr style="background-color:#ddf">'
 	    }
 	    everyOther = (! everyOther);
-	    htmlOut += '<th style="text-align: right;">'+extraItem[0]+'</th><td><<'+extraItem[1]+'>></td></tr>';
+	    htmlOut += '<th style="text-align: right;">'+extraItem[0]+'</th><td>{{'+extraItem[1]+'}}</td></tr>';
 	}); // end forEach extra
     }
     htmlOut += '</table>';
