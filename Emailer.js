@@ -170,6 +170,7 @@ function applyTemplate (template, fields, fixWhiteSpace) {
 			}
 		}
     template = template.replace(new RegExp(escapeRegExp('<<'+target+'>>'),'g'),replacement);
+    template = template.replace(new RegExp(escapeRegExp('{{'+target+'}}'),'g'),replacement);
   }
   return template
 }
@@ -191,15 +192,17 @@ function testEmail () {
   sendEmail('tmhinkle@gmail.com','This is a test message from Workflows','<b>This is bold</b><br><table><tr><td>This</td><td>is</td></tr><tr><td><i>a</i></td><td>table</td></tr></table><h3>Heading!</h3>');
 }
 
-function testApplyTemplate () {
-  assertEq(applyTemplate('foo <<bar>>',{bar:'yippee'}),'foo yippee')
-  assertEq(applyTemplate('foo \n<<bar>>',{bar:'yippee'}),'foo \nyippee')
-  assertEq(applyTemplate('foo \n<<bar>>',{bar:'yippee'},true),'foo <br>yippee') 
-  assertEq(applyTemplate('foo \n<<bar>>\n<<bar>>\n',{bar:'yippee'},true),'foo <br>yippee<br>yippee<br>')
-  assertEq(applyTemplate('<<first>>:<<middle>>:<<last>>',{'first':'Thomas','middle':'M','last':'Hinkle'}),
-           'Thomas:M:Hinkle')
-}
+var templateTest = Test ( {
+    metadata : {name:'Template test'},
+    test : function () {
+	assertEq(applyTemplate('foo <<bar>>',{bar:'yippee'}),'foo yippee')
+	assertEq(applyTemplate('foo \n<<bar>>',{bar:'yippee'}),'foo \nyippee')
+	assertEq(applyTemplate('foo \n{{bar}}',{bar:'yippee'},true),'foo <br>yippee') 
+	assertEq(applyTemplate('foo \n<<bar>>\n<<bar>>\n',{bar:'yippee'},true),'foo <br>yippee<br>yippee<br>')
+	assertEq(applyTemplate('<<first>>:<<middle>>:<<last>>',{'first':'Thomas','middle':'M','last':'Hinkle'}),
+		 'Thomas:M:Hinkle')
+         return 'Success!'
+    }
+})
 
-
-
-
+function testTemplate () {templateTest.solo()}
