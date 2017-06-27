@@ -6,7 +6,7 @@ var fileRegistry = {
 
 Vue.component('field-config',{
     name : 'field-config',
-    props : ['type','value','formfields','formfieldoptions','lookups'],
+    props : ['type','form','value','formfields','formfieldoptions','lookups'],
     data : function () {return {
 	mode:'field',
 	field:'',
@@ -16,6 +16,7 @@ Vue.component('field-config',{
 	newLookupDictName:'',
 	newLookupKey:'',
 	newLookupVal:'',
+	gettingTable : false,
     }},
     methods : {
 	updateVal : function (event) {
@@ -81,7 +82,26 @@ Vue.component('field-config',{
 	    this.lookups[this.lookupDict] = {};
 	    this.newLookupDict = '';
 	    this.$forceUpdate();
+	},
+
+	insertFormTable : function () {
+	    var self = this
+	    self.gettingTable = true
+	    google.script.run
+		.withSuccessHandler(function (table) {
+		    console.log('++table: %s',table);
+		    self.setVal(
+			self.value + '\n\n'+table
+		    )
+		    self.gettingTable = false
+		})
+	        .withFailureHandler(function (e) {
+		    self.error = e;
+		    self.gettingTable = false;
+		})
+		.createEmailTableTemplateForForm(self.form);
 	}
+
 	
     },
     created : function () {this.updateForVal()
