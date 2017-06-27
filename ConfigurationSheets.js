@@ -542,7 +542,7 @@ var modTest = Test({
 })
 
 function testMod () {
-  console.log('Ran test: %s',modTest.run());;
+    console.log('Ran test: %s',modTest.solo());
 }
 
 function testMagicDictionaryStuff () {
