@@ -78,7 +78,7 @@
     <div v-if="error" class="error">{{error}}</div>
     <div v-if="id&&!file.id">Loading file data... ({{id}})</div>
     <div v-else-if="id">
-      <a :href="file.url">{{file.name}}</a>
+      <a :href="file.url" target="_BLANK">{{file.name}}</a>
     </div>
   </div>
 </script>
@@ -191,6 +191,7 @@
 			    :formfieldoptions="details.formFieldOptions"
 			    :lookups="config.lookups"
 			    :ref="'fl_'+key"
+			    :form="form"
 			    >
 	      </field-config> <!-- use fields for everything -->
 	    </span>
@@ -201,6 +202,7 @@
 			    :formfieldoptions="details.formFieldOptions"
 			    :lookups="config.lookups"
 			    :ref="'fl_'+key"
+			    :form="form"
 			    >
 	      </field-config> <!-- use fields for everything -->
 	    </span>
@@ -226,6 +228,8 @@
     <span v-else-if="type==5"> <!-- PARA -->
       <textarea cols="72" rows="10" :value="value" @input="updateVal">
       </textarea>
+      <button v-if="!gettingTable" v-on:click="insertFormTable()">Insert Table of Form Values</button><span v-if="gettingTable">Fetching form data...</span>
+      </button>
     </span>
     <span v-else-if="type==6">
       <select v-model="mode">
