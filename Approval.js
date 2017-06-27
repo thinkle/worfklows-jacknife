@@ -288,7 +288,7 @@ function testWeirdness () {
 
 approvalTest = Test({
     metadata : {name : 'Test Approval Request'},
-    test : function () {resubmitForm('1WGKg3jEmRI4oGZIh1TfAEW4H8AlzNtttAEbWfEo989s',0)}     // this will be live soon -- change before we go to production FIXME
+    test : function () {resubmitForm('1WGKg3jEmRI4oGZIh1TfAEW4H8AlzNtttAEbWfEo989s',1)}     // this will be live soon -- change before we go to production FIXME
 })
 
 function runApprovalTrigger () {
@@ -297,7 +297,7 @@ function runApprovalTrigger () {
 
 approvalApprovedTest = Test({
     metadata : {name : 'Test Approved Approval'},
-    test : function () {resubmitForm('1lVauucfWhU57sU_PVUY0j2oFcmBAbUTHnJVDLuyT0Tk',0)} // this will be live soon - change before we go into production
+    test : function () {resubmitForm('1lVauucfWhU57sU_PVUY0j2oFcmBAbUTHnJVDLuyT0Tk',1)} // this will be live soon - change before we go into production
 });
 
 function runApprovedApprovalTrigger () {
