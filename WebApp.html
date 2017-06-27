@@ -77,13 +77,13 @@
 
 
 <script type="text/x-template" id="drive-file">
-  <div>
-    <div v-if="error" class="error">{{error}}</div>
-    <div v-if="id&&!file.id"><span class="loader mini"></span>Loading file data... ({{id}})</div>
-    <div  :class="'file'+' '+type" v-else-if="id">
+  <span>
+    <span v-if="error" class="error">{{error}}</span>
+    <span v-if="id&&!file.id"><span class="loader mini"></span>Loading file data... ({{id}})</span>
+    <span  :class="'file'+' '+type" v-else-if="id">
       <a :href="file.url" target="_BLANK">{{file.name}}</a>
-    </div>
-  </div>
+    </span>
+  </span>
 </script>
 
 <script type="text/x-template" id="collapser">
@@ -139,8 +139,8 @@
     </div>
 
     <div v-for="configRow,i in master.config">
-      <div v-if="i>0">
-	<h3 class="configrow"><drive-file type="form" :id="configRow.Form"></drive-file> {{configRow.Action}}:</h3>
+      <div class="configrow" v-if="i>0">
+	<h3><drive-file type="form" :id="configRow.Form"></drive-file> {{configRow.Action}}</h3>
 	<collapser show-label="Show Config" hide-label="Hide Config">
 	  <tabs>
 	    <config-sheet v-for="n in 3"
