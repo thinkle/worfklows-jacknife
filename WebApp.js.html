@@ -6,7 +6,7 @@ var fileRegistry = {
 
 Vue.component('field-config',{
     name : 'field-config',
-    props : ['type','value','formfields','lookups'],
+    props : ['type','value','formfields','formfieldoptions','lookups'],
     data : function () {return {
 	mode:'field',
 	field:'',
@@ -38,23 +38,36 @@ Vue.component('field-config',{
 	    this.setVal(val);
 	},
 	updateForVal : function () {
-	     console.log('Watched field config with value %s',this.value);
-	     if (this.value && this.type==globals.FIELD) {
-		 this.mode = 'raw';
-		 if (this.value[0]=='%') {
-		     this.mode = 'field'
-		     this.field = this.value.substr(1)
-		 }
-		 else if (this.value[0]=='@') {
-		     this.mode = 'lookup'
-		     var vals = this.value.substr(1).split('>>')
-		     this.lookupField = vals[0].trim();
-		     this.lookupDict = vals[1].trim();
-		 }
-		 else if (this.value.substr(0,3)=='*#*') {
-		     this.mode == 'magic'
-		 }
-	     }
+	    this.mode = 'raw'; // default to raw
+	    console.log('Watched field config with value %s',this.value);
+	    if (this.value && this.type==globals.FIELD) {
+
+		if (typeof this.value !== 'string') {
+		    console.log('Weird, non-string value: %s',this.value);
+		    this.mode = 'raw'; return;
+		}
+		else {
+		    if (this.value[0]=='%') {
+			console.log('Set mode to field: %s',this.value);
+			this.mode = 'field'
+			this.field = this.value.substr(1)
+			return
+		    }
+		    else if (this.value[0]=='@') {
+			console.log('Set mode to lookup: %s',this.value);
+			this.mode = 'lookup'
+			var vals = this.value.substr(1).split('>>')
+			this.lookupField = vals[0].trim();
+			this.lookupDict = vals[1].trim();
+			return;
+		    }
+		    else if (this.value.substr(0,3)=='*#*') {
+			console.log('Set mode to magic: ',this.value);
+			this.mode == 'magic'
+			return;
+		    }
+		}
+	    }
 	},
 
 	addLookupKey : function () {
@@ -164,13 +177,12 @@ Vue.component('picker', {
 Vue.component('config-sheet',{
     name:'config-sheet',
     template:'#config-sheet',
-    props : ['sheetId','ssId','n','form','action'],
+    props : ['sheetId','ssId','n','form','action','upstreamForms','rawConfig'],
     created: function () {this.loadData()},
     data : function () {return {
-	config:undefined,
 	error:'',
 	show:false,
-	details:undefined,
+	details:{formFields:[],formFieldOptions:{}},
 	saved:true,
 	formLookups : {},
 	formFields : [],
@@ -179,49 +191,49 @@ Vue.component('config-sheet',{
 	loadData : function () {
 	    var self = this;
 	    this.getActionDetails();
-	    google.script.run
-		.withSuccessHandler(function (data) {
-		    self.config = {raw:data}
-		    // Now let's do some parsing...
-		    self.config.lookups = {}
-		    self.config.fields = []
-		    for (var key in data) {
-			var val = data[key];
-			if (key.length>3&&key.indexOf('Key')==key.length-3) { // If it ends in key...
-			    // then let's assume there is also a 'Val'
-			    var lookupName = key.substr(0,key.length-3)
-			    var lookup = {};
-			    console.log('Making a lookup from %s,%s',key,val);
-			    self.config.lookups[lookupName] = lookup;
-			    var lookupKeys = val;
-			    var lookupVals = data[lookupName+'Val']
-			    console.log('Looking at values: %s',lookupVals);
-			    lookupKeys.forEach(function (lookupKey,i) {
-				// Loop through lookup keys and create
-				lookup[lookupKey] = lookupVals[i]
-			    })
-			    self.config.lookups[lookupName]=lookup;
-			    self.$watch('config.lookups.'+lookupName,
-					function () {self.saved = false},
-					{deep:true});
-			}
-			else if (key.length>3&&key.indexOf('Val')==key.length-3) {
-			    console.log('Skip val - part of lookup');
-			}
-			else if (key) {
-			    self.config.fields.push(key);
-			}
-		    }
-
-
-		})
-		.withFailureHandler (function (e) {
-		    self.error = e;
-		})
-		.getConfigTable(
-		    self.ssId,
-		    self.sheetId
-		);
+	    //google.script.run
+	    //.withSuccessHandler(function (data) {
+	    self.config = {raw:self.rawConfig}; var data = self.rawConfig;
+	    // Now let's do some parsing...
+	    self.config.lookups = {}
+	    self.config.fields = []
+	    for (var key in data) {
+		var val = data[key];
+		if (key.length>3&&key.indexOf('Key')==key.length-3) { // If it ends in key...
+		    // then let's assume there is also a 'Val'
+		    var lookupName = key.substr(0,key.length-3)
+		    var lookup = {};
+		    console.log('Making a lookup from %s,%s',key,val);
+		    self.config.lookups[lookupName] = lookup;
+		    var lookupKeys = val;
+		    var lookupVals = data[lookupName+'Val']
+		    console.log('Looking at values: %s',lookupVals);
+		    lookupKeys.forEach(function (lookupKey,i) {
+			// Loop through lookup keys and create
+			lookup[lookupKey] = lookupVals[i]
+		    })
+		    self.config.lookups[lookupName]=lookup;
+		    self.$watch('config.lookups.'+lookupName,
+				function () {self.saved = false},
+				{deep:true});
+		}
+		else if (key.length>3&&key.indexOf('Val')==key.length-3) {
+		    console.log('Skip val - part of lookup');
+		}
+		else if (key) {
+		    self.config.fields.push(key);
+		}
+	    }
+	    
+	    
+	    //})
+	    //.withFailureHandler (function (e) {
+	    //self.error = e;
+	    //})
+	    //.getConfigTable(
+	    //self.ssId,
+	    //self.sheetId
+	    //);
 	},
 
 	save : function () {
@@ -260,7 +272,7 @@ Vue.component('config-sheet',{
 		    });
 		})
 	        .withFailureHandler(function (e) {self.error = e})
-		.getActionDetails(this.action,this.form)
+		.getActionDetails(this.action,this.form,this.upstreamForms)
 	},
     }, // end methods
     watch : {
@@ -345,7 +357,30 @@ Vue.component('master-config',{
 	    google.script.run
 		.withSuccessHandler(function (data) {
 		    console.log('Got data: %s',JSON.stringify(data));
+		    self.formStream = {} // pointers showing the way...
+		    self.byForm = {}
 		    self.master = data;
+		    self.master.config.forEach(function (cfg) {
+			if (!self.byForm[cfg.FormID]) {self.byForm[cfg.FormID]=[]}
+			self.byForm[cfg.FormID].push(cfg)
+			if (cfg.Action=='Approval') { // approval chain = upstream mapping...
+			    self.formStream[cfg.Config1['Approval Form ID']] = cfg.FormID
+			}
+		    });
+		    // Now let's populate our upstream data...
+		    for (var downstreamForm in self.formStream) {
+			var upstreamForms = [self.formStream[downstreamForm]]
+			// Follow the flow up...
+			while (self.formStream[upstreamForms[upstreamForms.length-1]]) {
+			    upstreamForms.push(self.formStream[upstreamForms[upstreamForms.length-1]])
+			    console.log('Follow the flow up to: ',upstreamForms);
+			}
+			// Now that we have them, let's attach them to each config object...
+			self.byForm[downstreamForm].forEach(function (cfg) {
+			    console.log('Pushing upstream forms %s onto cfg %s',upstreamForms,cfg);
+			    cfg.upstreamForms = upstreamForms
+			});
+		    }
 		    console.log('Populated master with data');
 		})
 		.withFailureHandler(function (e) {
