@@ -1,6 +1,13 @@
-function doGet() {
-    var html = HtmlService.createTemplateFromFile('WebApp');
-    return html.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME);
+function doGet(e) {
+    if (e.parameter.approve) {
+	var html = '<html>HELLO WORLD WEB APP COMING RIGHT UP</html>'
+	var html = HtmlService.createHtmlOutput(html);
+	return html.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME);
+    }
+    else {
+	var html = HtmlService.createTemplateFromFile('WebApp');
+	return html.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME);
+    }
 }
 
 function onOpen (e) {
@@ -163,12 +170,13 @@ function getCurrentMasterConfig (sid) {
     }
     Logger.log('Config of length: %s',conf.length);
     for (var i=1; i<conf.length; i++) {
-	table = conf[i];
+	var table = conf[i];
 	Logger.log('look @ %s',table);
 	for (var n=1; n<=3; n++) {
 	    if (table['Config '+n+' Link'] && (table['Config '+n+' Link'] != 'NOT_FOUND')) {
 		table['ConfigLink'+n]=table['Config '+n+' Link']
 		table['ConfigId'+n]=table['Config '+n+' ID']
+		table['Config'+n] = getConfigTable(sid,table['ConfigId'+n])
 	    }
 	}
 	try {
@@ -191,38 +199,99 @@ function getCurrentMasterConfig (sid) {
 
 function getAllFormFields (form) {
     var items = form.getItems();
-    ret = []
+    var ret = ['Timestamp']
+    if (form.collectsEmail()) {
+	ret.push('FormUser');
+    }
     items.forEach(function (i) {
 	ret.push(i.getTitle());
     }
 		 );
+    ret.push('ResponseId');
     return ret;
 }
 
-function getActionDetails (actionName, formUrl) {
+function getFormFieldOptions (form, initialOptions) {
+    if (initialOptions) {
+	var ret = initialOptions
+    }
+    else {
+	var ret = {
+	    // title : [optionA, optionB, optionC,...]
+	}
+    }
+    //var form = FormApp.openById('1WGKg3jEmRI4oGZIh1TfAEW4H8AlzNtttAEbWfEo989s');
+    form.getItems().forEach(function (i) {
+      if (i.getType()=='MULTIPLE_CHOICE') {
+          if (!ret[i.getTitle()]) {ret[i.getTitle()]=[]}
+          i.asMultipleChoiceItem().getChoices().forEach(
+              function (c) {
+                ret[i.getTitle()].push(c.getValue())
+                });
+       }
+    });
+    return ret
+}
+
+function testFieldOptions () {
+  var f = FormApp.openById('1WGKg3jEmRI4oGZIh1TfAEW4H8AlzNtttAEbWfEo989s');
+  Logger.log('got %s',f);
+  Logger.log('Got %s',JSON.stringify(getFormFieldOptions(f)));
+}
+
+function getForm (maybeUrl) {
+    if (typeof maybeUrl=='string') {
+	if (maybeUrl.indexOf('//') > -1) {
+	    return FormApp.openByUrl(maybeUrl);
+	}
+	else {
+	    return FormApp.openById(maybeUrl);
+	}
+    }
+    else {
+	// let's hope it's a form
+	return maybeUrl
+    }
+	
+}
+
+function getActionDetails (actionName, formUrl, upstreamFormUrls) {
+    // actionName is the name of our action type
+    // formUrl is the URL of our form
+    // upstreamFormUrls lists other forms that might be in our approval chain.
+    // This allows us to populate multiple choice options into formFieldOptions
+    // (since we typically map multiple choice -> text fields to make management
+    // easier, this allows us to present a UI based on the upstream multiple choice
+    // options).
     var action = sidebarActions[actionName];
     if (!action) {
 	action = actionLookup[actionName];
     }
-    try {var form = FormApp.openByUrl(formUrl);}
-    catch (err) {
-	Logger.log('Did we actually get a form?');
-	form = formUrl;
+    var form = getForm(formUrl)
+    action.formFields = getAllFormFields(form);
+    action.formFieldOptions = getFormFieldOptions(form);
+    if (upstreamFormUrls) {
+	upstreamFormUrls.forEach(function (url) {
+	    var upstreamForm = getForm(url);
+	    action.formFieldOptions = getFormFieldOptions(upstreamForm,action.formFieldOptions);
+	})
+	console.log('ActionDetails Got upstream options: %s',action.formFieldOptions,action.formFieldOptions);
     }
+
     // let's jazz this baby up...
     var options = undefined
     for (var param in action.params) {
 	param = action.params[param]
 	Logger.log('Jazz up %s, %s',param,param.type);
 	if (param.type == FIELDLIST || param.type == FIELDCONVERSION || param.type == FIELD || param.type == PARA) {			
-	    if (! options) {
-		options = getAllFormFields(form)
-		options.push('FormUser')
-		options.push('Timestamp')
-		options.push('*#*MAGIC-FIELD-YY-###')
-	    }
-	    Logger.log('Add the options!');
-	    param.fields = options;
+	    //if (! options) {
+	    //options = getAllFormFields(form)
+	    //options.push('FormUser')
+	    //options.push('Timestamp')
+	    //options.push('*#*MAGIC-FIELD-YY-###')
+	    // }
+	    //Logger.log('Add the options!');
+	    param.fields = action.formFields;
 	}
     }
     return action
