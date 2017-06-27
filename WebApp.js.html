@@ -4,6 +4,12 @@ var fileRegistry = {
 }
 
 
+Vue.component('tabs', {
+    name:'tabs',
+    data : function () {return {active:1}},
+    template : '#tabs'
+});
+
 Vue.component('field-config',{
     name : 'field-config',
     props : ['type','form','value','formfields','formfieldoptions','lookups'],
@@ -197,7 +203,7 @@ Vue.component('picker', {
 Vue.component('config-sheet',{
     name:'config-sheet',
     template:'#config-sheet',
-    props : ['sheetId','ssId','n','form','action','upstreamForms','rawConfig'],
+    props : ['sheetId','ssId','n','form','action','upstreamForms','rawConfig','display'],
     created: function () {this.loadData()},
     data : function () {return {
 	error:'',
@@ -205,10 +211,12 @@ Vue.component('config-sheet',{
 	details:{formFields:[],formFieldOptions:{}},
 	saved:true,
 	formLookups : {},
+	config : {raw:{},lookups:{},fields:[]},
 	formFields : [],
 	fieldLookup:{}}},
     methods : {
 	loadData : function () {
+	    console.log('Loading data for : %s, %s, %s',this.sheetId,this.n,this.rawConfig);
 	    var self = this;
 	    this.getActionDetails();
 	    //google.script.run
@@ -296,6 +304,7 @@ Vue.component('config-sheet',{
 	},
     }, // end methods
     watch : {
+	'rawConfig' : function (v) {this.loadData()},
 	lookups : {deep: true,
 		   handler : function (v) {this.saved = false}},
 	'config.raw' : {deep:true,
@@ -318,7 +327,7 @@ Vue.component('collapser',{
 
 Vue.component('drive-file',{
     name : 'drive-file',
-    props: ['id'],
+    props: ['id','type'],
     data : function () {return {
 	error : '',
 	file : {
@@ -491,6 +500,7 @@ Vue.component('master-config',{
 JacknifeApp = new Vue({
     el : '#appName',
     data : {
+	'testarr':{1:'Hello world',2:'what is going on',3:'this is very peculiar'},
 	'test':'Not a field - should be raw :)',
 	error:'',
 	configSheet : '',
