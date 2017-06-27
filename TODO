@@ -1,0 +1,45 @@
+*UI*
+**Create interface for managing triggers** (x)
+
+**Finish up field-editing interface**
+- List of fields
+- File
+- List of files
+- Magic fields
+- Action result fields (?)
+
+**Prettify entire UI**
+
+**Create UI for managing backup triggers / backup process**
+
+*Integrate Web-Form thing for mass approvals*
+**Test URL redirection from w/in google**
+
+
+*For Business Office*
+- Copy FY17 to FY18 (x)
+- Test new triggers (x)
+
+*Refactoring*
+- Move createForm scripts from FormSetup.py to Blade.js
+- Improve workflow for blades...
+  Blade ( {
+    trigger -> what happens when we get run by a form
+    createConfig -> function(form, params) -> create config for existing form
+    createForm -> function (params) -> create new form from scratch...
+    configParams -> (was params) -> parameters for handling configuration/creating form...
+    createParams -> (doesn't exist) -> parameters for creating a new form...
+    })
+
+*Test Suite*
+- Start automating testing (x)
+- Test Config Sheet (x)
+- Test Blades
+  - Test set up of new blade for each blad
+  - Test trigger set-up
+  - Test approval process
+
+*Backend*
+- Create code for copying an entire workflow (x)
+
+
