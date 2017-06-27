@@ -51,7 +51,7 @@ function Blade (data) {
     // register trigger
     triggerActions[data.shortname] = function (a1,a2,a3,a4) {
 	console.log('%s trigger (%s,%s,%s,%s)',data.shortname,a1,a2,a3,a4);
-	data.trigger(a1,a2,a3,a4)
+	return data.trigger(a1,a2,a3,a4); // don't forget to return our results to pass to other triggers!
     }
 
     if (!data.create) {
