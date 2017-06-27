@@ -39,23 +39,13 @@ Blade({
 
     trigger: function (event, masterSheet, actionRow, actionResults) {
 	Logger.log('!!! APPROVAL TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
-	responses = getResponseItems(event.response)
-	// DEBUG 
-	//    try {
-	//      createConfigurationSheet(masterSheet,
-	//                               'Approval Response Received',
-	//                               responses);          
-	//    }
-	//    catch (err) {
-	//      Logger.log('Error creating debug sheet '+err);
-	//    }    
-	// END DEBUG
+	var responses = getResponseItems(event.response)
 	Logger.log('Get actionRow'+JSON.stringify(actionRow));
 	Logger.log('Get actionRow[Config1]'+JSON.stringify(actionRow.Config1));
 	// configuration set up
-	f2f = lookupFields(actionRow.Config1.table,responses);
+	var f2f = lookupFields(actionRow.Config1.table,responses);
 	var templateSettings = actionRow['Config2'].table
-	config = lookupFields(templateSettings,responses);
+	var config = lookupFields(templateSettings,responses);
 	var logConf = actionRow['Config3'].table
 	checkForSelfApproval(config);
 	f2f.Approver = config.Approver;
@@ -73,7 +63,7 @@ Blade({
 	var approvalRespObj = preFillApprovalForm({'targetForm':targetForm,
 						   'responseItems':responses,
 						   'field2field':f2f})
-	editUrl = approvalRespObj.edit_url
+	var editUrl = approvalRespObj.edit_url
 	//if (actionRow['Config2'].table && actionRow['Config3'].table) {
 	//var lookupSettings = actionRow['Config3'].table
 	//responses['link'] = editUrl;
