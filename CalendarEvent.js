@@ -6,37 +6,45 @@ function toDate (timeString) {
 }
 
 function addEvent (calId, eventParams) {
-	if (eventParams.hasOwnProperty('onlyAddIf')) {
-		logNormal('Checking onlyAddIf');
-		if (! checkBool(eventParams.onlyAddIf)) {
-			logNormal('Not adding event: %s',eventParams)
-			return 'No Event Added'
-		}
+    if (eventParams.hasOwnProperty('onlyAddIf')) {
+	    logNormal('Checking onlyAddIf');
+	    if (! checkBool(eventParams.onlyAddIf)) {
+		    logNormal('Not adding event: %s',eventParams)
+		return 'No Event Added'
+	    }
+    }
+    var cal = CalendarApp.getCalendarById(calId);
+    logVerbose('cal.createEvent - cal=%s params=%s',cal,eventParams);
+    if (eventParams.startTime && eventParams.endTime) {
+	var startTime = new toDate(eventParams.startTime)
+	var endTime = new toDate(eventParams.endTime)
+	// If we end before we start, let's assume we should shift
+	// the end time by twelve hours :)
+	if (startTime > endTime) {
+	    Logger.log('Silently fixing AM/PM issue');
+	    startTime.setHours(startTime.getHours()+12)
 	}
-  var cal = CalendarApp.getCalendarById(calId);
-  logVerbose('cal.createEvent - cal=%s params=%s',cal,eventParams);
-  if (eventParams.startTime && eventParams.endTime) {
-    var e = cal.createEvent(
-      eventParams.title,
-      new toDate(eventParams.startTime),
-      new toDate(eventParams.endTime),
-      eventParams.options
-      // options can consiste of...
-      // description
-      // location
-      // guests
-      // sendInvites
-      ); 
-  }
-  else {
-    var e = cal.createAllDayEvent(
-      eventParams.title,
-      toDate(eventParams.date),
-      eventParams.options
-    );
-  }
-  logNormal('Created event %s',e);   
-  return e
+	var e = cal.createEvent(
+	    eventParams.title,
+	    startTime,
+	    endTime,
+	    eventParams.options
+	    // options can consiste of...
+	    // description
+	    // location
+	    // guests
+	    // sendInvites
+	); 
+    }
+    else {
+	var e = cal.createAllDayEvent(
+	    eventParams.title,
+	    toDate(eventParams.date),
+	    eventParams.options
+	);
+    }
+    logNormal('Created event %s',e);   
+    return e
 } // end addEvent
 
 
