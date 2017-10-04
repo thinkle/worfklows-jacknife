@@ -22,7 +22,8 @@ function addEvent (calId, eventParams) {
 	// the end time by twelve hours :)
 	if (startTime > endTime) {
 	    Logger.log('Silently fixing AM/PM issue');
-	    startTime.setHours(startTime.getHours()+12)
+	    endTime.setHours(endTime.getHours()+12)
+        Logger.log('Have times: %s - %s',startTime,endTime);
 	}
 	var e = cal.createEvent(
 	    eventParams.title,
@@ -66,9 +67,9 @@ function testAddEvent () {
     {
       title:'Test Event',
       //startTime: new Date('2016-09-19 09:30:00 GMT-0400'),
-      startTime: new Date(2016,8,19,9,30),
+      startTime: "2016-09-19 09:30",
       //endTime: new Date('2016-09-19 10:30:00 GMT-0400'),
-      endTime: new Date(2016,8,19,10,30),
+      endTime: "2016-09-19 10:30",
       options: {
         description : 'Test Description',
         location : 'Test Location',
@@ -79,8 +80,24 @@ function testAddEvent () {
     );
   addEvent(
     TESTID,
+    {
+      title:'Test Event AM/PM FIX!',
+      //startTime: new Date('2016-09-19 09:30:00 GMT-0400'),
+      startTime: "2016-09-19 09:30",
+      //endTime: new Date('2016-09-19 10:30:00 GMT-0400'),
+      endTime: "2016-09-19 04:30",
+      options: {
+        description : 'Test Fix AM PM Description',
+        location : 'Test Location',
+        guests : 'website@innovationcharter.org',
+        sendInvites: false
+      },
+    }      
+    );
+  addEvent(
+    TESTID,
     {title:'Test AllDay Event',
-     date:new Date(),
+     date: "2016-09-19",
      options:{
        description:'All Day Event Description',
        location:'Location Test',
