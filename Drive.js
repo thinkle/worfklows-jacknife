@@ -5,15 +5,14 @@ function createDriveFormAndConfig (folders, form) {
 	var ret = {}
 	ret.form = createDriveForm(folders, form);
 	ret.configTable = {
-		'Username':'%Username',
-		'FoldersRead':'@Drive Folders (Read Access)>>Folder',
-		'FoldersWrite':'@Drive Folders (Write Access)>>Folder',
-		'FolderKey':folders.map(function (f) {return DriveApp.getFolderById(f).getName()}),
-		'FolderVal':folders,
-		'EmailSubject':defaultDriveSubjectTemplate,
-		'EmailBody':defaultDriveBodyTemplate,
-      'InformFormUser':1,
-
+	    'Username':'%Username',
+	    'FoldersRead':'@Drive Folders (Read Access)>>Folder',
+	    'FoldersWrite':'@Drive Folders (Write Access)>>Folder',
+	    'FolderKey':folders.map(function (f) {return DriveApp.getFolderById(f).getName()}),
+	    'FolderVal':folders,
+	    'EmailSubject':defaultDriveSubjectTemplate,
+	    'EmailBody':defaultDriveBodyTemplate,
+	    'InformFormUser':1,
 	};
 	return ret;
 }
