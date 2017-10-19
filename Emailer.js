@@ -172,11 +172,13 @@ function applyTemplate (template, fields, fixWhiteSpace) {
     template = template.replace(new RegExp(escapeRegExp('<<'+target+'>>'),'g'),replacement);
     template = template.replace(new RegExp(escapeRegExp('{{'+target+'}}'),'g'),replacement);
   }
+  template = template.replace(/{{[^}]*}}/g,''); // remove empty ones
+  template = template.replace(/<<[^>]*>>/g,''); // remove empty ones
   return template
 }
 
 function testTemplateEmail () {
-  template = '<p>This is a <<adj>> paragraph. One day, Mr. <<name>> went on a walk and came upon a <<animal>>.</p><p>When Mr. <<name>> saw the <<animal>>, he <<verb1>>ed!</p><p>This ends my mad lib story. I hope you <<verb2>>ed it.</p>'
+  template = '<p>This is a <<adj>> paragraph. <<empty>> One day, Mr. <<name>> went on a walk and came upon a <<animal>>.</p><p>When Mr. <<name>> saw the <<animal>>, he <<verb1>>ed!</p><p>This ends my mad lib story. I hope you <<verb2>>ed it.</p>'
   fields = {
     animal: 'bear',
     name: 'Johnson',
@@ -196,6 +198,8 @@ var templateTest = Test ( {
     metadata : {name:'Template test'},
     test : function () {
 	assertEq(applyTemplate('foo <<bar>>',{bar:'yippee'}),'foo yippee')
+    	assertEq(applyTemplate('foo <<empty>><<bar>>',{bar:'yippee'}),'foo yippee')
+
 	assertEq(applyTemplate('foo \n<<bar>>',{bar:'yippee'}),'foo \nyippee')
 	assertEq(applyTemplate('foo \n{{bar}}',{bar:'yippee'},true),'foo <br>yippee') 
 	assertEq(applyTemplate('foo \n<<bar>>\n<<bar>>\n',{bar:'yippee'},true),'foo <br>yippee<br>yippee<br>')
