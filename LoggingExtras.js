@@ -1,10 +1,16 @@
 VERBOSITY = 1
 
+function testLogNormal () {
+  logNormal('Foo bar baz %s','what what?');
+
+}
+
 function doLog (verbosity) {    
   if (VERBOSITY >= verbosity) {
     var args = Array.prototype.slice.call(arguments);
     args.shift()
 		args = args.map(tidyLog)
+    console.log.apply(console,args);
     Logger.log.apply(Logger,args)
   }
 }
