@@ -249,13 +249,35 @@
       <button v-if="!gettingTable" v-on:click="insertFormTable()">Insert Table of Form Values</button><span v-if="gettingTable">Fetching form data...</span>
       </button>
     </span>
-    <span v-else-if="type==6">
+    <span v-else-if="type==6"> <!-- FIELD -->
       <select v-model="mode">
 	<option value="raw" default>Enter value</option>
 	<option value="field">Choose field</option>
 	<option value="lookup">Field lookup</option>
 	<option value="magic">Magic field</option>
+	<option value="function">Function</option>
       </select>
+      <span v-if="mode=='function'" class="function">
+	FUNCTION: <select v-model="fname">
+	  <option value="if" default>if</option>
+	  <option value="and">and</option>
+	  <option value="or">or</option>
+	  <option value="join">join</option>
+	</select>
+	<span v-if="fname=='if'">
+	  <br>IF: <field-config v-model="fargs[0]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields"></field-config>
+	  <br>THEN: <field-config v-model="fargs[1]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form"  :formfields="formfields"></field-config>
+	  <br>ELSE: <field-config v-model="fargs[2]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form"  :formfields="formfields"></field-config>
+	</span>
+	<span v-else>
+	  <br>{{fname}}(
+	  <span v-for="n in fargs.length"><br><field-config v-model="fargs[n]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields">
+	    </field-config>,
+	  </span>
+	  <br><button v-on:click="fargs.push('value')">+</button>
+	  <br>)
+	</span>
+      </span>
       <span v-if="mode=='field'">
 	<select v-model="field"> <!-- @input="updateField">-->
 	  <option v-for="f in formfields" :value="f">{{f}}</option>
