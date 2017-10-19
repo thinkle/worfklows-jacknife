@@ -23,6 +23,8 @@ Vue.component('field-config',{
 	newLookupKey:'',
 	newLookupVal:'',
 	gettingTable : false,
+	fname : 'if',
+	fargs : [],
     }},
     methods : {
 	updateVal : function (event) {
@@ -67,6 +69,13 @@ Vue.component('field-config',{
 			this.lookupField = vals[0].trim();
 			this.lookupDict = vals[1].trim();
 			return;
+		    }
+		    else if (this.value[0]==':') {
+			this.mode = 'function'
+			var fmatcher = /:([^(]*)\(([^]*)\)/;
+			var match = this.value.match(fmatcher);
+			this.fname = match[1]
+			this.fargs = match[2].split('|')
 		    }
 		    else if (this.value.substr(0,3)=='*#*') {
 			console.log('Set mode to magic: ',this.value);
