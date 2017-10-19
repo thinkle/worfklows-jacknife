@@ -1,9 +1,13 @@
+function testConsole () {
+  console.log('hello');
+}
 function logEvent (configTable, event, actionResults, extraConfig) {
     // DEBUG CODE
     //msg = 'logEvent('+JSON.stringify(configTable)+','+JSON.stringify(event)+',';
     //msg += JSON.stringify(actionResults)+','+JSON.stringify(extraConfig)+')';
     //emailError (msg, "NO ERROR",{'subject':'logEvent debug info'})
     // END DEBUG CODE
+  console.log(configTable,event,actionResults,extraConfig);
     var settings = lookupFields(configTable,getResponseItems(event.response, actionResults));	
     settings.Triggers = {};
     for (var key in actionResults) {
