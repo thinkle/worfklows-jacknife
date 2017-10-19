@@ -98,7 +98,7 @@ function getValue (val,results,settings,settingKey) {
 	break;
     case ':':
 	// function!
-	var fmatcher = /:([^(]*)\(([^\)]+)\)/;
+	var fmatcher = /:([^(]*)\(([^]*)\)/;
 	var match = val.match(fmatcher);
 	if (!match) {
 	    console.log('Error with "function" value: ',val)
