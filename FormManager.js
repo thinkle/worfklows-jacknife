@@ -32,6 +32,126 @@ function lookupField (settings, results) {
 // key : val (just provide the value)
 // key : %val (lookup %val in our results)
 // key : @val>>newfield (lookup %val in lookup table newfield in settings)
+// key : ?action.value (lookup result from another action)
+// key : :function(arg|arg|arg) - or bar separated arguments to a function...
+//    functions look like spreadsheet functions... but with or bars instead of commas
+//    we support...
+//    join(JOINCHAR|ARG2|ARG3)
+//    if(COND1|THEN|ELSE)
+//    and(COND1|COND2)
+//    or(COND1|COND2)
+function getValue (val,results,settings,settingKey) {
+    switch (val[0]) {
+    case '?':
+	logNormal('Looking up action! %s:%s',settingKey,val);
+	// Syntax = +ACTION.attribute.attribute.attribute
+	var result = val.substr(1);
+	// BUILD REST OF THIS TO PARSE OUT ACTION RESULTS
+	// BASED ON MAGIC :)
+	var objectChain = result.split('.');
+	var obj = results.actionResults[objectChain.shift()]
+	while (obj && objectChain.length > 0) {
+	    try {
+		var obj = obj[objectChain.shift()]
+	    }
+	    catch (err) {
+		logAlways('Error %s getting setting +%s, unable to read object %s',
+			  err, val, obj
+			 )
+		obj = undefined
+	    }
+	} // end looping through attributes
+	return obj
+	break;
+    case '%':
+	// Syntax = %FieldnameFromForm
+	val = val.substr(1);
+	return results[val]
+	break;
+    case '@':
+	if (val.indexOf('>>')==-1) {
+	    throw 'Invalid configuration: '+val+' - @ with no >>';
+	}
+	val = val.substr(1); // Now we get the value and pass it through
+	var vals = val.split('>>');
+	var fieldKey = vals[0]
+	var lookupVar = vals[1]
+	var initialResult = results[fieldKey]
+	var lookupDict = settings[lookupVar+'Lookup'];
+	if (!lookupDict) {
+	    throw "Illegal settings: no lookup dict "+lookupVar+'Lookup'+' for lookup value @'+val;
+	}
+	else {
+	    logVerbose('Looking up %s in dictionary %s',initialResult, lookupDict);
+	    function getResult (r) {
+		var fieldVal = lookupDict[r]
+		if (fieldVal) { return fieldVal }
+		else { return lookupDict['Default']}
+	    }
+	    if (Array.isArray(initialResult)) {
+		return initialResult.map(getResult)
+	    }
+	    else {
+		return getResult(initialResult)
+	    }
+	}
+	break;
+    case ':':
+	// function!
+	var fmatcher = /:([^(]*)\(([^\)]+)\)/;
+	var match = val.match(fmatcher);
+	if (!match) {
+	    console.log('Error with "function" value: ',val)
+	    return val
+	}
+	else {
+	    var fname = match[1]
+	    var args = match[2].split('|').map(function (a) {return getValue(a,results,settings,settingKey)});
+      Logger.log('Looking at function: %s with args %s',fname,args);
+	    switch (fname.toLowerCase()) {
+	    case 'if':
+            Logger.log('if')
+		if (checkBool(args[0])) {
+		    return args[1]
+		}
+		else {
+		    return args[2]
+		}
+		break;
+	    case 'or':
+            Logger.log('Execute or')
+		for (var i=0; i<args.length; i++) {
+		    if (checkBool(args[i])) {
+			return args[i]
+		    }
+		}
+		return false;
+		break;
+	    case 'and':
+            Logger.log('execute and')
+		for (var i=0; i<args.length; i++) {
+		    if (!checkBool(args[i])) {return false}
+		}
+		return args[i-1]; // return last arg -- like an or
+		break;
+	    case 'join':
+            Logger.log('execute join');
+		var joinchar = args.shift();
+		return args.join(joinchar)
+		break;
+	    default:
+		console.log('Invalid function name: %s',fname);
+		return val;
+		break;
+	    } // end inner switch (functions)
+	}
+	break;
+    default:
+	return val;
+    } // end switch
+}
+
+
 function lookupFields (settings, results) {
     if (! results) {
 	logAlways('No results (%s) handed to lookupFields',results)
@@ -42,70 +162,10 @@ function lookupFields (settings, results) {
     if (results.FormUser) { fields.FormUser=results.FormUser }
     if (results.Timestamp) { fields.Timestamp = results.Timestamp }
     for (var settingKey in settings) {
-	logVerbose('lookupFields "%s"=>"%s"',settingKey,settings[settingKey]);
-	var val = settings[settingKey];
-	switch (val[0]) {
-	case '?':
-	    logNormal('Looking up action! %s:%s',settingKey,val);
-	    // Syntax = +ACTION.attribute.attribute.attribute
-	    var result = val.substr(1);
-	    // BUILD REST OF THIS TO PARSE OUT ACTION RESULTS
-	    // BASED ON MAGIC :)
-	    var objectChain = result.split('.');
-	    var obj = results.actionResults[objectChain.shift()]
-	    while (obj && objectChain.length > 0) {
-		try {
-		    var obj = obj[objectChain.shift()]
-		}
-		catch (err) {
-		    logAlways('Error %s getting setting +%s, unable to read object %s',
-			      err, val, obj
-			     )
-		    obj = undefined
-		}
-	    } // end looping through attributes
-	    fields[settingKey] = obj
-	    logNormal('%s settings[%s]=>%s (looked up in actionResults %s)',val,settingKey,obj,Object.keys(results.actionResults));
-	    break;
-	case '%':
-	    // Syntax = %FieldnameFromForm
-	    val = val.substr(1);
-	    fields[settingKey] = results[val];
-	    logNormal('fields[%s]=%s (results[%s])',settingKey,fields[settingKey],val);
-	    break;
-	case '@':
-	    if (val.indexOf('>>')==-1) {
-		throw 'Invalid configuration: '+val+' - @ with no >>';
-	    }
-	    val = val.substr(1); // Now we get the value and pass it through
-	    var vals = val.split('>>');
-	    var fieldKey = vals[0]
-	    var lookupVar = vals[1]
-	    var initialResult = results[fieldKey]
-	    var lookupDict = settings[lookupVar+'Lookup'];
-	    if (!lookupDict) {
-		throw "Illegal settings: no lookup dict "+lookupVar+'Lookup'+' for lookup value @'+val;
-	    }
-	    else {
-		logVerbose('Looking up %s in dictionary %s',initialResult, lookupDict);
-		function getResult (r) {
-		    var fieldVal = lookupDict[r]
-		    if (fieldVal) { return fieldVal }
-		    else { return lookupDict['Default']}
-		}
-		if (Array.isArray(initialResult)) {
-		    fields[settingKey] = initialResult.map(getResult)
-		}
-		else {
-		    fields[settingKey] = getResult(initialResult)
-		}
-		logVerbose('fields[%s]=>%s',settingKey,fields[settingKey])
-	    }
-	    break;
-	default:
-	    logVerbose('fields[%s]=>%s',settingKey,val);
-	    fields[settingKey] = val;
-	} // end switch
+      logVerbose('lookupFields "%s"=>"%s"',settingKey,settings[settingKey]);
+      var val = settings[settingKey];
+      fields[settingKey] = getValue(val,results,settings,settingKey)
+      
     }
     logVerbose('Looked up fields->%s',fields);
     return fields
@@ -758,12 +818,21 @@ function testLookupField () {
 	'TestQuest':'?Email.config.To',
 	'TestNorm':'Nuttin special',
 	'BarLookup':{'Foo':'FooLookedUp',
+                 'Boo':'BooLookedUp',
 		     'Bar':'LookedUpBar',
 		     'Default':'Default?',
 		    },
+	TestOr: ':or(no|%Foo)',
+	TestOrFalse:':or(no|%Empty)',
+	TestAnd: ':and(yes|%Foo)',
+	TestAndFalse : ':and(yes|%Empty)',
+	TestJoin : ':join(,|%Foo|@Foo>>Bar|@Default>>Bar)',
+	TestIfIf : ':if(yes|First Thing|Other Thing)',
+	TestIfElse : ':if(%Empty|First Thing|Other Thing)',
     }
     result = {
 	'Foo':'Boo',
+	'Empty':'No',
 	'Default':'Nothing to see here',
 	'actionResults':{'Email':{'config':{'To':'me@me.me'}}}
     }
