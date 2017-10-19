@@ -7,6 +7,7 @@ FIELD = 6
 FOLDERLIST = 7
 BOOL = 8
 SPREADSHEET = 9;
+//FUNCTION = 10;
 
 function exportGlobals () {
     return "globals="+JSON.stringify({
@@ -19,6 +20,7 @@ function exportGlobals () {
 	FOLDERLIST:FOLDERLIST,
 	BOOL:BOOL,
 	SPREADSHEET:SPREADSHEET,
+	//FUNCTION:FUNCTION,
     });
 }
 
@@ -66,15 +68,16 @@ function Blade (data) {
 		    config[p.field] = p.val
 		}
 	    }); // end mapping config fields...
-	    handleLookups(config,params)
+	    handleLookups(config,data.params)
 	    // Config is set
+	    var form = FormApp.openByUrl(formUrl);
 	    var formAsFile = DriveApp.getFileById(form.getId());
 	    var formTitle = form.getTitle(); Logger.log('title='+formTitle);
 	    var controlSS = args['SpreadsheetApp'] ? args['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
 	    var configSheets = [createConfigurationSheet(controlSS,formTitle+' Settings',config)];
 	    getMasterConfig(controlSS)
-		.pushConfig(formUrl,data.shortname,configSheets);
-	    createFormTrigger(formUrl,controlSS);
+		.pushConfig(form,data.shortname,configSheets);
+	    createFormTrigger(form,controlSS);
 	}
     }
 
