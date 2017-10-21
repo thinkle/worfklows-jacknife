@@ -282,70 +282,49 @@ function convertUnpushableFields (form) {
   });
 }
 
-/* newTextItems=['Approval'], convertFields={'Requester':'FormUser', 'Request Timestamp':'Timestamp'}, ) */
-function createApprovalForm (firstForm, params) {
-    if (params == undefined) {params = {}}
+
+function setupApprovalConfig (firstForm, params) {
     var formAsFile = DriveApp.getFileById(firstForm.getId())
-    var origTitle = firstForm.getTitle()
-    var origName = formAsFile.getName()
-    var titleSuffix = params['titleSuffix'] ? params['titleSuffix'] : ' Approval'  
     var controlSS = params['SpreadsheetApp'] ? params['SpreadsheetApp'] : SpreadsheetApp.getActiveSpreadsheet();
     var masterConfig = getMasterConfig(controlSS);
-    if (params['DestinationFolder']) {
-	var approvalFormAsFile = formAsFile.makeCopy(origName+' '+titleSuffix, params['destinationFolder'] ? params['destinationFolder'] : "")
+    defaults = {
+	newFields : [{'type':'textField','title':'Signature','helpText':'Write initials and date here to approve.'}],
+	convertFields : [{'from':'FormUser','to':'Requester','type':FormApp.ItemType.TEXT},
+									     {'from':'Timestamp','to':'Request Timestamp','type':FormApp.ItemType.TEXT},
+									     {'from':'*#*FY16-MM-###','to':'PO Number','type':FormApp.ItemType.TEXT},
+			],
+	approvalHeader : {'title':'Approval', 'helpText':'The above information was filled out by the requester. Use the section below to indicate your approval.'}
+    }
+    for (var p in defaults) {
+	if (!params[p]) {
+	    params[p] = p
+	}
+    }
+    if (params.createForm) {
+	var result = createApprovalForm(firstForm,params);
+	var approvalFormAsFile = result.file;
+	var approvalForm = result.form;
     }
     else {
-	var approvalFormAsFile = formAsFile.makeCopy(origName+' '+titleSuffix);
+	var approvalFormAsFile = DriveApp.getFileById(params.selectForm);
+	var approvalForm = FormApp.openById(approvalFormAsFile.getId());   
     }
-    var approvalForm = FormApp.openById(approvalFormAsFile.getId());   
-    approvalForm.setTitle(origTitle+' '+titleSuffix)  
-    var convertFields = params['convertFields'] ? params['convertFields'] : [{'from':'FormUser','to':'Requester','type':FormApp.ItemType.TEXT},
-                                                                             {'from':'Timestamp','to':'Request Timestamp','type':FormApp.ItemType.TEXT},
-									     {'from':'*#*FY16-MM-###','to':'PO Number','type':FormApp.ItemType.TEXT},
-                                                                            ]
-    var newSectionHeader = params['approvalHeader'] ? params['approvalHeader'] : {'title':'Approval', 'helpText':'The above information was filled out by the requester. Use the section below to indicate your approval.'}
-    var newFields = params['newFields'] ? params['newFields'] : [{'type':'textField','title':'Signature','helpText':'Write initials and date here to approve.'}]  
-    newSectionHeader['type']=FormApp.ItemType.SECTION_HEADER
 
-    Logger.log('create header');
-    createFormItem(approvalForm,newSectionHeader);  
-    for (var fi in convertFields) {
-	var fieldParams = convertFields[fi]
-	//var existingItems = approvalForm.getItems(fieldParams['type'])
-	var existingItems = approvalForm.getItems(FormApp.ItemType.TEXT)
-	for (var ii in existingItems) {
-	    itm = existingItems[ii]
-	    if (itm.getTitle()==fieldParams['from']) {
-		Logger.log('Delete existing '+fieldParams['from'])
-		approvalForm.deleteItem(itm)
-	    }
-	    
-	    
-	}
-	fieldParams['title']=fieldParams['to']
-	fieldParams['helpText'] = 'Do not modify this field.';
-	Logger.log('Create from: '+fieldParams);
-	createFormItem(approvalForm,fieldParams)    
-    }
-    for (var i in newFields) {
-	var fieldParams = newFields[i]
-	Logger.log('Create from: '+fieldParams);
-	createFormItem(approvalForm,fieldParams)    
-    }
-    convertUnpushableFields(approvalForm);
-    var fromFields = []; toFields = []; helpText = []; fieldTypes = [];
+    var fromFields = []; var toFields = []; var helpText = []; var fieldTypes = [];    
     function addField (f) {
 	fromFields.push(f.from ? f.from : '')
 	toFields.push(f.to ? f.to : f.title ? f.title : '')
 	helpText.push(f.helpText ? f.helpText : '')
 	fieldTypes.push(f.type ? f.type : '')
     }
-    newFields.forEach(addField);  
-    convertFields.forEach(addField);  
-    
+
+    params.newFields.forEach(addField);  
+    params.convertFields.forEach(addField);
+
     // Create config sheets...
+
     var configSheets = []
-    approvalConfig = {
+    var approvalConfig = {
 	'Approval Form ID':approvalForm.getId(),
 	'Approval Form Edit URL':approvalForm.getEditUrl(),
 	'toFields':toFields,
@@ -374,6 +353,8 @@ function createApprovalForm (firstForm, params) {
 	 'RequestBody':(params['emailRequestBody'] ? params['emailRequestBody'] : 'We have received a request and need your approval. <a href="<<link>>">Click here</a> to approve.') +'\n\n'+ createEmailTableTemplateForForm(approvalForm),
 	 'Approver':'foo@bar.com',
 	 'allowSelfApproval':0,
+	 'conditionalSubmit':0,
+	 onlySubmitIf:'',
 	 'ApproverDefault':'DEFAULTAPPROVAL@FOO.BAR',
 	 'ApproverBackup':'BACKUPAPPROVAL@FOO.BAR',
 	 'includeFormSubmitter':0,
@@ -437,8 +418,54 @@ function createApprovalForm (firstForm, params) {
     // if we don't have one already...
     createFormTrigger(firstForm, controlSS);
     createFormTrigger(approvalForm, controlSS);
+    return approvalForm;
+}
 
-    return approvalForm
+/* newTextItems=['Approval'], convertFields={'Requester':'FormUser', 'Request Timestamp':'Timestamp'}, ) */
+function createApprovalForm (firstForm, params) {
+    var formAsFile = DriveApp.getFileById(firstForm.getId())
+    var origTitle = firstForm.getTitle()
+    var origName = formAsFile.getName()
+    var titleSuffix = params['titleSuffix'] ? params['titleSuffix'] : ' Approval'  
+    if (params == undefined) {params = {}}
+    if (params['DestinationFolder']) {
+	var approvalFormAsFile = formAsFile.makeCopy(origName+' '+titleSuffix, params['destinationFolder'] ? params['destinationFolder'] : "")
+    }
+    else {
+	var approvalFormAsFile = formAsFile.makeCopy(origName+' '+titleSuffix);
+    }
+    var approvalForm = FormApp.openById(approvalFormAsFile.getId());   
+    approvalForm.setTitle(origTitle+' '+titleSuffix)  
+    var convertFields = params.convertFields;
+    var newSectionHeader = params.approvalHeader;
+    newSectionHeader['type']=FormApp.ItemType.SECTION_HEADER
+    Logger.log('create header');
+    createFormItem(approvalForm,newSectionHeader);  
+    for (var fi in convertFields) {
+	var fieldParams = convertFields[fi]
+	//var existingItems = approvalForm.getItems(fieldParams['type'])
+	var existingItems = approvalForm.getItems(FormApp.ItemType.TEXT)
+	for (var ii in existingItems) {
+	    itm = existingItems[ii]
+	    if (itm.getTitle()==fieldParams['from']) {
+		Logger.log('Delete existing '+fieldParams['from'])
+		approvalForm.deleteItem(itm)
+	    }
+	    
+	    
+	}
+	fieldParams['title']=fieldParams['to']
+	fieldParams['helpText'] = 'Do not modify this field.';
+	Logger.log('Create from: '+fieldParams);
+	createFormItem(approvalForm,fieldParams)    
+    }
+    for (var i in params.newFields) {
+	var fieldParams = params.newFields[i]
+	Logger.log('Create from: '+fieldParams);
+	createFormItem(approvalForm,fieldParams)    
+    }
+    convertUnpushableFields(approvalForm);
+    return {form:approvalForm,file:approvalFormAsFile}
 }
 
 function handleLookups (config, params, form) {
