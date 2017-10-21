@@ -14,6 +14,7 @@
   <!-- Simple Sidebar -->
   <div id="appName">
     <h1>Workflows Jacknife</h1>
+    
     <tabs>
       <div v-for="n in 3" :slot="n">This is the {{n}} slot: {{testarr[n]}}</div>
     </tabs>
@@ -24,6 +25,10 @@
       Master Sheet: <drive-file type="sheet" :id="master"></drive-file>
       <collapser show-label="Show forms" hide-label="Hide forms">Forms: <li v-for="form in formList"><drive-file type="form" :id="form"></drive-file></li></collapser>
       <collapser show-label="Show Full Config" hide-label="Hide">
+    Folder: <field-config api-info="apiInfo" type="2"></field-config>
+    <br>Form: <field-config api-info="apiInfo" type="10"></field-config>
+    <br>Sheet: <field-config api-info="apiInfo" type="9"></field-config>
+
 	<div>Config Sheet: <picker :api-info="apiInfo" v-model="master"></picker>
 	<master-config :config-sheet="master"
 		       :api-info="apiInfo"
@@ -66,6 +71,10 @@
 	  <span v-if="value">Change</span>
 	  <span v-else>Select</span>
 	  Form
+	</button>
+	<button v-else-if="type=='folder'" v-on:click="getFolder()">
+	  <span v-if="value">Change</span>
+	  <span v-else>Select</span>
 	</button>
 	<button v-else v-on:click="getSheet()" >
 	  <span v-if="value">Change</span><span v-else>Select</span> Sheet
@@ -144,6 +153,7 @@
 	<collapser show-label="Show Config" hide-label="Hide Config">
 	  <tabs>
 	    <config-sheet v-for="n in 3"
+			  :api-info="apiInfo"
 			  :slot="n" :ref="'config'+n" v-if="configRow['ConfigId'+n]"
 			  :n="n"
 			  :sheet-id="configRow['ConfigId'+n]"
@@ -174,7 +184,7 @@
 	<table>
 	  <tr v-for="param in actionParameters.params">
 	    <td>{{param.label}}</td>
-	    <td><field-config :formfields="param.fields" v-model="actionConfig[param.field]" :type="param.type" ref="fc"></field-config></td>
+	    <td><field-config :api-info="apiInfo" :formfields="param.fields" v-model="actionConfig[param.field]" :type="param.type" ref="fc"></field-config></td>
 	  </tr>
 	</table>
 	<button class="create" v-on:click="createAction">Set up action</button>
@@ -210,6 +220,7 @@
 			    :lookups="config.lookups"
 			    :ref="'fl_'+key"
 			    :form="form"
+			    :api-info="apiInfo"
 			    >
 	      </field-config> <!-- use fields for everything -->
 	    </span>
@@ -221,6 +232,7 @@
 			    :lookups="config.lookups"
 			    :ref="'fl_'+key"
 			    :form="form"
+			    :api-info="apiInfo"
 			    >
 	      </field-config> <!-- use fields for everything -->
 	    </span>
@@ -242,6 +254,16 @@
     </span>
     <span v-else-if="type==2"> <!--folder-->
       Folder {{value}} (not yet implemented)
+      <drive-file :id="value" type="folder"></drive-file>
+      <picker :api-info="apiInfo" v-model="value" type="folder"></picker>
+    </span>
+    <span v-else-if="type==10"> <!--form-->
+      Form {{value}}
+      <picker :api-info="apiInfo" v-model="value" type="form"></picker>
+    </span>
+    <span v-else-if="type==9"> <!-- spreadsheet -->
+      Spreadsheet {{value}}
+      <picker :api-info="apiInfo" v-model="value" type="spreadsheet"></picker>
     </span>
     <span v-else-if="type==5"> <!-- PARA -->
       <textarea cols="72" rows="10" :value="value" @input="updateVal">
@@ -265,13 +287,13 @@
 	  <option value="join">join</option>
 	</select>
 	<span v-if="fname=='if'">
-	  <br>IF: <field-config v-model="fargs[0]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields"></field-config>
-	  <br>THEN: <field-config v-model="fargs[1]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form"  :formfields="formfields"></field-config>
-	  <br>ELSE: <field-config v-model="fargs[2]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form"  :formfields="formfields"></field-config>
+	  <br>IF: <field-config api-info="apiInfo" v-model="fargs[0]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields"></field-config>
+	  <br>THEN: <field-config api-info="apiInfo" v-model="fargs[1]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form"  :formfields="formfields"></field-config>
+	  <br>ELSE: <field-config api-info="apiInfo" v-model="fargs[2]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form"  :formfields="formfields"></field-config>
 	</span>
 	<span v-else>
 	  <br>{{fname}}(
-	  <span v-for="n in fargs.length"><br><field-config v-model="fargs[n]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields">
+	  <span v-for="n in fargs.length"><br><field-config api-info="apiInfo" v-model="fargs[n]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields">
 	    </field-config>,
 	  </span>
 	  <br><button v-on:click="fargs.push('value')">+</button>
