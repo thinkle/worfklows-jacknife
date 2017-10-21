@@ -7,7 +7,7 @@ FIELD = 6
 FOLDERLIST = 7
 BOOL = 8
 SPREADSHEET = 9;
-//FUNCTION = 10;
+FORM = 10;
 
 function exportGlobals () {
     return "globals="+JSON.stringify({
@@ -251,6 +251,86 @@ function copyWorkflow (ssid) {
 	    file:newSS}
 }
 
+var SPREADSHEETID = 2
+var FORMID = 3
+var IS_DEFINED = 4
+
+function checkParam (config, param, type, require) {
+    if (!config.table.hasOwnProperty(param)) {
+	console.log('Warning: %s not defined in config %s',param,config.getSheetLink());
+	if (type==IS_DEFINED) {
+	    console.log('param %s is required',param);
+	    throw {error:"Required Parameter Not Defined",
+		   config:config.getSheetLink()}
+	}
+    }
+    if (type==SPREADSHEETID || type==FORMID) {
+	var id = config.table[param]
+	try {
+	    if (type==FORMID) {
+		FormApp.openById(id);
+	    }
+	    if (type==SPREADSHEETID) {
+		SpreadsheetApp.openById(id);
+	    }
+	}
+	catch (err) {
+	    console.log('Error: %s does not appear to be a %s (defined in %s)',
+			type==SPREADSHEETID && 'Sheet' || 'Form',
+			config.table[param],
+			config.getSheetLink())
+	    throw err;
+	}
+    }
+}
+
+
+function assertError (f) {
+    try {
+	f()
+    }
+    catch (err) {
+	Logger.log('Error as expected: %s',err);
+	return
+    }
+    // if we get here there was no error :(
+    throw {error:'Should have thrown error but did not','f':f}
+}
+
+checkParamTest = Test({
+    metadata : {name: 'Config - test check params'},
+    setup : function (p) {
+      Logger.log('Set up!');
+	var ss = p.getScratchSS();
+      Logger.log('Got ss');
+	p.cs = createConfigurationSheet(ss,'Test Param Check',
+					  {SheetID : p.getScratchSS().getId(),
+					   FormID : p.getScratchForm().getId(),
+					   PresentValue : 'This value is present',
+					   BadFormValue : 'Not a form ID',
+					   BadSheetValue : 'Not a sheet ID'});
+	p.cs.loadConfigurationTable();
+    },
+  test: function (p) {
+    var cs = p.cs;
+	// No error for these...
+	checkParam(cs,'SheetID',SPREADSHEETID)
+	checkParam(cs,'FormID',FORMID)
+	checkParam(cs,'PresentValue',IS_DEFINED)
+	checkParam(cs,'ShouldLogWarningButNotThrowError')
+	assertError(function () {checkParam(cs,'BadSheetValue',SheetID)});
+	assertError(function () {checkParam(cs,'BadFormValue',FORMID)});
+	assertError(function () {checkParam(cs,'SheetID',FORMID)});
+	assertError(function () {checkParam(cs,'FormID',SheetID)});
+	assertError(function () {checkParam(cs,'MissingValue',IS_DEFINED)});
+    }
+})
+		    
+function runParamTest () {
+    checkParamTest.solo();
+}
+
+
 function testConfigFix () {
   cs = getConfigurationSheetById('146cgFmQ55S2jTJ3OP6biLrM_UYvDueQwV71Ce11luKM',1461439748);
   cs.loadConfigurationTable();
@@ -268,3 +348,4 @@ var testCopy = Test({
 })
 
 function runTestCopy () {testCopy.solo()}
+
