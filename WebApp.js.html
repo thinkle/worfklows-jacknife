@@ -471,6 +471,7 @@ Vue.component('master-config',{
 	duplicateWorkflow : function () {
 	    var self = this;
 	    self.duplicating = true;
+	    console.log('Calling duplicateWorkflow %s',this.configSheet);
 	    google.script.run
 		.withSuccessHandler(
 		    function (d) {
@@ -489,6 +490,7 @@ Vue.component('master-config',{
 
 	gatherDocs : function () {
 	    var self = this;
+	    console.log('Calling gatherDocs %s',this.configSheet);
 	    google.script.run
 		.withSuccessHandler(function (d) {self.folder = d})
 		.withFailureHandler(function (e) {self.error = e}).gatherWorkflow(this.configSheet);
@@ -519,6 +521,7 @@ Vue.component('master-config',{
 
 	setupTriggers : function () {
 	    var self=this;
+	    console.log('Calling setupTriggers %s',this.configSheet);
 	    google.script.run
 		.withFailureHandler(function (e) {self.error = e})
 	        .withSuccessHandler(function (d) {console.log('Triggers set up!');})
