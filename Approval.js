@@ -3,7 +3,7 @@
 ///////////////////////////////////
 
 supported_approval_field_types = [
-    'TEXT','PARAGRAPH_TEXT','MULTIPLE_CHOICE','LIST','DATETIME','DATE'
+    'TEXT','PARAGRAPH_TEXT','MULTIPLE_CHOICE','LIST','DATETIME','DATE','PAGE_BREAK',
     ]
 function preFillApprovalForm (params) {
   // Pre-Fill Out approval form and return editUrl
@@ -148,7 +148,7 @@ function getApprovalFormToMasterLookup (actionRow) {
 }
 
 function checkForApprovals (form, logsheet) {
-	var allResponses = form.getResponses();
+        var allResponses = form.getResponses();
 	var logTable = Table(logsheet.getDataRange(), 'OriginalResponseId');
 	var fixed = []
 	allResponses.forEach (function (resp) {
@@ -201,8 +201,12 @@ function approvalOnTimerCleanup () {
 	    masterConfig.getConfigsForId(fs).forEach( function (row,i) {
 			if (row.Action=='Approval') {
 			    Logger.log('Checking approvals at config: %s',i)
+			    checkParam(row.Config3,'SpreadsheetId',SPREADSHEETID);
+			    checkParam(row.Config3,'SheetId',IS_DEFINED);
 			    logSS = SpreadsheetApp.openById(row['Config3'].table.SpreadsheetId);
 			    logSheet = getSheetById(logSS, row['Config3'].table.SheetId);
+			    console.log('Checking for approvals with sheets: %s, %s',logSS, logSheet);
+			    //console.log('Working with config: %s',row['Config3'].table)
 			    checkForApprovals(FormApp.openById(fs),logSheet);
 			}
 	    });
