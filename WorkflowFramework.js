@@ -143,6 +143,7 @@ function gatherFiles (controlss) {
 
 function gatherWorkflow (ssid, foldername) {
     //Gather a workflow associated with a spreadsheet into a folder, then return the ID of the folder that contains it;
+    logNormal('Gather workflow at %s into folder named %s',ssid,foldername)
     if (ssid) {var controlss = SpreadsheetApp.openById(ssid)}
     else {var controlss = SpreadsheetApp.getActiveSpreadsheet()}
     var fid = PropertiesService.getScriptProperties().getProperty(ssid+' folder');
@@ -173,7 +174,7 @@ function gatherWorkflow (ssid, foldername) {
 // Gather
 function gatherWorkflowInFolder (controlss, folder) {
     var files = gatherFiles(controlss)
-    Logger.log('Gathering files: %s',files);
+    logNormal('Gathering files: %s',files);
     files.forEach(function (f) {
 	folder.addFile(f);
     });
