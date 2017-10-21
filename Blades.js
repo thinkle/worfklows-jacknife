@@ -6,6 +6,14 @@ Blade({
     name : "Create Approval Form",
     create : createApprovalFormFromUrl,
     params : [
+	{field:'createForm',
+	 label:'Create Approval Form?',
+	 type:BOOL,
+	 val:true},
+	{field:'selectForm',
+	 label:'Select Pre-Existing Approval Form?',
+	 type:FORM,
+	 val:undefined},
 	{field:'titleSuffix',
 	 label:'Approval Form Title Suffix',
 	 type:TEXT,
@@ -13,6 +21,16 @@ Blade({
 	{field:'destinationFolder','label':'Folder',
 	 'type':FOLDER,
 	 'val':undefined,},
+	//{field:'conditionalSubmit',
+	//type:BOOL,
+	//val:undefined,
+	//label:'Submit approval conditionally',
+	//mode:'value',},
+	//{field:'onlySubmitIf',
+	//type:FIELD,
+	//label:'Only Submit for Approval If',
+	//mode:'field',
+	//val:'True',},
 	{field:'convertFields','label':'Fields to Convert',
 	 type:FIELDCONVERSION,
 	 'val':[{'from':'FormUser','to':'Requester','type':FormApp.ItemType.TEXT},
@@ -41,11 +59,28 @@ Blade({
 	Logger.log('!!! APPROVAL TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
 	var responses = getResponseItems(event.response)
 	Logger.log('Get actionRow'+JSON.stringify(actionRow));
+	console.log('APPROVAL Looking at event %s',event.response.getId(),event.response,actionRow);
 	Logger.log('Get actionRow[Config1]'+JSON.stringify(actionRow.Config1));
 	// configuration set up
 	var f2f = lookupFields(actionRow.Config1.table,responses);
 	var templateSettings = actionRow['Config2'].table
 	var config = lookupFields(templateSettings,responses);
+	if (config.conditionalSubmit) {
+	    //console.log('Checking on conditional submit');
+	    //console.log('onlySubmitIf: %s',config.onlySubmitIf);
+	    //console.log('onlySubmitIf: %s',checkBool(config.onlySubmitIf));
+	    //console.log('onlySubmitIf setting: %s',templateSettings.onlySubmitIf);
+	    if (!checkBool(config.onlySubmitIf)) {
+		logNormal('Conditionally not submitting for approval: %s',config);
+		return
+	    }
+	    else {
+		logNormal('Checked conditon: we are submitting! %s',config);
+	    }
+	}
+	else {
+	    console.log('We do not have to check conditionalSubmit: not in %s',config)
+	}
 	var logConf = actionRow['Config3'].table
 	checkForSelfApproval(config);
 	f2f.Approver = config.Approver;
@@ -57,6 +92,7 @@ Blade({
 	    Logger.log('actionRow: '+JSON.stringify(actionRow));
 	    return 0
 	}
+	checkParam(actionRow.Config1,'Approval Form ID',FORMID);
 	var targetForm = FormApp.openById(actionRow['Config1'].table['Approval Form ID'])
 	lookupMagic(f2f,responses,targetForm);
 	//emailError ("Working with target f2f:"+JSON.stringify(f2f), 'no real error') 
@@ -113,6 +149,11 @@ Blade({
 	Logger.log('!!! CALENDAR TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
 	responses = getResponseItems(event.response);
 	var calConfig = actionRow['Config1'].table;
+	checkParam(actionRow.Config1,'Username')
+	checkParam(actionRow.Config1,'EmailSubject')
+	checkParam(actionRow.Config1,'EmailBody')
+	checkParam(actionRow.Config1,'CalendarsRead')
+	checkParam(actionRow.Config1,'CalendarsWrite')
 	//var informConfig = actionRow['Config2'].table;
 	//var emailConfig = actionRow['Config3'].table;
 	var calendarsAdded = addUserToCalendarFromForm(responses, calConfig)//, informConfig, emailConfig);
@@ -140,6 +181,11 @@ Blade({
     trigger:function (event, masterSheet, actionRow, actionResults) {
 	responses = getResponseItems(event.response);
 	var ceConfig = actionRow['Config1'].table;
+	checkParam(actionRow.Config1,'title',IS_DEFINED)
+	checkParam(actionRow.Config1,'date',IS_DEFINED)
+	checkParam(actionRow.Config1,'startTime')
+	checkParam(actionRow.Config1,'endTime')
+	checkParam(actionRow.Config1,'options')
 	return addCalendarEventFromForm(responses,ceConfig);
     }
 })
@@ -161,8 +207,9 @@ Blade({
 	Logger.log('!!! EMAIL TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
 	var responses = getResponseItems(event.response,actionResults);
 	var settings = actionRow['Config1'].table    
-	//var templateSettings = actionRow['Config1'].table;
-	//var lookupSettings = actionRow['Config2'].table;
+	checkParam(actionRow.Config1,'To');
+	checkParam(actionRow.Config1,'Body',IS_DEFINED);
+	checkParam(actionRow.Config1,'Subject',IS_DEFINED);
 	return sendFormResultEmail(
 	    responses,
 	    settings
@@ -175,10 +222,13 @@ Blade({
 Blade({shortname:'Folder',
        name:'Share Folder',
        trigger:function (event, masterSheet, actionRow) {
-	Logger.log('!!! FOLDER TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
-	responses = getResponseItems(event.response);
-	var config = actionRow['Config1'].table;
-	return addUserToFoldersFromForm(responses,config);
+	   Logger.log('!!! FOLDER TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
+	   responses = getResponseItems(event.response);
+	   var config = actionRow['Config1'].table;
+	   checkParam(actionRow.Config1,'Username')
+	   checkParam(actionRow.Config1,'FoldersRead')
+	   checkParam(actionRow.Config1,'FoldersWrite')
+	   return addUserToFoldersFromForm(responses,config);
        },
        create : function (form,params) {
 	   createDriveFormAndConfig(params.folders,form)
@@ -207,6 +257,8 @@ Blade({
 	Logger.log('!!! GROUP TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
 	responses = getResponseItems(event.response);
 	var groupConfig = actionRow['Config1'].table;
+	checkConfig(actionRow.Config1,'username',IS_DEFINED)
+	checkConfig(actionRow.Config1,'groups',IS_DEFINED)
 	return addToGroupFromForm(responses,groupConfig);
     }
 })
@@ -219,6 +271,8 @@ Blade({
 	      {field:'SpreadsheetId',type:SPREADSHEET,label:'ID of Spreadsheet'},
 	     ],
     trigger:function (event, masterSheet, actionRow, actionResults) {
+	checkParam(actionRow.Config1,'SpreadsheetId',SPREADSHEETID);
+	checkParam(actionRow.Config1,'SheetId');
 	return logEvent(actionRow['Config1'].table,event,actionResults);
     }})
 
@@ -228,6 +282,10 @@ Blade({
     trigger : function (event, masterSheet, actionRow) {
 	var responses = getResponseItems(event.response);
  	var usernameSettings = actionRow['Config1'].table;
+	['first','last','informList','username','emailSubject','emailTemplate','requirePasswordReset'].forEach(
+	    function (p) {
+		checkParam(actionRow.Config1,p);
+	    })
  	return createAccountFromForm(
 	    //results, fieldSettings, informSettings, emailTemplateSettings
 	    responses, 
