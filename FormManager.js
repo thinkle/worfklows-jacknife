@@ -481,10 +481,12 @@ function onFormSubmitTrigger (event) {
     
     // Log this baby...
     try {
-	var logDoc = DocumentApp.openById('1mSdNItUTyONo5ZX6kaHXMlgVghKypeMzJpjydzEVk9w')
-	var body = logDoc.getBody()
+	console.log('Full log: %s',Logger.getLog())
+	console.log('Action Results: %s',JSON.stringify(actionResults))
+	//var logDoc = DocumentApp.openById('1mSdNItUTyONo5ZX6kaHXMlgVghKypeMzJpjydzEVk9w')
+	//var body = logDoc.getBody()
 	//body.appendParagraph(Logger.getLog()); // too much...
-	body.appendParagraph(JSON.stringify(actionResults));
+	//body.appendParagraph(JSON.stringify(actionResults));
     }
     catch (err) {
 	Logger.log('Error logging to google doc :( %s',err)
