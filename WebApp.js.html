@@ -6,6 +6,7 @@ var fileRegistry = {
 
 Vue.component('tabs', {
     name:'tabs',
+    props : ['labels'],
     data : function () {return {active:1}},
     template : '#tabs'
 });
