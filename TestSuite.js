@@ -9,6 +9,12 @@ function resubmitForm (formId,i) {
     onFormSubmitTrigger(fakeEvent)
 }
 
+function getOldResponse (formId, i) {
+  var form = FormApp.openById(formId);
+  var firstResp = form.getResponses()[i];
+  return firstResp
+}
+
 function getProp () {
 Logger.log(PropertiesService.getUserProperties().getProperty('scratchSS'));//,'1MVfqdE8Y5R_3Ua2fm3L6FHahv4yM8dc6u-pYzTn2nOg'));
 }
@@ -17,6 +23,18 @@ function addDefaultParams (params) {
 	configSS : '1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk',
 	fileForm : '1iXj_oTMfPhjBeYDYbkQptf-MafpFdKp-Ml3eY9hwvaY',
 	masterSS : '1lldMEo4F5K_T8Zb2kURh2CZfgL4-K1yesILGrnmDT5Q',
+	getScratchForm : function () {
+	    var fid = PropertiesService.getUserProperties().getProperty('scratchForm');
+	    if (!fid) {
+		var f = FormApp.create('Scratch Form for Testing');
+		PropertiesService.getUserProperties().setProperty('scratchForm',f.getId())
+		return f
+	    }
+	    else {
+		var f = FormApp.openById(fid);
+		return f;
+	    }
+	},
 	getScratchSS : function () {
 	    var ssid = PropertiesService.getUserProperties().getProperty('scratchSS');
 	    if (!ssid) {
