@@ -101,7 +101,7 @@ function getFileInfo (id) {
 function createApprovalFormFromUrl (formId, params) {
     Logger.log('createApprovalForm(%s)',formId);
     firstForm = FormApp.openByUrl(formId);
-    createApprovalForm (firstForm, params);
+    setupApprovalConfig (firstForm, params);
 }
 
 function sidebarDoAction (action, form, params) {
