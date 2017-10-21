@@ -14,11 +14,10 @@
   <!-- Simple Sidebar -->
   <div id="appName">
     <h1>*DEV BRANCH - Workflows Jacknife - DEV BRANCH*</h1>
-    
-    <tabs>
-      <div v-for="n in 3" :slot="n" :key="n">This is the {{n}} slot: {{testarr[n]}}</div>
-    </tabs>
-    <span class="error" v-if="error">{{error}}</span>
+    <span class="error" v-if="error">{{error}}</span>    
+    <tabs :labels="['Active Workflows','Inactive/Other Workflows']">
+      <div slot="1"> <!-- Installed -->
+
     <h2>Installed Workflows (with Triggers)</h2>
     <collapser show-label="Show workflows w/ triggers set up">
     <div v-for="formList,master in masters">
@@ -37,7 +36,8 @@
       </collapser>
     </div>
     </collapser>
-
+      </div>
+      <div slot="2"> <!-- Not Installed -->
 
     <h2>Non-Active/New Workflows</h2>
     <i>Or workflows w/ triggers under another account</i>
@@ -52,6 +52,8 @@
 	  </master-config>
       </div>
     </collapser>
+      </div> 
+    </tabs> 
   </div>
 </body>
 
@@ -106,8 +108,8 @@
 
 <script type="text/x-template" id="tabs">
   <div class="tabs">
-  <div class="labels">
-    <button v-for="n in 3" v-on:click="active=n" v-if="$slots[n]">{{n}}</button>
+  <div class="labels" v-if="$slots[2]">
+    <span :class="active==n && 'selected' || 'unselected' " v-for="n in 3" v-on:click="active=n" v-if="$slots[n]">{{labels&&labels[n-1]||n}}</span>
   </div>
   <slot v-if="active==1" name="1">  </slot>
   <slot v-else-if="active==2" name="2"> </slot>
