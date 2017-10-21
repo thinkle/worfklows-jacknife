@@ -307,7 +307,7 @@ function getResponseItems (resp, actionResults) {
     // attach action results so we can act on those as well :)
     if (actionResults) { responseItems.actionResults = actionResults; }
     resp.getItemResponses().forEach(function (itemResp) {
-	responseItems[itemResp.getItem().getTitle()]=getResponse(itemResp); // maps oddball types to something more normal
+      responseItems[itemResp.getItem().getTitle()]=getResponse(itemResp); // maps oddball types to something more normal
     }) // end forEach itemResp
     responseItems['Timestamp'] = resp.getTimestamp();
     responseItems['FormUser'] = resp.getRespondentEmail();
