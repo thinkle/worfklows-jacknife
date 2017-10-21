@@ -12,7 +12,7 @@ Vue.component('tabs', {
 
 Vue.component('field-config',{
     name : 'field-config',
-    props : ['type','form','value','formfields','formfieldoptions','lookups'],
+    props : ['apiInfo','type','form','value','formfields','formfieldoptions','lookups'],
     data : function () {return {
 	mode:'field',
 	field:'',
@@ -153,10 +153,19 @@ Vue.component('picker', {
 	    error:'',
 	}
     },
+    created : function () {
+	console.log('Created a picker!');
+	console.log("Let's point to the window :)");
+	this.apiInfo = window.apiInfo;
+    },
     methods : {
 
 	getForm : function () {
 	    this.getFile(google.picker.ViewId.FORMS)
+	},
+
+	getFolder : function () {
+	    this.getFile(google.picker.ViewId.FOLDERS)
 	},
 
 	getSheet : function () {
@@ -165,6 +174,9 @@ Vue.component('picker', {
 
 	getFile : function (viewId) {
 	    var self = this;
+	    self.apiInfo = window.apiInfo;
+	    console.log('We refer to the window :)');
+	    console.log(self.apiInfo)
 	    if (self.apiInfo.pickerApiLoaded && self.apiInfo.authToken) {
 		var picker = new google.picker.PickerBuilder()
 		    .addView(viewId)
@@ -212,7 +224,7 @@ Vue.component('picker', {
 Vue.component('config-sheet',{
     name:'config-sheet',
     template:'#config-sheet',
-    props : ['sheetId','ssId','n','form','action','upstreamForms','rawConfig','display'],
+    props : ['apiInfo','sheetId','ssId','n','form','action','upstreamForms','rawConfig','display'],
     created: function () {this.loadData()},
     data : function () {return {
 	error:'',
@@ -408,10 +420,19 @@ Vue.component('master-config',{
 		    // Now let's populate our upstream data...
 		    for (var downstreamForm in self.formStream) {
 			var upstreamForms = [self.formStream[downstreamForm]]
+			var circular = false;
 			// Follow the flow up...
-			while (self.formStream[upstreamForms[upstreamForms.length-1]]) {
-			    upstreamForms.push(self.formStream[upstreamForms[upstreamForms.length-1]])
-			    console.log('Follow the flow up to: ',upstreamForms);
+			while (self.formStream[upstreamForms[upstreamForms.length-1]] && !circular) {
+			    var lastUpstreamForm = upstreamForms[upstreamForms.length-1];
+			    if (upstreamForms.indexOf(lastUpstreamForm) == -1) {
+				// If we're not already in this thing...
+				upstreamForms.push(self.formStream[lastUpstreamForm])
+				console.log('Follow the flow up to: ',upstreamForms);
+			    }
+			    else {
+				console.log('I detect a circle - breaking out');
+				circular = true;
+			    }
 			}
 			// Now that we have them, let's attach them to each config object...
 			self.byForm[downstreamForm].forEach(function (cfg) {
@@ -517,7 +538,11 @@ JacknifeApp = new Vue({
 	apiInfo: {pickerApiLoaded:false,authToken:undefined},
 	masters: {'':[]},
     },
-    
+    created : function () {
+	console.log("Let's set up our apiinfo reference on the window!");
+	window.apiInfo = this.apiInfo;
+	console.log("window=>%s",window.apiInfo);
+    },
     methods : {
 
 	// CALLBACKS
@@ -537,6 +562,10 @@ JacknifeApp = new Vue({
 	    var self = this;
 	    gapi.load('picker',{'callback':function () {
 		self.apiInfo.pickerApiLoaded = true;
+		if (!window.apiInfo) {
+		    window.apiInfo = self.apiInfo;
+		    console.log('Set window.apiInfo');
+		}
 	    }});
 	},
 	getOAuthToken : function () {
