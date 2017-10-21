@@ -257,8 +257,8 @@ Blade({
 	Logger.log('!!! GROUP TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
 	responses = getResponseItems(event.response);
 	var groupConfig = actionRow['Config1'].table;
-	checkConfig(actionRow.Config1,'username',IS_DEFINED)
-	checkConfig(actionRow.Config1,'groups',IS_DEFINED)
+	checkParam(actionRow.Config1,'username',IS_DEFINED)
+	checkParam(actionRow.Config1,'groups',IS_DEFINED)
 	return addToGroupFromForm(responses,groupConfig);
     }
 })
