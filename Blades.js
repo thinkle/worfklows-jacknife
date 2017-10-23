@@ -181,11 +181,15 @@ Blade({
     trigger:function (event, masterSheet, actionRow, actionResults) {
 	responses = getResponseItems(event.response);
 	var ceConfig = actionRow['Config1'].table;
-	checkParam(actionRow.Config1,'title',IS_DEFINED)
-	checkParam(actionRow.Config1,'date',IS_DEFINED)
-	checkParam(actionRow.Config1,'startTime')
-	checkParam(actionRow.Config1,'endTime')
-	checkParam(actionRow.Config1,'options')
+	checkParam(actionRow.Config1,'Title',IS_DEFINED)
+	try {
+	    checkParam(actionRow.Config1,'Date',IS_DEFINED)
+	}
+	catch (e) {
+	    console.log('Date not defined: checking time');
+	    checkParam(actionRow.Config1,'startTime')
+	    checkParam(actionRow.Config1,'endTime')
+	}
 	return addCalendarEventFromForm(responses,ceConfig);
     }
 })
