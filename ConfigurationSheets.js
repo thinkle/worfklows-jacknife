@@ -255,12 +255,14 @@ function ConfigurationSheet (sheet, settings) {
 			    },
       getSpreadsheet : function () {return sheet.getParent()},
     loadConfigurationTable: function () {
-      this.table = getConfigurationTable();
+	this.table = getConfigurationTable();
+	return this.table
     },    
     
     writeConfigurationTable: function (table, lookups) {
       if (table) { this.table = table };
-      overwriteConfigurationTable(this.table,lookups);
+	overwriteConfigurationTable(this.table,lookups);
+	return this.table;
     },
   } // end configurationSheet
   
@@ -355,30 +357,35 @@ function getMasterConfig (ss) {
     logAlways('pushRow '+shortStringify(pushData));
     table.pushRow(pushData);
   }
+
+  table.getConfigsForRow = function (row) {
+      //row.getConfigurationSheets = function () {
+      for (var i=1; i<4; i++) {            
+          configId = row['Config '+i+' ID']          
+          if (configId) {
+              logNormal('Grabbing config '+i+' from sheet '+configId)
+              try {
+		  row['Config'+i] = getConfigurationSheetById(sheet.getParent(), configId)
+		  row['Config'+i].loadConfigurationTable();
+              }
+              catch (err) {
+		  Logger.log('Odd: unable to load Config'+i+': '+configId);
+              }
+          }
+          else {
+              row['Config'+i] = 'FOO!'
+          }
+      } // end for each config
+      return row
+  }
+    
   table.getConfigsForId = function (id) {
     var retRows = []
     table.forEach(function (row) {
       if (row.FormID==id) {
-        //row.getConfigurationSheets = function () {
-        for (var i=1; i<4; i++) {            
-          configId = row['Config '+i+' ID']          
-          if (configId) {
-            logNormal('Grabbing config '+i+' from sheet '+configId)
-            try {
-              row['Config'+i] = getConfigurationSheetById(sheet.getParent(), configId)
-              row['Config'+i].loadConfigurationTable();
-            }
-            catch (err) {
-              Logger.log('Odd: unable to load Config'+i+': '+configId);
-            }
-          }
-          else {
-            row['Config'+i] = 'FOO!'
-          }
-        } // end for each config
         //return configs;
         //} // end getConfigurationSheets
-        
+        table.getConfigsForRow(row);
         retRows.push(row)
       }
     }) // end forEach row...
