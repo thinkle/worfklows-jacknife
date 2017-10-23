@@ -9,9 +9,10 @@
 **Create interface for managing triggers** (x)
 
 **Finish up field-editing interface**
+- Functions (X)
 - List of fields
-- File
-- List of files
+- File (X)
+- List of files 
 - Magic fields
 - Action result fields (?)
 
@@ -20,7 +21,7 @@
 **Create UI for managing backup triggers / backup process**
 
 *Integrate Web-Form thing for mass approvals*
-**Test URL redirection from w/in google**
+**Test URL redirection from w/in google** (X)
 
 
 *For Business Office*
