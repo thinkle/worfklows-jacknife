@@ -281,7 +281,65 @@ function startoverProp () {
     var scriptCache = CacheService.getScriptCache();
     scriptCache.remove('FY16-06-###');
 }
-    
+
+function getUnapprovedItems (approvalForm, approvalSettings, user) {
+    Logger.log('getUnapproved items for form: %s',approvalForm);
+    Logger.log('Looking at fields: %s',approvalSettings.Config1.table.toFields);
+    Logger.log('Approval form = %s',approvalSettings.Config1.table['Approval Form ID']);
+    var approvalForm = FormApp.openById(approvalSettings.Config1.table['Approval Form ID'])
+    var itemsToCheck = approvalSettings.Config1.table.toFields.map(function (f) {return getItemByTitle(approvalForm,f)})
+    var idItem = getItemByTitle(
+	approvalForm,
+	approvalSettings.Config1.table.idField
+    );
+    Logger.log('From %s we are checking %s',approvalSettings.Config1.table.toFields,
+               itemsToCheck);
+    var respById = {}
+    approvalForm.getResponses().map(function (r) {
+      
+	var iresp = r.getResponseForItem(idItem);
+	if (iresp) {
+	    if (respById.hasOwnProperty(iresp.getResponse())) {
+		Logger.log('Duplicate ID: %s',iresp.getResponse());
+	    }
+	    respById[iresp.getResponse()] = r;
+      
+	}
+    });
+    var unapproved = []
+    for (var rid in respById) {
+	r = respById[rid]
+	anyBlank = false
+	for (var i=0; i<itemsToCheck.length; i++) {
+	    if (itemsToCheck[i]) {
+		itemresp = r.getResponseForItem(itemsToCheck[i])
+		if (!itemresp || !itemresp.getResponse()) {
+		    Logger.log('No response for: %s',approvalSettings.Config1.table.toFields[i]);
+		    anyBlank = true;
+		}       
+	    }    
+	}
+	if (anyBlank) { unapproved.push(r) }
+    }
+    Logger.log('We have %s unapproved form responses',unapproved.length);
+    Logger.log('For example: %s',unapproved[0].getEditResponseUrl());
+    Logger.log('and also: %s',unapproved[unapproved.length-1].getEditResponseUrl())
+    return unapproved;
+}
+
+function testUnapprovedItems () {
+  ssid = '1YECCtTGxgpMo-aO_VIszvzJmJAA18qlWsF0Rov3OYqU';
+  mcfg = getMasterConfig(SpreadsheetApp.openById(ssid));
+  approvals = []
+  mcfg.forEach(function (cfg) {
+    if (cfg.Action=='Approval') {
+      Logger.log('Approval form: %s',cfg.Form)
+      getUnapprovedItems(cfg.Form,mcfg.getConfigsForRow(cfg));
+    }
+  });  
+}
+
+
 function testWeirdness () {
    form = FormApp.openById('1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM');
    existingResp = '2_ABaOnucOVov0flUTCRKnY938U4Qw3q3lEFKd3QYkY_gNFHOcSrn5TO1ZmUz9q0o'
