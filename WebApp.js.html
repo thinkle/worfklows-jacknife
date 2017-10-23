@@ -47,6 +47,18 @@ Vue.component('field-config',{
 	    val = '@' + this.lookupField+'>>'+this.lookupDict;
 	    this.setVal(val);
 	},
+
+	updateFunction : function () {
+	    this.setVal(':'+this.fname+'('+this.fargs.join('|')+')');
+	},
+	resetArgs : function () {
+	    if (this.fname=='if') {
+		this.fargs.splice(3) // cut off last 3
+	    }
+	    if (this.fname=='or'||this.fname=='and') {
+		this.fargs.splice(2)
+	    }
+	},
 	updateForVal : function () {
 	    this.mode = 'raw'; // default to raw
 	    console.log('Watched field config with value %s',this.value);
@@ -130,13 +142,22 @@ Vue.component('field-config',{
      		this.setVal('%'+v);
      	    }
      	},
+	 fargs : function (v) {
+	     this.updateFunction()
+	 },
+	 fname : function (v) {
+	     this.updateFunction()
+	 },
 	 lookupField : function (v) {
 	     this.updateLookup()
 				    },
 	 lookupDict : function (v) {
 	     this.updateLookup()
 				   },
-	 value : function (v) {this.updateForVal()},
+	 value : function (v) {//this.updateForVal()
+			       this.$emit('input',this.value);
+			      },
+	 //mode : function (v) {this.updateForVal()}
      },
     template:'#field-config',
     

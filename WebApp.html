@@ -17,6 +17,10 @@
     <span class="error" v-if="error">{{error}}</span>    
     <tabs :labels="['Active Workflows','Inactive/Other Workflows']">
       <div slot="1"> <!-- Installed -->
+	<div v-for="n in 10">
+	  TEST CONFIG type={{n}} <field-config v-model="testarr[n]" api-info="apiInfo" :type="n"></field-config> 
+	  <br>VALUE: {{testarr[n]}}
+	</div>
 
     <h2>Installed Workflows (with Triggers)</h2>
     <collapser show-label="Show workflows w/ triggers set up">
@@ -282,7 +286,7 @@
 	<option value="function">Function</option>
       </select>
       <span v-if="mode=='function'" class="function">
-	FUNCTION: <select v-model="fname">
+	FUNCTION: <select v-on:change="resetArgs" v-model="fname">
 	  <option value="if" default>if</option>
 	  <option value="and">and</option>
 	  <option value="or">or</option>
@@ -295,8 +299,8 @@
 	</span>
 	<span v-else>
 	  <br>{{fname}}(
-	  <span v-for="n in fargs.length"><br><field-config api-info="apiInfo" v-model="fargs[n]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields">
-	    </field-config>,
+	  <span v-for="n in fargs.length"><br><field-config api-info="apiInfo" v-model="fargs[n-1]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields">
+	    </field-config>, <button v-if="n>1" v-on:click="fargs.splice(n-1,1)">remove arg</button>
 	  </span>
 	  <br><button v-on:click="fargs.push('value')">+</button>
 	  <br>)
