@@ -1,3 +1,10 @@
+**** LATEST ***
+- Migrate new user form over to current script (DONE)
+- Make two copies so we can have a "WORKING" and a "DEV" version of this baby. (DONE)
+- Finish parameter checking testing 
+- Set up tests for all blades
+- Migrate/Rewrite mass approval tool :(
+
 *UI*
 **Create interface for managing triggers** (x)
 
