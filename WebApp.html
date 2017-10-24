@@ -159,6 +159,7 @@
 	<collapser show-label="Show Config" hide-label="Hide Config">
 	  <tabs>
 	    <config-sheet v-for="n in 3"
+			  :key="n"
 			  :api-info="apiInfo"
 			  :slot="n" :ref="'config'+n" v-if="configRow['ConfigId'+n]"
 			  :n="n"
