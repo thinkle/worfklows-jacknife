@@ -104,7 +104,7 @@ function sendFormResultEmail (results, settings) {
 	if (config.hasOwnProperty('onlyEmailIf')) {
 		Logger.log('Checking onlyEmailIf field!');
 		if (! checkBool(config.onlyEmailIf)) {
-			logNormal('Not sending email: \nresults:%s \nsettings:%s',results,settings);
+		    logNormal('Not sending email: \nresults:%s \nsettings:%s config: %s',results,settings,config);
 			return 'No Email Sent';
 		}
 	}
