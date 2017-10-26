@@ -266,13 +266,11 @@ dupTest = Test ({
 	var t = Table(p.ss.getActiveSheet().getDataRange());
 	// Succeed with pushing row
 	t.pushRow({h1:4,h2:7,h3:9});
-     Logger.log('Got: %s',t[1].h1)
+	Logger.log('Got: %s',t[1].h1)
 	assertEq(t[1].h1, 1) // first column value should win, not second
-    assertEq(t[4][0],4) // we pushed to the first column
-    assertEq(t[4][2],undefined) // we have a blank third column
+	assertEq(t[4][0],4) // we pushed to the first column
+	assertEq(t[4][2],undefined) // we have a blank third column
     }
-
-    
 })
 
 updateTest=  Test( {
