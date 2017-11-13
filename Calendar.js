@@ -1,6 +1,15 @@
 var defaultCalendarBodyTemplate = 'We have given <<Username>> read access to the following calendars: <<CalendarsRead>>\nWe have given them write access to the following calendars: <<CalendarsWrite>>'
 var defaultCalendarSubjectTemplate = 'Calendars Shared'
 
+
+/** @function
+/ * Create a calendar form and configuration file for a set of calendars.
+/ * 
+/ * Return {form : formObject, configTable: ConfigTableObject}
+/ *
+/ * @param {array} calendarIds - a list of calendar IDs to make form for.
+/ * @param {form} form - a pre-existing form that needs configuration.
+*/
 function createCalendarFormAndConfig (calendarIDs, form) {
     var ret = {}
     ret.form = createCalendarAddForm(calendarIDs,form);
@@ -25,7 +34,10 @@ function createCalendarFormAndConfig (calendarIDs, form) {
 } // end createCalendarFormAndConfig
 
 
-
+/** @function
+/ @param {array} calendarIds - a list of calendar IDs to make form for.
+/ @param {form} form - a pre-existing form that needs configuration.
+*/
 function createCalendarAddForm (calendarIDs, form) {
     if (!form) {
 	form = FormApp.create("Add Calendar Form");
@@ -73,6 +85,7 @@ function checkAuthorization (results, config) {
 	return false
     }
 }
+
 
 function addUserToCalendarFromForm (results, calConfig) { //, informConfig, emailConfig) {
     if (! checkAuthorization(results,calConfig)) {
@@ -133,6 +146,13 @@ function addUserToCalendarFromForm (results, calConfig) { //, informConfig, emai
     return {'settings':calendarSettings,'results':calResults}
     //sendEmailUpdate(user,calsAdded);
 }
+
+/** @function
+/ @param {string} user - username
+/ @param {string} calendarId - ID of calendar
+/ @param {role} role
+/ *
+*/
 
 function addUserToCalendar (user, calendarId, role) {
     if (! role) {role='reader'};
