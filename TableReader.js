@@ -26,7 +26,7 @@ function getSheetById (ss, id) {
 	    return sheets[i]
 	}
 	else {
-	    logVerbose('Oops, '+sheets[i].getSheetId()+'!='+id);
+	    //logVerbose('Oops, '+sheets[i].getSheetId()+'!='+id);
 	}
     }
 }
@@ -74,14 +74,14 @@ function getSheetById (ss, id) {
  */
 function Table (range, idHeader) {
     var values = range.getValues()
-    logVerbose('Table(' + JSON.stringify(range) + ')')
+    //logVerbose('Table(' + JSON.stringify(range) + ')')
     var sheet = range.getSheet()
     var rowOffset = range.getRow()
     var colOffset = range.getColumn()
     var headers = values[0]
     var rowsById = {}
     
-    logVerbose('headers=>'+JSON.stringify(headers))  
+    //logVerbose('headers=>'+JSON.stringify(headers))  
     
     function processRow (row) {
 	//newObj = {'foo':'bar'}
@@ -103,7 +103,7 @@ function Table (range, idHeader) {
 	var rowNum = values.indexOf(row);
 
 	function buildProperties (i, h) { // for closure purposes
-	    logVerbose('Setting '+h+'->'+i);
+	    //logVerbose('Setting '+h+'->'+i);
 	    if (rowObj.hasOwnProperty(h)) {
 		console.log('Ignore duplicate column: %s (col %s). %s will refer to the first column by that name.',h,i,h);
 		return
@@ -136,12 +136,8 @@ function Table (range, idHeader) {
 	
 	
 	for (var i in headers) {
-	    logVerbose('rowNum='+(Number(rowOffset)+Number(rowNum)))
-	    logVerbose('colNum='+(Number(colOffset)+Number(i)))    
 	    var h = headers[i] 
-	    logVerbose('Set property '+h+' -> '+row[i]);
 	    buildProperties(i,h)
-	    logVerbose('Now we have '+rowObj+'.'+h+'=>'+rowObj[h]);
 	}    
 	
 	return rowObj
@@ -178,23 +174,17 @@ function Table (range, idHeader) {
     * 
     */
     table.pushRow = function (data) {
-	logVerbose('pushRow got '+JSON.stringify(data))
 	var pushArray = []
 	for (var i=0; i<headers.length; i++) {pushArray.push('')}
 	for (var key in data) {  
 	    if (data.hasOwnProperty(key)) {
-		logVerbose('look at key: '+key);
-		logVerbose('Number(key)=>'+JSON.stringify(Number(key)))
 		if (isNaN(Number(key))) {
-		    logVerbose('Stringy key: '+key);        
 		    var i = headers.indexOf(key);
 		    if (i > -1) {
-			logVerbose('Converts to i='+i);
 			pushArray[i] = spreadsheetify(data[key]) // set to the integer...          
 		    }
 		}
 		else {
-		    logVerbose('Numerical key: '+key);
 		    // Otherwise we're looking at a numerical key...
 		    pushArray[key] = spreadsheetify(data[key])
 		} 
@@ -210,7 +200,6 @@ function Table (range, idHeader) {
 	    appendRow.push(''); // pad beginning of array...
 	}
 	appendRow = appendRow.concat(pushArray);
-	logVerbose('New values = '+shortStringify(pushArray));
 	//cell.setValues([pushArray]); // push to sheet...
 	sheet.appendRow(appendRow);
 	values.push(pushArray); // push to array
@@ -248,11 +237,9 @@ function Table (range, idHeader) {
 	    try {
 		lock.waitLock(240000);
 		var row = rowsById[id];
-		//console.log('Updating table row %s with %s',row,data);
 		for (var prop in data) {
 		    if (data.hasOwnProperty(prop) && row.hasOwnProperty(prop)) {
 			if (data[prop]===undefined) {
-			    //Logger.log('Undefined value :( %s',prop);
 			    row[prop] = ''
 			}
 			else {
@@ -266,7 +253,8 @@ function Table (range, idHeader) {
 		success = true;
 	    }
 	    catch (err) {
-		emailError('Error during table write',err);
+		//emailError('Error during table write',err);
+		console.log('Error during table write',err);
 	    }
 	    finally {
 		lock.releaseLock();
