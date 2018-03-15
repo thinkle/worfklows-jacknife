@@ -167,7 +167,7 @@ function checkForApprovals (form, logsheet) {
 		    'response':resp,
 		}
 		logNormal('checkForApprovals triggering fakeEvent: %s',fakeEvent);
-		onFormSubmitTrigger(fakeEvent);
+		onFormSubmitTrigger(fakeEvent); // DISABLED
 	    }
 	    else {
 		logNormal('checkForApprovals found perfectly good row: %s',respId);
@@ -268,7 +268,7 @@ function listProps () {
 function toFormDate (timeString) {  
   timeString = timeString.replace(/-/g,"/");
   var d = new Date(timeString);
-  var offset = new Date().getTimezoneOffset();
+  var offset = new Date(timeString).getTimezoneOffset();
   function addMinutes(date, minutes) {
     return new Date(date.getTime() + minutes*60000);
   }    
