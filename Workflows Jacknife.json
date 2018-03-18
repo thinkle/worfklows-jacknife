@@ -144,6 +144,11 @@
             "type": "server_js", 
             "id": "bc895a66-1346-4ad6-955b-88bdbf8c00d1", 
             "name": "TestSuite"
+        }, 
+        {
+            "type": "json", 
+            "id": "7481a857-f211-4c93-8192-99389de36bc6", 
+            "name": "appsscript"
         }
     ], 
     "id": "1rWoDJhnstrwiN3MBZXOJjg5yX2zsoNLlZLRO-Vp7gSX1za7UNSzENJBO"
