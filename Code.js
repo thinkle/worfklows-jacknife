@@ -88,10 +88,14 @@ function getFileInfo (id) {
   try {var f = DriveApp.getFileById(id)}
   catch (e) {
     try {var f = DriveApp.getFolderById(id);}
-    catch (e) {
-      var f = FormApp.openByUrl(id).getId();
-      f = DriveApp.getFileById(f);
-    }
+      catch (e) {
+	  try {
+	      var f = DriveApp.getFileById(FormApp.openByUrl(id).getId());
+	  }
+	  catch (e) {
+	      var f = DriveApp.getFileById(SpreadsheetApp.openByUrl(id).getId());
+	  }
+      }
   }
     return {
 	id : id,
