@@ -91,13 +91,14 @@ function preFillApprovalForm (params) {
   }
   submittedFormResponse = formResponse.submit()  
   edit_url = submittedFormResponse.getEditResponseUrl();  
-  Logger.log('preFill=>'+edit_url);
+  edit2_url = params.targetForm.getResponse(submittedFormResponse.getId()).getEditResponseUrl();
   var allResponses = params.targetForm.getResponses();
   var lastRespNo = allResponses.length - 1;
   var lastResp = allResponses[lastRespNo]
   var newEditUrl = lastResp.getEditResponseUrl();
-	edit_url = newEditUrl; // ARRRGHH -- work around broken google crap
-  return {'edit_url':edit_url,
+    //edit_url = newEditUrl; // ARRRGHH -- work around broken google crap -- maybe google fixed???
+  console.log('Three edit URLs: the one from our form object: %s and the one from our last object %s and finally the probably right one: %s',edit_url,newEditUrl,edit2_url);
+  return {'edit_url':edit2_url,
           'response':lastResp}
 }
 
@@ -156,10 +157,12 @@ function checkForApprovals (form, logsheet) {
             // Here's some seriously f*ed up code thanks to google -- guess what, each form ID
             // can actually be one of TWO different IDs, and the ID you get off of an object
             // from resp.getId() is DIFFERENT than the ID you get from 
-            // form.getResponse(resp).getId() -- so yeah, thanks google, thanks a fucking lot.
-	    if (! logTable.hasRow(respId) && ! logTable.hasRow(form.getResponse(resp.getId()).getId())) {
+            // form.getResponse(resp).getId() -- so yeah, thanks google, thanks a fucking lot.        
+		var respId2 = form.getResponse(respId).getId()
+        //form.getResponse(resp.getId()).getId())
+	    if (! logTable.hasRow(respId) && ! logTable.hasRow(respId2) ) {
 		// We don't have the row! We better do this thing...
-		Logger.log('Do this thing! '+respId+' '+resp);
+          logNormal('Do this thing! '+respId+' or '+respId2+' '+resp);
 		//foo = y + 7 + 23;
 		//
 		fakeEvent = {
@@ -167,10 +170,10 @@ function checkForApprovals (form, logsheet) {
 		    'response':resp,
 		}
 		logNormal('checkForApprovals triggering fakeEvent: %s',fakeEvent);
-		onFormSubmitTrigger(fakeEvent); // DISABLED
+		//onFormSubmitTrigger(fakeEvent);
 	    }
 	    else {
-		logNormal('checkForApprovals found perfectly good row: %s',respId);
+		//logNormal('checkForApprovals found perfectly good row: %s',respId);
 	    }
 	}); // end forEach resp
 }
@@ -188,6 +191,7 @@ function approvalOnTimerCleanup () {
 	}) // end forEach trigger
 	var props = PropertiesService.getUserProperties()    
 	form_sources.forEach(function (fs) {
+        logNormal('approvalonTimer looking at form: %s',fs);
 		var masterID = props.getProperty(fs)
 		try {
           logNormal('approvalOnTimerCleanup grabbing MASTER %s',masterID);
