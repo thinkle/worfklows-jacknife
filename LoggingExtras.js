@@ -32,13 +32,15 @@ logAlways = function () {
 }
 
 function emailError (msg, err, params) {
+    console.log('ERROR %s %s %s',err, msg, params);
     if (! params) {params = {}};
     subject = params.subject ? params.subject : 'Error';
     to = params.to ? params.to : 'thinkle@innovationcharter.org';
     msg += '<br>Error '+err;
     msg += '<br>Exception: '+err.name+': '+err.message;
     msg += '<br>Stack: '+err.stack
-    console.log('Emailing error: %s, %s',subject,msg);
+    console.error('Emailing error: %s, %s',subject,msg);
+
     sendEmail(to, subject, msg, true);
     //sendEmail('thinkle@innovationcharter.org','Error in Budget Script',msg)
 }
