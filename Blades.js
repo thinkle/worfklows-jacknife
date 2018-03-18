@@ -121,8 +121,13 @@ Blade({
 	    config[key] = responses[key];
 	}
 	// send email with request
-	sendEmailFromTemplate(config.Approver,config.RequestSubject,config.RequestBody,
-			      config,true);
+	if (config.Approver) {
+	    sendEmailFromTemplate(config.Approver,config.RequestSubject,config.RequestBody,
+				  config,true);
+	}
+	else {
+	    console.info('Odd: approval setup with no email to an approver.');
+	}
 	if (config.InformSubmitter) {
 	    // send email informing user of response thingy...
 	    sendEmailFromTemplate(responses.FormUser, config.InformSubject, config.InformBody,
