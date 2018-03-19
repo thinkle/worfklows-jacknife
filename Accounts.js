@@ -1,7 +1,10 @@
 // Code for creating new accounts
+var defaultCreateAccountSubject, defaultCreateAccountTemplate
 
-defaultCreateAccountSubject = "Account Info";
-defaultCreateAccountTemplate = "This email is to inform you that a new account has been created for <<username>> with the initial password <<password>>.";
+function _initAccounts () {
+    defaultCreateAccountSubject = "Account Info";
+    defaultCreateAccountTemplate = "This email is to inform you that a new account has been created for <<username>> with the initial password <<password>>.";
+}
 
 function createAccountFromForm (results, fieldSettings) {
 	logNormal('createAccountFromForm(%s,%s)',results,fieldSettings);
