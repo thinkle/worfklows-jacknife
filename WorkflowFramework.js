@@ -348,12 +348,15 @@ function testConfigFix () {
   cs.table['foo']='bar'
   cs.writeConfigurationTable();
 }
+var testCopy
 
-var testCopy = Test({
-    metadata : {name:'Copy Workflow Test'},
-    test : function (p) {
-	return copyWorkflow(p.masterSS)
-    }
-})
+function _initZZZTestWorkflowFramework () {
+     testCopy = Test({
+        metadata : {name:'Copy Workflow Test'},
+        test : function (p) {
+	    return copyWorkflow(p.masterSS)
+        }
+    })
+}
 
 function runTestCopy () {testCopy.solo()}
