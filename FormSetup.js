@@ -755,19 +755,24 @@ function createTestTriggerTomTom () {
     createFormTrigger(form2,ss)
 }
 
-convertTest = Test({
-    metadata : {name:'Test field conversion'},
-    test : function (p) {
-      console.log('Run conversion test');
-      var f = DriveApp.getFileById(p.fileForm).makeCopy();
-      //f = DriveApp.getFileById('1jAnp-92wGxfihWvK9hgTcWBSmCZZEFHeAvfrP0UQqzs');
-      var form = FormApp.openById(f.getId());
-      console.log('Try converting unpushables...');
-      convertUnpushableFields(form)
-      console.log('Completed converting unpushables');
-      console.log('URL: %s',form.getEditUrl());
-      return {url:form.getEditUrl()}
-    },
-})
+var convertTest;
+
+function initZZZTestFormSetup () {
+
+    convertTest = Test({
+        metadata : {name:'Test field conversion'},
+        test : function (p) {
+            console.log('Run conversion test');
+            var f = DriveApp.getFileById(p.fileForm).makeCopy();
+            //f = DriveApp.getFileById('1jAnp-92wGxfihWvK9hgTcWBSmCZZEFHeAvfrP0UQqzs');
+            var form = FormApp.openById(f.getId());
+            console.log('Try converting unpushables...');
+            convertUnpushableFields(form)
+            console.log('Completed converting unpushables');
+            console.log('URL: %s',form.getEditUrl());
+            return {url:form.getEditUrl()}
+        },
+    })
+}
 
 function testFieldConversion () {convertTest.solo()}
