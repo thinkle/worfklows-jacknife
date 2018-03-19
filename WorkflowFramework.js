@@ -1,13 +1,21 @@
-TEXT = 1
-FOLDER = 2
-FIELDCONVERSION = 3
-FIELDLIST = 4
-PARA = 5
-FIELD = 6
-FOLDERLIST = 7
-BOOL = 8
-SPREADSHEET = 9;
-FORM = 10;
+var triggerActions, TEXT, FOLDER, FIELDCONVERSION, FIELDLIST, PARA, FIELD, FOLDERLIST, BOOL, SPREADSHEET, FORM;
+
+function _initWorkflowFramework () {
+ triggerActions = {
+} // registry of triggers by name, with functions
+ TEXT = 1
+ FOLDER = 2
+ FIELDCONVERSION = 3
+ FIELDLIST = 4
+ PARA = 5
+ FIELD = 6
+ FOLDERLIST = 7
+ BOOL = 8
+ SPREADSHEET = 9;
+ FORM = 10;
+  console.log('Loaded globals and triggerActions');
+  Logger.log('Ran load()');
+};
 
 function exportGlobals () {
     return "globals="+JSON.stringify({
@@ -35,8 +43,6 @@ function exportGlobals () {
 */
 
 
-triggerActions = {} // registry of triggers by name, with functions
-
 
 // To be used as follows...
 // Blade({
@@ -50,7 +56,9 @@ triggerActions = {} // registry of triggers by name, with functions
 
 
 function Blade (data) {
+  
     // register trigger
+    console.log('Creating blade: %s',data.shortname);
     triggerActions[data.shortname] = function (a1,a2,a3,a4) {
 	console.log('%s trigger (%s,%s,%s,%s)',data.shortname,a1,a2,a3,a4);
 	return data.trigger(a1,a2,a3,a4); // don't forget to return our results to pass to other triggers!
@@ -349,4 +357,3 @@ var testCopy = Test({
 })
 
 function runTestCopy () {testCopy.solo()}
-
