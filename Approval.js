@@ -2,9 +2,27 @@
 // Form2Form Stuff for Approval Forms
 ///////////////////////////////////
 
-supported_approval_field_types = [
-    'TEXT','PARAGRAPH_TEXT','MULTIPLE_CHOICE','LIST','DATETIME','DATE','PAGE_BREAK',
-]
+var supported_approval_field_types
+var approvalTest, approvalApprovedTest
+
+function _initApproval () {
+    supported_approval_field_types = [
+        'TEXT','PARAGRAPH_TEXT','MULTIPLE_CHOICE','LIST','DATETIME','DATE','PAGE_BREAK',
+    ]
+}
+
+function _initZZTestsApproval () {
+    approvalTest = Test({
+        metadata : {name : 'Test Approval Request'},
+        test : function () {resubmitForm('1WGKg3jEmRI4oGZIh1TfAEW4H8AlzNtttAEbWfEo989s',1)}     // this will be live soon -- change before we go to production FIXME
+    })
+    approvalApprovedTest = Test({
+        metadata : {name : 'Test Approved Approval'},
+        test : function () {resubmitForm('1lVauucfWhU57sU_PVUY0j2oFcmBAbUTHnJVDLuyT0Tk',1)} // this will be live soon - change before we go into production
+    });
+}
+
+
 function preFillApprovalForm (params) {
     // Pre-Fill Out approval form and return editUrl
     // params.targetForm = form object
@@ -296,19 +314,11 @@ function testWeirdness () {
     Logger.log('missing id=>%s',form.getResponse(missingResp).getId());
 }
 
-approvalTest = Test({
-    metadata : {name : 'Test Approval Request'},
-    test : function () {resubmitForm('1WGKg3jEmRI4oGZIh1TfAEW4H8AlzNtttAEbWfEo989s',1)}     // this will be live soon -- change before we go to production FIXME
-})
 
 function runApprovalTrigger () {
     approvalTest.solo()
 }
 
-approvalApprovedTest = Test({
-    metadata : {name : 'Test Approved Approval'},
-    test : function () {resubmitForm('1lVauucfWhU57sU_PVUY0j2oFcmBAbUTHnJVDLuyT0Tk',1)} // this will be live soon - change before we go into production
-});
 
 function runApprovedApprovalTrigger () {
     approvalApprovedTest.solo();
