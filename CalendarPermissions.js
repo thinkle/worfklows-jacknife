@@ -1,5 +1,9 @@
-var defaultCalendarBodyTemplate = 'We have given <<Username>> read access to the following calendars: <<CalendarsRead>>\nWe have given them write access to the following calendars: <<CalendarsWrite>>'
-var defaultCalendarSubjectTemplate = 'Calendars Shared'
+var defaultCalendarBodyTemplate, defaultCalendarSubjectTemplate
+
+function _initCalendarPermissions () {
+    defaultCalendarBodyTemplate = 'We have given <<Username>> read access to the following calendars: <<CalendarsRead>>\nWe have given them write access to the following calendars: <<CalendarsWrite>>'
+    defaultCalendarSubjectTemplate = 'Calendars Shared'
+}
 
 function createCalendarFormAndConfig (calendarIDs, form) {
 	var ret = {}
