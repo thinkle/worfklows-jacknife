@@ -1,4 +1,8 @@
-VERBOSITY = 1
+var VERBOSITY
+
+function _initAAALog () {
+    VERBOSITY = 1
+}
 
 function testLogNormal () {
   logNormal('Foo bar baz %s','what what?');
