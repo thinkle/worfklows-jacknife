@@ -273,38 +273,43 @@ dupTest = Test ({
     }
 })
 
-updateTest=  Test( {
-    metadata : {name :'Test Table pushRow and updateRow'},
-    setup : function (p) {
-	p.ss = p.getScratchSS();
-	[['ID','Name','Number','Foo','Bar'],
-	 [1,'Tom',82,'asdf','owiaeru'],
-	 [2,'Dick',82,'asdfqqq','zzz'],
-	 [3,'Harry',82,'asdfasdf','iii'],
-	 [4,'Falsey',false,true,'bar bar bar '],
-	].forEach(function (r) {p.ss.appendRow(r)});
-    },
-    test : function (p) {
-	var t = Table(p.ss.getActiveSheet().getDataRange(),'ID');
-	t.updateRow({ID:1,Name:'Mary','Foo':false,Bar:'',Number:77});
-	t.updateRow({ID:2,Name:'Fred','Foo':undefined,Bar:false,Number:-72.123});
-	t.pushRow({ID:27,Name:"Foo",Bar:undefined,Foo:false});
-	// access in straight row/col fashion for test...
-	var newT = Table(p.ss.getActiveSheet().getDataRange());
-	assertEq(newT[1].Name,'Mary')
-	assertEq(newT[1].Foo,false)
-	assertEq(newT[2].Name,'Fred')
-	assertEq(newT[2].Foo,'')
-	assertEq(newT[2].Number,-72.123)
-	assertEq(newT[5].Name,'Foo')
-	assertEq(newT[5].Number,'')
-	assertEq(newT[5].ID,27)
-	assertEq(newT[5].Foo,false)
-	//t.updateRow({ID:3,Number:17});
-	return {url:p.ss.getUrl()}
-    },
-})
-    
+var updateTest
+
+function _initZZZTestTableReader () {
+
+    updateTest=  Test( {
+        metadata : {name :'Test Table pushRow and updateRow'},
+        setup : function (p) {
+	    p.ss = p.getScratchSS();
+	    [['ID','Name','Number','Foo','Bar'],
+	     [1,'Tom',82,'asdf','owiaeru'],
+	     [2,'Dick',82,'asdfqqq','zzz'],
+	     [3,'Harry',82,'asdfasdf','iii'],
+	     [4,'Falsey',false,true,'bar bar bar '],
+	    ].forEach(function (r) {p.ss.appendRow(r)});
+        },
+        test : function (p) {
+	    var t = Table(p.ss.getActiveSheet().getDataRange(),'ID');
+	    t.updateRow({ID:1,Name:'Mary','Foo':false,Bar:'',Number:77});
+	    t.updateRow({ID:2,Name:'Fred','Foo':undefined,Bar:false,Number:-72.123});
+	    t.pushRow({ID:27,Name:"Foo",Bar:undefined,Foo:false});
+	    // access in straight row/col fashion for test...
+	    var newT = Table(p.ss.getActiveSheet().getDataRange());
+	    assertEq(newT[1].Name,'Mary')
+	    assertEq(newT[1].Foo,false)
+	    assertEq(newT[2].Name,'Fred')
+	    assertEq(newT[2].Foo,'')
+	    assertEq(newT[2].Number,-72.123)
+	    assertEq(newT[5].Name,'Foo')
+	    assertEq(newT[5].Number,'')
+	    assertEq(newT[5].ID,27)
+	    assertEq(newT[5].Foo,false)
+	    //t.updateRow({ID:3,Number:17});
+	    return {url:p.ss.getUrl()}
+        },
+    })
+}
+
 function doUpdateTest () {
   updateTest.solo();
 }
