@@ -8,8 +8,11 @@
 // Quick ways to read form fields from
 // config files...
 ////////////////////////////////////////
+var FAILURE
 
-var FAILURE = 'FAILED';
+function _initFormManager () {
+    FAILURE = 'FAILED';
+}
 
 function lookupField (settings, results) {
     if (settings['Field']) {
@@ -314,12 +317,6 @@ function getResponseItems (resp, actionResults) {
     logNormal('ResponseItems: >>>'+JSON.stringify(responseItems)+'<<<');
     logNormal('ResponseItems FormUser: >>>'+responseItems.FormUser);
     return responseItems;
-}
-
-triggerActions = {
-    // Trigger Actions should return a value if successful (that can be
-    // an object with information about success for future actions to
-    // use)
 }
 
 function listTriggers () {
