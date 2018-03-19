@@ -1,6 +1,6 @@
 // An alphabetical index of "blades" that can be used by our "jacknife" tool
 // Each item is a step that can be triggered by a form as part of a workflow.
-
+function _initZZZBlades () {
 Blade({
     shortname:'Approval',
     name : "Create Approval Form",
@@ -304,3 +304,4 @@ Blade({
  	);
     },
 })
+}
