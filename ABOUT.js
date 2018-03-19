@@ -40,3 +40,14 @@ Group Sharing - this allows you to use a form to trigger the addition of the use
 
 
 */
+Logger.log('Load About');
+// For reasons that don't make sense to me, this file is now "first" - ugh.
+
+(function() {
+    console.log('Call All Inits!');
+  callAllInits_();
+})();
+
+function hello () {
+  Logger.log('Hello world');
+}
