@@ -1,4 +1,8 @@
-VERBOSITY = 1
+var VERBOSITY
+
+function _initAAALog () {
+    VERBOSITY = 1
+}
 
 function testLogNormal () {
   logNormal('Foo bar baz %s','what what?');
@@ -36,6 +40,7 @@ logAlways = function () {
 }
 
 function emailError (msg, err, params) {
+    console.log('ERROR %s %s %s',err, msg, params);
     if (! params) {params = {}};
     subject = params.subject ? params.subject : 'Error';
     to = params.to ? params.to : 'thinkle@innovationcharter.org';

@@ -1,5 +1,9 @@
-var defaultDriveSubjectTemplate = 'Folders Shared';
-var defaultDriveBodyTemplate = 'We have given <<Username>> read access to the following folders: <<FoldersRead>>\nWe have given them write access to the following folders: <<FoldersWrite>>.';
+var defaultDriveSubjectTemplate, defaultDriveBodyTemplate
+
+function _initDrive () {
+    defaultDriveSubjectTemplate = 'Folders Shared';
+    defaultDriveBodyTemplate = 'We have given <<Username>> read access to the following folders: <<FoldersRead>>\nWe have given them write access to the following folders: <<FoldersWrite>>.';
+}
 
 function createDriveFormAndConfig (folders, form) {
 	var ret = {}

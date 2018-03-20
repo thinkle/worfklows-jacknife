@@ -1,3 +1,147 @@
+// Simple interface for handling our configuration sheets.
+// The configuration sheets are a bit of an unusual format. 
+//
+// The first two columns are for simple key->value pairs
+//
+// A     |      B
+// KEY   ->   VAL
+// KEY   ->   VAL
+// KEY   ->   VAL
+//
+// Repeated keys are not checked for but are not advised -- the later key
+// will wipe out the earlier one.
+//
+// Columns 3 on are used for list-values, with the orientation changing as follows:
+//
+// C   |   D   |  E  | ...
+// KEY |  KEY  | KEY | ...
+// VAL |  VAL  | VAL | ...
+// VAL |  VAL  | VAL | ...
+// VAL |  VAL  | VAL | ...
+// VAL |  VAL  | VAL | ...
+//
+//
+// If the column names here contain Key and Value, then we create additional
+// Dictionaries with the name...
+//
+// FooKey | FooVal
+// KEY    | VAL
+// KEY    | VAL
+//
+// Will produce...
+//
+// {FooKey : [KEY, KEY, ...],
+//  FooVal : [VAL, VAL, ...],
+//  FooLookup : {KEY : VAL, KEY : VAL}
+//  }
+// 
+// The key object here is ConfigurationSheet, used as follows
+//
+// cs = ConfigurationSheet( sheet )
+// var table = cs.loadConfigurationTable()
+// // table is a simple lookup containing either the single
+// // items or the list of items:
+// // 
+// // {k:v, k:v, k:v, k:[v,v,v,v], k:[v,v,v,v]}
+//
+// // Updated values can be written with...
+// cs.writeConfigurationTable(table)
+//
+// Note: the master spreadsheet contains the following...
+//
+// Form 1 - Action - Configuration 1 - Configuration 2 - Configuration 3 - Configuration 4...
+// 
+var COLORS
+
+function _initConfigSheets () {
+    COLORS = {
+        'key' : {'even' : {'fg' : '#ffffff',
+                           'bg': '#283593'},
+                 'odd' : {'fg': '#E8EAF6',
+                          'bg' : '#303F9F'},
+                },
+        'val' : {'even': {'fg':'#1A237E',
+                          'bg':'#FFECB3'},
+                 'odd': {'fg':'#1A237E',
+                         'bg':'#FFF8E1'},
+                },
+        'lkey' : {'odd' : {'fg' : '#F5F5F5',
+                           'bg': '#212121'},
+	          'even' : {'fg': '#E0E0E0',
+			    'bg' : '#424242'},
+                 },
+        'lval' : {'even': {'fg':'#424242',
+                           'bg':'#F5F5F5'},
+	          'odd': {'fg':'#212121',
+		          'bg':'#E0E0E0'},
+                 },           
+    }
+}
+var baseTest, modTest
+
+function _initZZZTestsConfigSheets () {
+    baseTest = {
+        test : function (p) {
+	    var config = createTestSheet(p);
+	    var sid = config.getSheetId();
+	    var cs = getConfigurationSheetById(p.configSS,sid);
+	    cs.loadConfigurationTable();
+	    assertEq(cs.table['NumProp'],1);
+	    assertEq(cs.table['StrProp'],'okay')
+	    assertEq(cs.table['Array1'][2],7)
+	    assertEq(cs.table['Array2'][0],'foo')
+	    assertEq(cs.table.dicLookup[7],7)
+	    assertEq(cs.table.mixedDicLookup['hi'],1)
+	    return {config:config,
+		    link:config.getSheetLink(),
+		    id:config.getSheetId()
+                    
+                   }
+        },
+        cleanup : function (p,r,success) {
+            console.log('Cleanup got: %s,%s,%s',p,r,success);
+	    if (success) {
+	        ss = SpreadsheetApp.openById(p.configSS);
+                console.log('Deleting sheet %s %s',ss,r.id);
+	        ss.deleteSheet(getSheetById(ss,r.id))
+	    }
+	    else {
+	        console.log('Test failed, not deleting sheet. Investigate @ %s',r.link);
+	    }
+        },
+        metadata : {name:'Config Sheet Test',
+	           }
+    }
+
+    Test(baseTest);
+
+    var modTest = Test({
+        metadata : {name: 'Config - Modify Sheet'},
+        setup : baseTest.test,
+        test : function (p) {
+	    var config = p.setupResult.config
+	    config.loadConfigurationTable();
+	    config.table['New Prop'] = 'New Val';
+	    config.table['NumProp'] = 2; // change it
+	    config.table.dicLookup[7] = 17; // change it
+	    config.writeConfigurationTable(config.table,{newDic:{a:'a'}})
+	    var cs = getConfigurationSheetById(p.configSS,config.getSheetId())
+	    cs.loadConfigurationTable();
+	    assertEq(cs.table.NumProp,2)
+	    assertEq(cs.table.dicLookup[7],17)
+	    assertEq(cs.table['New Prop'],'New Val')
+	    assertEq(cs.table.newDicLookup.a,'a')
+            return {result:"Modificaiton worked",id:cs.getSheetId(),link:cs.getSheetLink()}
+        },
+        cleanup : baseTest.cleanup,
+    })
+
+    Test(modTest);
+
+}
+    
+
+
 
 function getSheetById (ss, id) {
   var sheets = ss.getSheets()
@@ -33,29 +177,6 @@ function getConfigurationSheetById (ssID, sheetID, settings) {
   else {
     throw 'Did not find sheet'+ss+sheetID
   }
-}
-
-COLORS = {
-  'key' : {'even' : {'fg' : '#ffffff',
-                     'bg': '#283593'},
-           'odd' : {'fg': '#E8EAF6',
-                    'bg' : '#303F9F'},
-          },
-  'val' : {'even': {'fg':'#1A237E',
-                    'bg':'#FFECB3'},
-           'odd': {'fg':'#1A237E',
-                   'bg':'#FFF8E1'},
-          },
-  'lkey' : {'odd' : {'fg' : '#F5F5F5',
-                     'bg': '#212121'},
-						'even' : {'fg': '#E0E0E0',
-											'bg' : '#424242'},
-           },
-  'lval' : {'even': {'fg':'#424242',
-                     'bg':'#F5F5F5'},
-						'odd': {'fg':'#212121',
-										'bg':'#E0E0E0'},
-           },           
 }
 
 
@@ -250,7 +371,7 @@ function ConfigurationSheet (sheet, settings) {
     return data;
   } // end getConfigurationTable  
   
-  configurationSheet = { // object we will return
+  var configurationSheet = { // object we will return
     
     /** @method ConfigurationTable.getSheetLink
 	* Return link to configuration sheet.
@@ -370,8 +491,9 @@ function getMasterConfig (ss) {
     logNormal('Presumably we are fine...');
   }
   var table =  Table(sheet.getDataRange())  
+
   table.pushConfig = function (form, action, configSheets) {
-    pushData = {'Form':form.getEditUrl(),'FormID':form.getId(),'Action':action}
+    var pushData = {'Form':form.getEditUrl(),'FormID':form.getId(),'Action':action}
     n = 1
     configSheets.forEach( function (configSheet) {
       logAlways('Pushing configSheet '+n+': '+shortStringify(configSheet));
@@ -382,6 +504,7 @@ function getMasterConfig (ss) {
     logAlways('pushRow '+shortStringify(pushData));
     table.pushRow(pushData);
   }
+
 
   table.getConfigsForRow = function (row) {
       //row.getConfigurationSheets = function () {
@@ -416,7 +539,9 @@ function getMasterConfig (ss) {
     }) // end forEach row...
     return retRows;
   }
+    
   return table;
+
 } // end getMasterConfig
 
 function testReadConfigsFromMaster () {
@@ -517,65 +642,6 @@ function createTestSheet (p) {
     
 }
 
-baseTest = {
-    test : function (p) {
-	var config = createTestSheet(p);
-	var sid = config.getSheetId();
-	var cs = getConfigurationSheetById(p.configSS,sid);
-	cs.loadConfigurationTable();
-	assertEq(cs.table['NumProp'],1);
-	assertEq(cs.table['StrProp'],'okay')
-	assertEq(cs.table['Array1'][2],7)
-	assertEq(cs.table['Array2'][0],'foo')
-	assertEq(cs.table.dicLookup[7],7)
-	assertEq(cs.table.mixedDicLookup['hi'],1)
-	return {config:config,
-		link:config.getSheetLink(),
-		id:config.getSheetId()
-          
-               }
-    },
-    cleanup : function (p,r,success) {
-      console.log('Cleanup got: %s,%s,%s',p,r,success);
-	if (success) {
-	    ss = SpreadsheetApp.openById(p.configSS);
-        console.log('Deleting sheet %s %s',ss,r.id);
-	    ss.deleteSheet(getSheetById(ss,r.id))
-	}
-	else {
-	    console.log('Test failed, not deleting sheet. Investigate @ %s',r.link);
-	}
-    },
-    metadata : {name:'Config Sheet Test',
-	       }
-}
-
-Test(baseTest);
-
-var modTest = Test({
-    metadata : {name: 'Config - Modify Sheet'},
-    setup : baseTest.test,
-    test : function (p) {
-	var config = p.setupResult.config
-	config.loadConfigurationTable();
-	config.table['New Prop'] = 'New Val';
-	config.table['NumProp'] = 2; // change it
-	config.table.dicLookup[7] = 17; // change it
-	config.writeConfigurationTable(config.table,{newDic:{a:'a'}})
-	var cs = getConfigurationSheetById(p.configSS,config.getSheetId())
-	cs.loadConfigurationTable();
-	assertEq(cs.table.NumProp,2)
-	assertEq(cs.table.dicLookup[7],17)
-	assertEq(cs.table['New Prop'],'New Val')
-	assertEq(cs.table.newDicLookup.a,'a')
-    return {result:"Modificaiton worked",id:cs.getSheetId(),link:cs.getSheetLink()}
-    },
-    cleanup : baseTest.cleanup,
-})
-
-function testMod () {
-    console.log('Ran test: %s',modTest.solo());
-}
 
 function testMagicDictionaryStuff () {
   var ss = SpreadsheetApp.openById('1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk');

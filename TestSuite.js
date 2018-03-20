@@ -16,7 +16,7 @@ function getOldResponse (formId, i) {
 }
 
 function getProp () {
-Logger.log(PropertiesService.getUserProperties().getProperty('scratchSS'));//,'1MVfqdE8Y5R_3Ua2fm3L6FHahv4yM8dc6u-pYzTn2nOg'));
+    Logger.log(PropertiesService.getUserProperties().getProperty('scratchSS'));//,'1MVfqdE8Y5R_3Ua2fm3L6FHahv4yM8dc6u-pYzTn2nOg'));
 }
 function addDefaultParams (params) {
     var defaults = {

@@ -13,6 +13,7 @@
 <body>
   <!-- Simple Sidebar -->
   <div id="appName">
+
     <h1>*DEV BRANCH - Workflows Jacknife - DEV BRANCH*</h1>
     <span class="error" v-if="error">{{error}}</span>
     <tabs :labels="['Inactive','Active']" :active="2">
@@ -20,7 +21,6 @@
       <div slot="2">Hello world - active at first</div>
     </tabs>
     <!--
-
 	<div v-for="n in 10">
 	  TEST CONFIG type={{n}} <field-config v-model="testarr[n]" api-info="apiInfo" :type="n"></field-config> 
 	  <br>VALUE: {{testarr[n]}}

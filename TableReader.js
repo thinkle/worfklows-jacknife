@@ -322,60 +322,68 @@ function testTable () {
     logNormal('Table length is now: '+table.length)
 }
 
-dupTest = Test ({
-    metadata : {name:'Test Handling of Duplicate Columns'},
-    setup : function (p) {
-	p.ss = p.getScratchSS();
-	p.ss.getActiveSheet().clear();
-	[['h1','h2','h1','h3'], // duplicate h1
-	 [1,2,3,4],
-	 [2,3,4,5],
-	 [3,4,5,6,]].forEach(function (r) {
-	     p.ss.appendRow(r)
-	 })},
-    
-    test : function (p) {
-	var t = Table(p.ss.getActiveSheet().getDataRange());
-	// Succeed with pushing row
-	t.pushRow({h1:4,h2:7,h3:9});
-	Logger.log('Got: %s',t[1].h1)
-	assertEq(t[1].h1, 1) // first column value should win, not second
-	assertEq(t[4][0],4) // we pushed to the first column
-	assertEq(t[4][2],undefined) // we have a blank third column
-    }
-})
 
-updateTest=  Test( {
-    metadata : {name :'Test Table pushRow and updateRow'},
-    setup : function (p) {
-	p.ss = p.getScratchSS();
-	[['ID','Name','Number','Foo','Bar'],
-	 [1,'Tom',82,'asdf','owiaeru'],
-	 [2,'Dick',82,'asdfqqq','zzz'],
-	 [3,'Harry',82,'asdfasdf','iii'],
-	 [4,'Falsey',false,true,'bar bar bar '],
-	].forEach(function (r) {p.ss.appendRow(r)});
-    },
-    test : function (p) {
-	var t = Table(p.ss.getActiveSheet().getDataRange(),'ID');
-	t.updateRow({ID:1,Name:'Mary','Foo':false,Bar:'',Number:77});
-	t.updateRow({ID:2,Name:'Fred','Foo':undefined,Bar:false,Number:-72.123});
-	t.pushRow({ID:27,Name:"Foo",Bar:undefined,Foo:false});
-	// access in straight row/col fashion for test...
-	var newT = Table(p.ss.getActiveSheet().getDataRange());
-	assertEq(newT[1].Name,'Mary')
-	assertEq(newT[1].Foo,false)
-	assertEq(newT[2].Name,'Fred')
-	assertEq(newT[2].Foo,'')
-	assertEq(newT[2].Number,-72.123)
-	assertEq(newT[5].Name,'Foo')
-	assertEq(newT[5].Number,'')
-	assertEq(newT[5].ID,27)
-	assertEq(newT[5].Foo,false)
-	//t.updateRow({ID:3,Number:17});
-	return {url:p.ss.getUrl()}
-    },
-})
+
+var updateTest, dupTest
+
+function _initZZZTestTableReader () {
+
+    dupTest = Test ({
+        metadata : {name:'Test Handling of Duplicate Columns'},
+        
+        setup : function (p) {
+	    p.ss = p.getScratchSS();
+	    p.ss.getActiveSheet().clear();
+	    [['h1','h2','h1','h3'], // duplicate h1
+	     [1,2,3,4],
+	     [2,3,4,5],
+	     [3,4,5,6,]].forEach(function (r) {
+	         p.ss.appendRow(r)
+	     })},
+    
+        test : function (p) {
+	    var t = Table(p.ss.getActiveSheet().getDataRange());
+	    // Succeed with pushing row
+	    t.pushRow({h1:4,h2:7,h3:9});
+	    Logger.log('Got: %s',t[1].h1)
+	    assertEq(t[1].h1, 1) // first column value should win, not second
+	    assertEq(t[4][0],4) // we pushed to the first column
+	    assertEq(t[4][2],undefined) // we have a blank third column
+        }
+    })
+
+    updateTest=  Test( {
+        metadata : {name :'Test Table pushRow and updateRow'},
+        setup : function (p) {
+	    p.ss = p.getScratchSS();
+	    [['ID','Name','Number','Foo','Bar'],
+	     [1,'Tom',82,'asdf','owiaeru'],
+	     [2,'Dick',82,'asdfqqq','zzz'],
+	     [3,'Harry',82,'asdfasdf','iii'],
+	     [4,'Falsey',false,true,'bar bar bar '],
+	    ].forEach(function (r) {p.ss.appendRow(r)});
+        },
+        test : function (p) {
+	    var t = Table(p.ss.getActiveSheet().getDataRange(),'ID');
+	    t.updateRow({ID:1,Name:'Mary','Foo':false,Bar:'',Number:77});
+	    t.updateRow({ID:2,Name:'Fred','Foo':undefined,Bar:false,Number:-72.123});
+	    t.pushRow({ID:27,Name:"Foo",Bar:undefined,Foo:false});
+	    // access in straight row/col fashion for test...
+	    var newT = Table(p.ss.getActiveSheet().getDataRange());
+	    assertEq(newT[1].Name,'Mary')
+	    assertEq(newT[1].Foo,false)
+	    assertEq(newT[2].Name,'Fred')
+	    assertEq(newT[2].Foo,'')
+	    assertEq(newT[2].Number,-72.123)
+	    assertEq(newT[5].Name,'Foo')
+	    assertEq(newT[5].Number,'')
+	    assertEq(newT[5].ID,27)
+	    assertEq(newT[5].Foo,false)
+	    //t.updateRow({ID:3,Number:17});
+	    return {url:p.ss.getUrl()}
+        },
+    })
+}
 
 function doUpdateTest () {
     updateTest.solo();

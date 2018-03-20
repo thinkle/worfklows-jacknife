@@ -1,3 +1,17 @@
+Logger.log('Load code');
+function callAllInits_() {
+  Logger.log('callAllInits!');
+  var keys = Object.keys(this);
+  keys.sort();
+  for (var i = 0; i < keys.length; i++) {
+    var funcName = keys[i];
+    if (funcName.indexOf("_init") == 0) {
+      Logger.log('Call %s',funcName);
+      this[funcName].call(this);
+    }
+  }
+}
+
 function doGet(e) {
   console.log('param info %s: %s',e,e.parameter)
     if (e.parameter.approve) {
@@ -157,7 +171,11 @@ function getLookupsForField (form, fieldName) {
 }
 
 
-sidebarActions = {}
+var sidebarActions
+
+function _initCode () {
+    sidebarActions = {}
+}
 
 function getSidebarActions () {
     actions = []
