@@ -6,9 +6,12 @@ var fileRegistry = {
 
 Vue.component('tabs', {
     name:'tabs',
-    props : ['labels'],
-    data : function () {return {active:1}},
-    template : '#tabs'
+    props : ['labels','active'],
+    //data : function () {return {active:1}},
+    template : '#tabs',
+    created : function () {
+	if (!this.active) {this.active = 1}
+    }
 });
 
 Vue.component('field-config',{
@@ -114,7 +117,8 @@ Vue.component('field-config',{
 
 	insertFormTable : function () {
 	    var self = this
-	    self.gettingTable = true
+            self.gettingTable = true
+	    self.error = ''
 	    google.script.run
 		.withSuccessHandler(function (table) {
 		    console.log('++table: %s',table);
@@ -309,6 +313,7 @@ Vue.component('config-sheet',{
 
 	save : function () {
 	    var self = this;
+	    self.error = ''
 	    google.script.run
 		.withSuccessHandler(
 		    function (d) {
@@ -328,6 +333,7 @@ Vue.component('config-sheet',{
 
 	getActionDetails : function () {
 	    var self = this;
+	    self.error = ''
 	    google.script.run
 		.withSuccessHandler(function (d) {
 		    self.details = d
@@ -368,6 +374,14 @@ Vue.component('collapser',{
     data : function () {return {show:false}}
 })
 
+Vue.component('popout',{
+    name:'collapser',
+    props : ['label','showLabel','hideLabel'],
+    template:'#popout',
+    data : function () {return {show:false}}
+})
+
+
 Vue.component('drive-file',{
     name : 'drive-file',
     props: ['id','type'],
@@ -382,6 +396,7 @@ Vue.component('drive-file',{
     template : '#drive-file',
     created : function () {
 	var self = this;
+	self.error = ''
 	if (fileRegistry[self.id]) {
 	    self.file = fileRegistry[self.id]
 	}
@@ -426,6 +441,7 @@ Vue.component('master-config',{
 	    var self = this;
 	    //var ID = '13J7v8UvtHFB0L7k0qJrDPIuZHRMaT01Ayas47jxion8'
 	    console.log("Loading ID %s",this.configSheet);
+	    self.error = '';
 	    google.script.run
 		.withSuccessHandler(function (data) {
 		    console.log('Got data: %s',JSON.stringify(data));
@@ -473,6 +489,7 @@ Vue.component('master-config',{
 
 	getAction : function (action, form) {
 	    var self = this;
+	    self.error = ''
 	    console.log('Getting action: %s',action);
 	    google.script.run
 		.withSuccessHandler(function (data) {
@@ -492,6 +509,7 @@ Vue.component('master-config',{
 
 	duplicateWorkflow : function () {
 	    var self = this;
+	    self.error = ''
 	    self.duplicating = true;
 	    console.log('Calling duplicateWorkflow %s',this.configSheet);
 	    google.script.run
@@ -513,6 +531,7 @@ Vue.component('master-config',{
 	gatherDocs : function () {
 	    var self = this;
 	    console.log('Calling gatherDocs %s',this.configSheet);
+	    self.error = ''
 	    google.script.run
 		.withSuccessHandler(function (d) {self.folder = d})
 		.withFailureHandler(function (e) {self.error = e}).gatherWorkflow(this.configSheet);
@@ -520,6 +539,7 @@ Vue.component('master-config',{
 
 	getActionDetails : function () {
 	    var self = this;
+	    self.error = ''
 	    google.script.run
 	        .withFailureHandler(function (e) {self.error = e})
 		.withSuccessHandler(function (parameters) {
@@ -543,6 +563,7 @@ Vue.component('master-config',{
 
 	setupTriggers : function () {
 	    var self=this;
+	    self.error = ''
 	    console.log('Calling setupTriggers %s',this.configSheet);
 	    google.script.run
 		.withFailureHandler(function (e) {self.error = e})
@@ -562,6 +583,7 @@ JacknifeApp = new Vue({
 	chosenSheet : '',
 	apiInfo: {pickerApiLoaded:false,authToken:undefined},
 	masters: {'':[]},
+	defaultTab : 1,
     },
     created : function () {
 	console.log("Let's set up our apiinfo reference on the window!");
@@ -595,6 +617,7 @@ JacknifeApp = new Vue({
 	},
 	getOAuthToken : function () {
 	    var self = this;
+	    self.error = ''
 	    google.script.run.withSuccessHandler(
 		function (token) {self.apiInfo.authToken = token}
 	    )
@@ -610,10 +633,18 @@ JacknifeApp = new Vue({
     created : function () {
 	var self  = this;
 	self.loadPickerApi()
+	self.error = ''
 	console.log('Get triggers');
 	google.script.run
 	    .withFailureHandler(function (e){ self.error = e})
-	    .withSuccessHandler(function (d) {console.log('got masters: %s',d);self.masters = d})
+	    .withSuccessHandler(function (d) {console.log('got masters: %s',d);self.masters = d;
+					      if (self.masters.length > 1) {
+						  self.defaultTab = 1
+					      }
+					      else {
+						  self.defaultTab = 2
+					      }
+					     })
 	    .listTriggers();
     },
     

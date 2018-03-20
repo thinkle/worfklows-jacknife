@@ -108,18 +108,21 @@ function preFillApprovalForm (params) {
         }
     }
     // Check for collecting email address...
-    // Not yet... 
+    // Not yet...
+    var switchEmailBackOn = false;
+    if (params.targetForm.collectsEmail()) {
+        switchEmailBackOn = true;
+        params.targetForm.setCollectEmail(false)
+    }
     submittedFormResponse = formResponse.submit()  
-    edit_url = submittedFormResponse.getEditResponseUrl();  
-    edit2_url = params.targetForm.getResponse(submittedFormResponse.getId()).getEditResponseUrl();
-    var allResponses = params.targetForm.getResponses();
-    var lastRespNo = allResponses.length - 1;
-    var lastResp = allResponses[lastRespNo]
-    var newEditUrl = lastResp.getEditResponseUrl();
-    //edit_url = newEditUrl; // ARRRGHH -- work around broken google crap -- maybe google fixed???
-    console.log('Three edit URLs: the one from our form object: %s and the one from our last object %s and finally the probably right one: %s',edit_url,newEditUrl,edit2_url);
-    return {'edit_url':edit2_url,
-            'response':lastResp}
+    //edit_url = submittedFormResponse.getEditResponseUrl();
+    var resp = params.targetForm.getResponse(submittedFormResponse.getId())
+    var edit_url = resp.getEditResponseUrl();
+    if (switchEmailBackOn) {
+        params.targetForm.setCollectEmail(true);
+    }
+    return {'edit_url':edit_url,
+            'response':resp}
 }
 
 function getApprovalFormToMasterLookup (actionRow) {
@@ -305,6 +308,169 @@ function startoverProp () {
     var scriptCache = CacheService.getScriptCache();
     scriptCache.remove('FY16-06-###');
 }
+
+function getUnapprovedItems (approvalForm, approvalSettings, user, after) {
+    Logger.log('getUnapproved items for form: %s',approvalForm);
+    Logger.log('Looking at fields: %s',approvalSettings.Config1.table.toFields);
+    Logger.log('Approval form = %s',approvalSettings.Config1.table['Approval Form ID']);
+    var approvalForm = FormApp.openById(approvalSettings.Config1.table['Approval Form ID'])
+    var itemsToCheck = approvalSettings.Config1.table.toFields.map(function (f) {return getItemByTitle(approvalForm,f)})
+    var idItem = getItemByTitle(
+	approvalForm,
+	approvalSettings.Config1.table.idField
+    );
+    var approverItem = getItemByTitle(
+        approvalForm,
+        'Approver'
+    );
+    Logger.log('From %s we are checking %s',approvalSettings.Config1.table.toFields,
+               itemsToCheck);
+    var respById = {}
+    var forUserCount = 0; totalCount = 0;
+    if (after) {
+        var responses = approvalForm.getResponses(after)
+    }
+    else {
+        var responses = approvalForm.getResponses();
+    }
+    responses.map(function (r) {
+        totalCount += 1;
+        var approver = r.getResponseForItem(approverItem) && r.getResponseForItem(approverItem).getResponse();
+        // DEBUG
+        if (totalCount < 10) {
+            Logger.log('ITEM %s, APPROVER: %s',totalCount,approver);
+            Logger.log('Approver item: %s',approverItem);
+        }
+        // END DEBUG
+
+        if (approver != user) {return} // skip if the user is no match
+        forUserCount += 1
+	var iresp = r.getResponseForItem(idItem);
+	if (iresp) {
+	    if (respById.hasOwnProperty(iresp.getResponse())) {
+		Logger.log('Duplicate ID: %s',iresp.getResponse());
+	    }
+	    respById[iresp.getResponse()] = r; // we keep the second one :)
+	}
+    });
+    Logger.log('USER %s has %s of %s ITEMS TOTAL',user,forUserCount,totalCount);
+    var unapproved = []
+    for (var rid in respById) { // loop through responses...
+	var r = respById[rid]
+	var anyBlank = false
+	for (var i=0; i<itemsToCheck.length; i++) {
+	    if (itemsToCheck[i]) {
+		var itemresp = r.getResponseForItem(itemsToCheck[i])
+		if (!itemresp || !itemresp.getResponse()) {
+		    //Logger.log('No response for: %s',approvalSettings.Config1.table.toFields[i]);
+		    anyBlank = true;
+		}  
+	    }
+	}
+	if (anyBlank) { unapproved.push(r) }
+    }
+    Logger.log('We have %s unapproved form responses',unapproved.length);
+    if (unapproved.length) {
+        Logger.log('For example: %s',unapproved[0].getEditResponseUrl());
+        Logger.log('and also: %s',unapproved[unapproved.length-1].getEditResponseUrl())
+    }
+    return unapproved;
+}
+
+/**
+* Return list of approval forms and items that need to be approved by user
+* 
+* [{form:FORMID, items:[ITEM,ITEM,ITEM]},...]
+**/
+function getUnapprovedItemsFromMaster (user, ssid, after) {
+    var mcfg = getMasterConfig(SpreadsheetApp.openById(ssid));
+    var approvals = []
+    mcfg.forEach(function (cfg) {
+        if (cfg.Action=='Approval') {
+            var configs = mcfg.getConfigsForRow(cfg)
+            approvals.push({
+                form:configs.Config1.table['Approval Form ID'],
+                items:getUnapprovedItems(cfg.Form,configs,user,after)
+            });
+        }
+    });
+    return approvals
+}
+
+function getUnapproved (ssid, daysAgo) {
+    if (daysAgo) {
+        var now = new Date().getTime();
+        var weeksAgo = 3;
+        var oldestTimeWeCareAbout = new Date(now-1000*60*60*24*daysAgo)
+    }
+    var unapprovedByForm = getUnapprovedItemsFromMaster(
+        Session.getActiveUser().getEmail(),
+        ssid,
+        daysAgo && oldestTimeWeCareAbout
+    )
+    unapprovedByForm.forEach(function (unapproved) {
+        unapproved.items = unapproved.items.map(formResponseToJSON);
+    });
+    return unapprovedByForm;
+}
+
+function formResponseToJSON (fr) {
+    var obj  = {
+        id : fr.getId(),
+    }
+    fr.getItemResponses().forEach(
+        function (ir) {
+            obj[ir.getItem().getTitle()] = ir.getResponse();
+        }
+    );
+    return obj
+}
+
+function approveItems (fid, responseIds, approvalValues) {
+    var form = getForm(fid);
+    responseIds.forEach(function (rid) {
+        var response = form.getResponse(rid);
+        var responses = formResponseToJSON(response);
+        for (var key in approvalValues) {
+            responses[key] = approvalValues[key];
+        }
+        Logger.log('Pushed response: %s',preFillApprovalForm(
+            {
+                targetForm : form,
+                responseItems : responses,
+                field2field : {},
+            }
+        ));
+    });
+}
+
+function testApproveItems () {
+    form = FormApp.openById(
+        '1pgtky1vVNg8bESxlAh2wOs2aY84S5d163nwgmq4A_ow'
+    );
+    items = [form.getResponses()[0].getId()]
+    Logger.log('To begin with, our form has %s responses',form.getResponses().length);
+    approveItems(
+        '1pgtky1vVNg8bESxlAh2wOs2aY84S5d163nwgmq4A_ow',
+        items,
+        {'Signature':'Test signature from the bots!'}
+    )
+    Logger.log('Post approval, our form has %s responses',form.getResponses().length);
+}
+
+function testUnapprovedItems () {
+    ssid = '1YECCtTGxgpMo-aO_VIszvzJmJAA18qlWsF0Rov3OYqU';
+    Logger.log('Got %s',getUnapprovedItemsFromMaster('thinkle@innovationcharter.org',ssid).map(formResponseToJSON));
+  // mcfg = getMasterConfig(SpreadsheetApp.openById(ssid));
+  // approvals = []
+  // mcfg.forEach(function (cfg) {
+  //   if (cfg.Action=='Approval') {
+  //     Logger.log('Approval form: %s',cfg.Form)
+  //     getUnapprovedItems(cfg.Form,mcfg.getConfigsForRow(cfg));
+  //   }
+  // });  
+}
+
 
 function testWeirdness () {
     form = FormApp.openById('1HXV-wts968j0FqRFTkPYK8giyeSoYz_yjooIL9NqUVM');

@@ -14,7 +14,7 @@ function doLog (verbosity) {
     var args = Array.prototype.slice.call(arguments);
     args.shift()
 		args = args.map(tidyLog)
-    console.log.apply(console,args);
+    //console.log.apply(console,args);
     Logger.log.apply(Logger,args)
   }
 }
@@ -22,16 +22,20 @@ function doLog (verbosity) {
 logVerbose = function () {
 	args = [5]
 	args.push.apply(args,arguments)
+   // console.log.apply(console,args)
 	doLog.apply(doLog,args)
 }
 logNormal = function () {
 	args = [1]
-	args.push.apply(args,arguments)    
-	doLog.apply(doLog,args)
+    args.push.apply(args,arguments)
+    console.info.apply(console,args)
+    doLog.apply(doLog,args)
+    
 }
 logAlways = function () {
 	args = [-1]
 	args.push.apply(args,arguments)
+    console.log.apply(console,args)
 	doLog.apply(doLog,args)
 }
 
@@ -40,11 +44,10 @@ function emailError (msg, err, params) {
     if (! params) {params = {}};
     subject = params.subject ? params.subject : 'Error';
     to = params.to ? params.to : 'thinkle@innovationcharter.org';
-    msg += '<br>Error '+err;
+    msg += '<br>Error '+JSON.stringify(err);
     msg += '<br>Exception: '+err.name+': '+err.message;
     msg += '<br>Stack: '+err.stack
     console.error('Emailing error: %s, %s',subject,msg);
-
     sendEmail(to, subject, msg, true);
     //sendEmail('thinkle@innovationcharter.org','Error in Budget Script',msg)
 }
@@ -54,7 +57,8 @@ function assertEq (a, b) {
     logVerbose(a+'='+b+'! Success');
   }
   else {
-    Logger.log('ASSERTION ERROR: '+shortStringify(a)+'!='+JSON.stringify(b))
+      Logger.log('ASSERTION ERROR: '+shortStringify(a)+'!='+JSON.stringify(b))
+      console.error('Assertion Error: %s!=%s',a,b)
     throw 'AssertionError'+shortStringify(a)+'!='+JSON.stringify(b);
   }
 }

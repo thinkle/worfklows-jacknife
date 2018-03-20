@@ -143,7 +143,6 @@ function _initZZZTestsConfigSheets () {
 
 
 
-
 function getSheetById (ss, id) {
   var sheets = ss.getSheets()
   for (var i=0; i<sheets.length; i++) {
@@ -206,6 +205,62 @@ function formatLKeys (sheet, colnum) {
   val.setFontWeight('normal'); val.setFontStyle('italic');
 }
 
+/** @constructor ConfigurationTable
+* @desc
+* Simple interface for handling our configuration sheets.
+* The configuration sheets are a bit of an unusual format. 
+* 
+* The first two columns are for simple key->value pairs
+* 
+* A     |      B
+* KEY   ->   VAL
+* KEY   ->   VAL
+* KEY   ->   VAL
+* 
+* Repeated keys are not checked for but are not advised -- the later key
+* will wipe out the earlier one.
+* 
+* Columns 3 on are used for list-values, with the orientation changing as follows:
+* 
+*     C   |   D   |  E  | ...
+*     KEY |  KEY  | KEY | ...
+*     VAL |  VAL  | VAL | ...
+*     VAL |  VAL  | VAL | ...
+*     VAL |  VAL  | VAL | ...
+*     VAL |  VAL  | VAL | ...
+* 
+* 
+* If the column names here contain Key and Value, then we create additional
+* Dictionaries with the name...
+* 
+*     FooKey | FooVal
+*     KEY    | VAL
+*     KEY    | VAL
+* 
+* Will produce...
+* 
+*     {FooKey : [KEY, KEY, ...],
+*      FooVal : [VAL, VAL, ...],
+*      FooLookup : {KEY : VAL, KEY : VAL}
+*      }
+* 
+* The key object here is ConfigurationSheet, used as follows
+* 
+*     cs = ConfigurationSheet( sheet )
+*     var table = cs.loadConfigurationTable()
+*     // table is a simple lookup containing either the single
+*     // items or the list of items:
+*     
+*     {K:v, k:v, k:v, k:[v,v,v,v], k:[v,v,v,v]}
+* 
+* Updated values can be written with...
+*     cs.writeConfigurationTable(table)
+* 
+* Note: the master spreadsheet contains the following...
+* 
+* Form 1 - Action - Configuration 1 - Configuration 2 - Configuration 3 - Configuration 4...
+*  
+**/
 function ConfigurationSheet (sheet, settings) {
   
   function overwriteConfiguration (keyValues, listValues) {
@@ -318,18 +373,42 @@ function ConfigurationSheet (sheet, settings) {
   
   var configurationSheet = { // object we will return
     
-    getSheetLink : function () { return sheet.getParent().getUrl()+'#gid='+sheet.getSheetId();
-															 },
-    getSheetId: function () { return sheet.getSheetId();
-			    },
+    /** @method ConfigurationTable.getSheetLink
+	* Return link to configuration sheet.
+     */
+      getSheetLink : function () {
+	  return sheet.getParent().getUrl()+'#gid='+sheet.getSheetId();
+      },
+
+      /** @method ConfigurationTable.getSheetId
+       * Return id of configuration sheet
+       */
+      getSheetId: function () {
+	  return sheet.getSheetId();
+      },
+
+      /** @method ConfigurationTable.getSheetId
+       * Return spreadsheet with configuration table
+       */
       getSpreadsheet : function () {return sheet.getParent()},
+
+      /** @method ConfigurationTable.loadConfigurationTable
+       * Load configuration table from google sheet
+       */
     loadConfigurationTable: function () {
-      this.table = getConfigurationTable();
+	this.table = getConfigurationTable();
+	return this.table
     },    
-    
+
+      /** @method ConfigurationTable.writeConfigurationTable
+       * Overwrite configuraton table or write for the first time.
+       * @param {Table} table
+       * @param {Object} lookups
+       */
     writeConfigurationTable: function (table, lookups) {
       if (table) { this.table = table };
-      overwriteConfigurationTable(this.table,lookups);
+	overwriteConfigurationTable(this.table,lookups);
+	return this.table;
     },
   } // end configurationSheet
   
@@ -412,6 +491,7 @@ function getMasterConfig (ss) {
     logNormal('Presumably we are fine...');
   }
   var table =  Table(sheet.getDataRange())  
+
   table.pushConfig = function (form, action, configSheets) {
     var pushData = {'Form':form.getEditUrl(),'FormID':form.getId(),'Action':action}
     n = 1
@@ -424,36 +504,44 @@ function getMasterConfig (ss) {
     logAlways('pushRow '+shortStringify(pushData));
     table.pushRow(pushData);
   }
+
+
+  table.getConfigsForRow = function (row) {
+      //row.getConfigurationSheets = function () {
+      for (var i=1; i<4; i++) {            
+          configId = row['Config '+i+' ID']          
+          if (configId) {
+              logNormal('Grabbing config '+i+' from sheet '+configId)
+              try {
+		  row['Config'+i] = getConfigurationSheetById(sheet.getParent(), configId)
+		  row['Config'+i].loadConfigurationTable();
+              }
+              catch (err) {
+		  Logger.log('Odd: unable to load Config'+i+': '+configId);
+              }
+          }
+          else {
+              row['Config'+i] = 'FOO!'
+          }
+      } // end for each config
+      return row
+  }
+    
   table.getConfigsForId = function (id) {
     var retRows = []
     table.forEach(function (row) {
       if (row.FormID==id) {
-        //row.getConfigurationSheets = function () {
-        for (var i=1; i<4; i++) {            
-          var configId = row['Config '+i+' ID']          
-          if (configId) {
-            logNormal('Grabbing config '+i+' from sheet '+configId)
-            try {
-              row['Config'+i] = getConfigurationSheetById(sheet.getParent(), configId)
-              row['Config'+i].loadConfigurationTable();
-            }
-            catch (err) {
-              Logger.log('Odd: unable to load Config'+i+': '+configId);
-            }
-          }
-          else {
-            row['Config'+i] = 'FOO!'
-          }
-        } // end for each config
         //return configs;
         //} // end getConfigurationSheets
-        
+        table.getConfigsForRow(row);
         retRows.push(row)
       }
     }) // end forEach row...
     return retRows;
   }
+    
   return table;
+
 } // end getMasterConfig
 
 function testReadConfigsFromMaster () {

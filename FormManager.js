@@ -448,6 +448,8 @@ function writePropertyTest () {
 
 function onFormSubmitTrigger (event) {
     Logger.log('onFormSubmitTrigger got event: '+JSON.stringify(event))
+    console.info('Got trigger: %s',event)
+    console.time('formtrigger');
     event = fixBrokenEvent(event)
     var form = event.source;
     var masterSheetId = PropertiesService.getUserProperties().getProperty(form.getId())
@@ -462,32 +464,31 @@ function onFormSubmitTrigger (event) {
     Logger.log('Working with formActions: '+shortStringify(formActions));
     var actionResults = {}
     formActions.forEach(function (actionRow) {
-	Logger.log('Trying action: '+actionRow);
 	var action = actionRow.Action;    
+	console.info('Completing action: %s',action)
+	console.time('Action')
 	try {
 	    actionResults[action] = triggerActions[action](event,masterSheet,actionRow,actionResults);
+	    console.info('Action completed with results: %s',actionResults[action])
 	}
 	catch (err) {
 	    actionResults[action] = FAILURE;
 	    emailError('Error on action '+action, err);
-	    Logger.log('Ran into error on action %s: %s\nSTACK:%s',action,err.name,err.stack);
-	    Logger.log('Blargh!');
+	    console.error('Ran into error on action %s: %s\nSTACK:%s',action,err.name,err.stack);
 	}
+	console.timeEnd('Action')
     }
                        )// end forEach action
     
     // Log this baby...
+    console.timeEnd('formtrigger')
     try {
 	console.log('Full log: %s',Logger.getLog())
-	console.log('Action Results: %s',JSON.stringify(actionResults))
-	//var logDoc = DocumentApp.openById('1mSdNItUTyONo5ZX6kaHXMlgVghKypeMzJpjydzEVk9w')
-	//var body = logDoc.getBody()
-	//body.appendParagraph(Logger.getLog()); // too much...
-	//body.appendParagraph(JSON.stringify(actionResults));
     }
     catch (err) {
-	Logger.log('Error logging to google doc :( %s',err)
+	Logger.log('Error logging to console :( %s',err)
     }
+    console.info('Done responding to event: %s',event);
 }
 
 function testPrefillForm () {

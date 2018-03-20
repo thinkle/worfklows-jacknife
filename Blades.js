@@ -166,7 +166,6 @@ function _initZZZBlades () {
 	    return calendarsAdded
         }})
 
-
     Blade({
         shortname:'CalendarEvent',
         name : 'Create Event',

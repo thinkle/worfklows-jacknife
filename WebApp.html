@@ -13,11 +13,23 @@
 <body>
   <!-- Simple Sidebar -->
   <div id="appName">
-    <h1>Workflows Jacknife</h1>
-    <span class="error" v-if="error">{{error}}</span>    
-    <tabs :labels="['Active Workflows','Inactive/Other Workflows']">
-      <div slot="1"> <!-- Installed -->
 
+    <h1>*DEV BRANCH - Workflows Jacknife - DEV BRANCH*</h1>
+    <span class="error" v-if="error">{{error}}</span>
+    <tabs :labels="['Inactive','Active']" :active="2">
+      <div slot="1">Hello World - Inactive at first</div>
+      <div slot="2">Hello world - active at first</div>
+    </tabs>
+    <!--
+	<div v-for="n in 10">
+	  TEST CONFIG type={{n}} <field-config v-model="testarr[n]" api-info="apiInfo" :type="n"></field-config> 
+	  <br>VALUE: {{testarr[n]}}
+	</div>
+      </div>
+      -->
+    <tabs :labels="['Active Workflows','Inactive/Other Workflows']"
+	  :active="defaultTab">>
+      <div slot="1"> <!-- Installed -->
     <h2>Installed Workflows (with Triggers)</h2>
     <collapser show-label="Show workflows w/ triggers set up">
     <div v-for="formList,master in masters">
@@ -97,6 +109,13 @@
   </span>
 </script>
 
+<script type="text/x-template" id="popout">
+  <div :class='"block popper "+(show&&" popout"||"")'>
+    <h4 v-on:click="show=!show">{{label||show&&(hideLabel||'Hide')||(showLabel||'Show')}}</h4>
+    <div v-if="show"><slot></slot></div>
+  </div>
+</script>
+
 <script type="text/x-template" id="collapser">
   <div class="block collapser">
     <div :class="'collapserLabel '+(show&&'down'||'up')" v-on:click="show=!show">{{label||show&&(hideLabel||'Hide')||(showLabel||'Show')}}</div>
@@ -149,12 +168,13 @@
       Gathered documents in folder: <drive-file type="folder" :id="folder"></drive-file>
     </div>
 
-    <div v-for="configRow,i in master.config">
-      <div class="configrow" v-if="i>0">
-	<h3><drive-file type="form" :id="configRow.Form"></drive-file> {{configRow.Action}}</h3>
-	<collapser show-label="Show Config" hide-label="Hide Config">
-	  <tabs>
+    <div v-for="configRow,i in master.config" class="configrow" v-if="i&gt;0">
+      <h3><drive-file type="form" :id="configRow.Form"></drive-file> {{configRow.Action}}</h3>
+      <popout show-label="Show Config" hide-label="Hide Config">
+	<h2><drive-file type="form" :id="configRow.Form"></drive-file> {{configRow.Action}}</h2>
+	  <tabs active="1">
 	    <config-sheet v-for="n in 3"
+			  :key="n"
 			  :api-info="apiInfo"
 			  :slot="n" :ref="'config'+n" v-if="configRow['ConfigId'+n]"
 			  :n="n"
@@ -167,8 +187,7 @@
 			  :href="configRow['ConfigLink'+n]">Config {{n}}
 	    </config-sheet>
 	  </tabs>
-	</collapser>
-      </div>
+	</popout>
     </div>
     
     <div v-if="master.actions">
@@ -282,7 +301,7 @@
 	<option value="function">Function</option>
       </select>
       <span v-if="mode=='function'" class="function">
-	FUNCTION: <select v-model="fname">
+	FUNCTION: <select v-on:change="resetArgs" v-model="fname">
 	  <option value="if" default>if</option>
 	  <option value="and">and</option>
 	  <option value="or">or</option>
@@ -295,8 +314,8 @@
 	</span>
 	<span v-else>
 	  <br>{{fname}}(
-	  <span v-for="n in fargs.length"><br><field-config api-info="apiInfo" v-model="fargs[n]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields">
-	    </field-config>,
+	  <span v-for="n in fargs.length"><br><field-config api-info="apiInfo" v-model="fargs[n-1]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields">
+	    </field-config>, <button v-if="n>1" v-on:click="fargs.splice(n-1,1)">remove arg</button>
 	  </span>
 	  <br><button v-on:click="fargs.push('value')">+</button>
 	  <br>)

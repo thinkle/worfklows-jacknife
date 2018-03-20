@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <script src="https://unpkg.com/vue/dist/vue.js"></script> <!-- vue -->
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css"> <!-- add-ons styles -->
+  <style>
+   .busy {cursor: wait}
+   .left {width: 60%;}
+   .right {width: 40%;}
+   .small {font-size: x-small}
+   .normal {cursor: normal}
+   .instructions {font-style: italic; font-size: 8px; color: #acacac}
+   ul {padding-left: 0px}
+   li {border: 1px solid; padding: 16px; position: relative; font-size: 10pt;  list-style-type: none;}
+   .block {margin-left: 1em; margin-right: 1em; display: inline-block; padding-top: 15px; position: relative; vertical-align: top;}
+   .block .label {position: absolute; top: 2px; left: 2px; font-size: 7px; color: #787878;} 
+   .detail {font-size: 80%; font-style: italic;}       
+   .block .sub {font-size: 6px; display: block; }
+   .itemInfo {display: inline-block; max-width: 350px;}
+   .message {position: absolute; top: 25px; width: 80%;  margin-left: auto; margin-right: auto; padding: 30px;
+       background-color: white; opacity: 0.8; color: black; font-weight: bold; font-size: 24pt; border: 10px solid black; text-align: center; z-index: 2;}       
+   .hide {display: none;}
+   .buttonbox button {font-size: 7pt;}
+   .approval {max-width: 100px}
+   .cost-box {max-width: 150px}       
+   .approval {position: relative; padding-bottom: 14px; font-size: 10px;}              
+   .sig {border-bottom: 1px dotted; min-width: 150px; display: inline-block; font-family: cursive;}              
+   .cost {font-weight: heavy; color: #050; max-width: 130px;}
+   .cost::before {content: "$"}
+   #ui {position: fixed; top: 0px; width: 100%; background-color: #B3E5FC; box-shadow: 0px 3px #01579B;
+        font-weight: bold; padding: 20px; height: 30px;}
+   .wrapped {width: 700px; margin: auto;}
+   #items {margin-top: 25px;}
+   #formchooser {margin-top:70px}
+  </style> <!-- style -->
+</head>
+
+<body>
+    <div id="approver" :class="{busy:busy}">
+    <p>This is a test!</p>
+    Error: {{error}},       Master: {{master}}
+    <div>
+        <div class="message" v-if="isAllDone()">All done!</div>
+        <div class="message" v-if="busy">{{message}}
+            <button @click="busy=false;" v-if="showCancel">Ok</button>
+        </div>
+        <div id="items" :class="{hide: forms.length==0}">
+            <div class="buttonbox"><label>Items to Approve:</label>
+                <button @click="checkAll">Check All</button> <button @click="uncheckAll()">Uncheck All</button>
+            </div>
+            <ul v-for="form in forms">
+                <!-- <li>FORM: {{form.form}}</li> -->
+                <li v-for="item in form.items">
+                    <input @change="$forceUpdate()" v-model="item.toUpdate" type="checkbox">
+                    <div v-for="f in fields" :class="'block '+f.label.toLowerCase()">
+                        <span class="label" >{{f.label}}</span>
+                        <span class="value">
+                            {{item[f.field]}}
+                        </span>
+                        <span v-if="f.detail"  class="detail">
+                            <br>{{item[f.detail]}}
+                        </span>
+                    </div>
+                    <div class="block approval">
+                        <span class="label">Approval:</span>         
+                        <span v-if="item.toUpdate" class="sig">{{signature}}</span>
+                        <span v-else class="sig"></span>
+                        <span class="sub email">{{item.Approver}}</span>        
+                    </div>
+                </li>
+            </ul>
+            <div id="ui">
+                <table>
+                    <tr>
+                        <td class="left" >
+                            <div style="display:inline-block; vertical-align: top;">   
+                                <div>Signature: <input v-model="signature"></div>
+                                <div class="instructions">Type initials and date to approve, or type initials and REJECT to reject.</div>
+                            </div>
+                            <button class="create"  @click="sign()">Submit Signatures</button>
+                        </td>
+                        <td class="right">
+                            <div class="small">
+                                (Only show items <input type="number" v-model="daysAgo"> days old or newer)
+                                <button @click="loadData()">Reload Data</button>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>    
+    </div>
+    <div class="hide"> Items: {{forms}}</div>
+  </div>
+</body>
+
+<script>
+ app = new Vue({
+     el : '#approver',
+     data : ()=>{
+         return {
+             daysAgo : 120,
+             fields : [
+                 {label:'Account',
+                  field:'Cost Account Type',
+                  detail:'Cost Sub-Account Type'
+                 },
+                 {label:'Requested By',
+                  field:'Requester',
+                  detail:'Request Type'
+                 },
+                 {label:'Time of Request',
+                  field:'Request Timestamp'},
+                 {label:'Item',
+                  field:'Item Description',
+                  detail:'Vendor'},
+                 {label:'Cost',
+                  field:'Total Cost',
+                  detail:'Total Type'},
+             ],
+             busy : false,
+             showCancel : false,
+             message : 'Loading data from form... this may take a while...',
+             error : '',
+             forms : [{form:'',items:[{toUpdate:false,id:0}]}],
+             master : '',
+             signature : '',
+         }
+     },
+     created ()  {
+         this.forms = []
+         console.log('Created thingy');
+         google.script.url.getLocation(
+             (l)=>{
+                 if (l.parameter.master) {
+                     console.log('Got master: %s',l.parameter.master)
+                     this.master = l.parameter.master;
+                 }
+                 else {
+                     console.log('Default master');
+                     this.master = '1YECCtTGxgpMo-aO_VIszvzJmJAA18qlWsF0Rov3OYqU';
+                 }
+                 this.loadData(); // now load the data!
+             }
+         )
+     },
+     methods : {
+         checkAll () {
+             this.forms.forEach((f)=>{
+                 f.items.forEach((i)=>i.toUpdate=true);
+             });
+             this.$forceUpdate();
+         },
+         uncheckAll () {
+             console.log('Uncheck all!');
+             this.forms.forEach((f)=>{
+                 f.items.forEach((i)=>i.toUpdate=false)
+             });
+             this.$forceUpdate();
+         },
+         sign () {
+             console.log('Sign!');
+             this.forms.forEach((f)=>{
+                 var toUpdate = f.items.filter((i)=>i.toUpdate);
+                 console.log('We should update: %s',toUpdate);
+                 this.busy = true;
+                 this.message = 'Signing items...';
+                 google.script.run
+                       .withSuccessHandler((d)=>{
+                           toUpdate.forEach((itm)=>{
+                               var idx = f.items.indexOf(itm);
+                               if (idx!==-1) {
+                                   f.items.splice(idx,1);
+                               }
+                           }
+                           );
+                           this.busy = false;
+                       })
+                       .withFailureHandler((e)=>{
+                           this.message='Error signing: '+e;
+                           this.showCancel=true;
+                       })
+                       .approveItems(
+                           f.form,
+                           toUpdate.map((i)=>i.id),
+                           {'Signature':this.signature}
+                       );
+                 
+             });
+         },
+         isAllDone () {
+             for (var f of this.forms) {
+                 if (f.items.length>0) {
+                     return false
+                 }
+             }
+             return true;
+         },
+         loadData () {
+             this.busy = true;
+             this.message = 'Loading data from form... this may take a while.';
+             google.script.run
+                   .withSuccessHandler((d)=>{
+                       this.forms=d;
+                       this.forms.forEach((f)=>{
+                           f.items.forEach((i)=>{
+                               i.toUpdate = false;
+                           });
+                       });;
+                       this.busy = false;
+                   })
+                   .withFailureHandler((e)=>{this.error=e;this.busy=false;})
+                   .getUnapproved(this.master,this.daysAgo)
+         },
+     },
+ });
+</script>
+
+</html>
+

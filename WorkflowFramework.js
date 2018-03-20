@@ -269,8 +269,11 @@ function checkParam (config, param, type, require) {
 	console.log('Warning: %s not defined in config %s',param,config.getSheetLink());
 	if (type==IS_DEFINED) {
 	    console.log('param %s is required',param);
-	    throw {error:"Required Parameter Not Defined",
-		   config:config.getSheetLink()}
+	    e = new Error()
+	    e.name = "Required Parameter Not Defined: "+param
+	    e.message = "Required Parameter Not Defined: "+param+' on sheet '+config.getSheetLink()
+	    e.config = config.getSheetLink()
+	    throw e;
 	}
     }
     if (type==SPREADSHEETID || type==FORMID) {

@@ -13,12 +13,15 @@ function callAllInits_() {
 }
 
 function doGet(e) {
+  console.log('param info %s: %s',e,e.parameter)
     if (e.parameter.approve) {
-	var html = '<html>HELLO WORLD WEB APP COMING RIGHT UP</html>'
-	var html = HtmlService.createHtmlOutput(html);
+	//var html = '<html>HELLO WORLD WEB APP COMING RIGHT UP</html>'
+	//var html = HtmlService.createHtmlOutput(html);
+        var html = HtmlService.createTemplateFromFile('ApproverApp.html');
 	return html.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME);
     }
     else {
+      Logger.log('serve norm');
 	var html = HtmlService.createTemplateFromFile('WebApp');
 	return html.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME);
     }
@@ -100,10 +103,14 @@ function getFileInfo (id) {
   try {var f = DriveApp.getFileById(id)}
   catch (e) {
     try {var f = DriveApp.getFolderById(id);}
-    catch (e) {
-      var f = FormApp.openByUrl(id).getId();
-      f = DriveApp.getFileById(f);
-    }
+      catch (e) {
+	  try {
+	      var f = DriveApp.getFileById(FormApp.openByUrl(id).getId());
+	  }
+	  catch (e) {
+	      var f = DriveApp.getFileById(SpreadsheetApp.openByUrl(id).getId());
+	  }
+      }
   }
     return {
 	id : id,
