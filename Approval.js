@@ -108,16 +108,21 @@ function preFillApprovalForm (params) {
         }
     }
     // Check for collecting email address...
-    // Not yet... 
+    // Not yet...
+    var switchEmailBackOn = false;
+    if (params.targetForm.collectsEmail()) {
+        switchEmailBackOn = true;
+        params.targetForm.setCollectEmail(false)
+    }
     submittedFormResponse = formResponse.submit()  
-    edit_url = submittedFormResponse.getEditResponseUrl();  
-    edit2_url = params.targetForm.getResponse(submittedFormResponse.getId()).getEditResponseUrl();
-    var lastRespNo = allResponses.length - 1;
-    var lastResp = allResponses[lastRespNo]
-    var newEditUrl = lastResp.getEditResponseUrl();
-    console.log('Three edit URLs: the one from our form object: %s and the one from our last object %s and finally the probably right one: %s',edit_url,newEditUrl,edit2_url);
-    return {'edit_url':edit2_url,
-            'response':lastResp}
+    //edit_url = submittedFormResponse.getEditResponseUrl();
+    var resp = params.targetForm.getResponse(submittedFormResponse.getId())
+    var edit_url = resp.getEditResponseUrl();
+    if (switchEmailBackOn) {
+        params.targetForm.setCollectEmail(true);
+    }
+    return {'edit_url':edit_url,
+            'response':resp}
 }
 
 function getApprovalFormToMasterLookup (actionRow) {
@@ -372,12 +377,21 @@ function getUnapprovedItems (approvalForm, approvalSettings, user, after) {
     return unapproved;
 }
 
+/**
+* Return list of approval forms and items that need to be approved by user
+* 
+* [{form:FORMID, items:[ITEM,ITEM,ITEM]},...]
+**/
 function getUnapprovedItemsFromMaster (user, ssid, after) {
     var mcfg = getMasterConfig(SpreadsheetApp.openById(ssid));
     var approvals = []
     mcfg.forEach(function (cfg) {
         if (cfg.Action=='Approval') {
-            approvals.push.apply(approvals,getUnapprovedItems(cfg.Form,mcfg.getConfigsForRow(cfg),user,after));
+            var configs = mcfg.getConfigsForRow(cfg)
+            approvals.push({
+                form:configs.Config1.table['Approval Form ID'],
+                items:getUnapprovedItems(cfg.Form,configs,user,after)
+            });
         }
     });
     return approvals
@@ -389,11 +403,15 @@ function getUnapproved (ssid, daysAgo) {
         var weeksAgo = 3;
         var oldestTimeWeCareAbout = new Date(now-1000*60*60*24*daysAgo)
     }
-    return getUnapprovedItemsFromMaster(
+    var unapprovedByForm = getUnapprovedItemsFromMaster(
         Session.getActiveUser().getEmail(),
         ssid,
         daysAgo && oldestTimeWeCareAbout
-    ).map(formResponseToJSON)
+    )
+    unapprovedByForm.forEach(function (unapproved) {
+        unapproved.items = unapproved.items.map(formResponseToJSON);
+    });
+    return unapprovedByForm;
 }
 
 function formResponseToJSON (fr) {
@@ -409,7 +427,7 @@ function formResponseToJSON (fr) {
 }
 
 function approveItems (fid, responseIds, approvalValues) {
-    var form = FormApp.openById(fid)
+    var form = getForm(fid);
     responseIds.forEach(function (rid) {
         var response = form.getResponse(rid);
         var responses = formResponseToJSON(response);
