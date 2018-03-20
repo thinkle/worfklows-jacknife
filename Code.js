@@ -1,9 +1,10 @@
 function doGet(e) {
   console.log('param info %s: %s',e,e.parameter)
     if (e.parameter.approve) {
-	var html = '<html>HELLO WORLD WEB APP COMING RIGHT UP</html>'
-	var html = HtmlService.createHtmlOutput(html);
-	return html.setSandboxMode(HtmlService.SandboxMode.IFRAME);
+	//var html = '<html>HELLO WORLD WEB APP COMING RIGHT UP</html>'
+	//var html = HtmlService.createHtmlOutput(html);
+        var html = HtmlService.createTemplateFromFile('ApproverApp.html');
+	return html.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME);
     }
     else {
       Logger.log('serve norm');
