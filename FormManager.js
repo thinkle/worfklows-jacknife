@@ -477,8 +477,7 @@ function onFormSubmitTrigger (event) {
 	catch (err) {
 	    actionResults[action] = FAILURE;
 	    emailError('Error on action '+action, err);
-	    Logger.log('Ran into error on action %s: %s\nSTACK:%s',action,err.name,err.stack);
-	    Logger.log('Blargh!');
+	    console.error('Ran into error on action %s: %s\nSTACK:%s',action,err.name,err.stack);
 	}
 	console.timeEnd('Action')
     }
@@ -488,14 +487,9 @@ function onFormSubmitTrigger (event) {
     console.timeEnd('formtrigger')
     try {
 	console.log('Full log: %s',Logger.getLog())
-	//console.log('Action Results: %s',JSON.stringify(actionResults))
-	//var logDoc = DocumentApp.openById('1mSdNItUTyONo5ZX6kaHXMlgVghKypeMzJpjydzEVk9w')
-	//var body = logDoc.getBody()
-	//body.appendParagraph(Logger.getLog()); // too much...
-	//body.appendParagraph(JSON.stringify(actionResults));
     }
     catch (err) {
-	Logger.log('Error logging to google doc :( %s',err)
+	Logger.log('Error logging to console :( %s',err)
     }
     console.info('Done responding to event: %s',event);
 }
