@@ -6,6 +6,9 @@
   <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css"> <!-- add-ons styles -->
   <style>
    .busy {cursor: wait}
+   .left {width: 60%;}
+   .right {width: 40%;}
+   .small {font-size: x-small}
    .normal {cursor: normal}
    .instructions {font-style: italic; font-size: 8px; color: #acacac}
    ul {padding-left: 0px}
@@ -25,9 +28,10 @@
    .sig {border-bottom: 1px dotted; min-width: 150px; display: inline-block; font-family: cursive;}              
    .cost {font-weight: heavy; color: #050; max-width: 130px;}
    .cost::before {content: "$"}
-   #ui {position: fixed; top: 0px; width: 100%; background-color: #0033a0; color: #fff; font-weight: bold; padding: 20px; height: 30px;}
+   #ui {position: fixed; top: 0px; width: 100%; background-color: #B3E5FC; box-shadow: 0px 3px #01579B;
+        font-weight: bold; padding: 20px; height: 30px;}
    .wrapped {width: 700px; margin: auto;}
-   #items {margin-top: 5px;}
+   #items {margin-top: 25px;}
    #formchooser {margin-top:70px}
   </style> <!-- style -->
 </head>
@@ -37,14 +41,18 @@
     <p>This is a test!</p>
     Error: {{error}},       Master: {{master}}
     <div>
-        <div class="message" v-if="items.length==0">All done!</div>
-        <div class="message" v-if="busy">Loading data from form... this may take a while...</div>
-        <div id="items" :class="{hide: items.length==0}">
-            <label>Items to Approve:</label>
-            <div class="buttonbox"><button @click="checkAll()">Check All</button> <button :click="uncheckAll()">Uncheck All</button></div>
-            <ul>
-                <li v-for="item in items">
-                    <input v-model="item.toUpdate" type="checkbox">
+        <div class="message" v-if="isAllDone()">All done!</div>
+        <div class="message" v-if="busy">{{message}}
+            <button @click="busy=false;" v-if="showCancel">Ok</button>
+        </div>
+        <div id="items" :class="{hide: forms.length==0}">
+            <div class="buttonbox"><label>Items to Approve:</label>
+                <button @click="checkAll">Check All</button> <button @click="uncheckAll()">Uncheck All</button>
+            </div>
+            <ul v-for="form in forms">
+                <!-- <li>FORM: {{form.form}}</li> -->
+                <li v-for="item in form.items">
+                    <input @change="$forceUpdate()" v-model="item.toUpdate" type="checkbox">
                     <div v-for="f in fields" :class="'block '+f.label.toLowerCase()">
                         <span class="label" >{{f.label}}</span>
                         <span class="value">
@@ -63,21 +71,28 @@
                 </li>
             </ul>
             <div id="ui">
-                <div class="wrapped">
-                    (Only show items <input type="number" v-model="daysAgo"> days old or newer)
-                    <button @click="loadData()">Reload Data</button>
-
-                    <div style="display:inline-block; vertical-align: top;">   
-                        <div>Signature: <input v-model="signature"></div>
-                        <div class="instructions">Type initials and date to approve, or type initials and REJECT to reject.</div>
-                    </div>
-                    <button @click="sign()" ng-callback="formList.sign">Submit Signatures</button>
-                </div>
+                <table>
+                    <tr>
+                        <td class="left" >
+                            <div style="display:inline-block; vertical-align: top;">   
+                                <div>Signature: <input v-model="signature"></div>
+                                <div class="instructions">Type initials and date to approve, or type initials and REJECT to reject.</div>
+                            </div>
+                            <button class="create"  @click="sign()">Submit Signatures</button>
+                        </td>
+                        <td class="right">
+                            <div class="small">
+                                (Only show items <input type="number" v-model="daysAgo"> days old or newer)
+                                <button @click="loadData()">Reload Data</button>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
             </div>
         </div>    
     </div>
-    Items: {{items}}
-    </div>
+    <div class="hide"> Items: {{forms}}</div>
+  </div>
 </body>
 
 <script>
@@ -95,6 +110,8 @@
                   field:'Requester',
                   detail:'Request Type'
                  },
+                 {label:'Time of Request',
+                  field:'Request Timestamp'},
                  {label:'Item',
                   field:'Item Description',
                   detail:'Vendor'},
@@ -103,13 +120,16 @@
                   detail:'Total Type'},
              ],
              busy : false,
+             showCancel : false,
+             message : 'Loading data from form... this may take a while...',
              error : '',
-             items : [{toUpdate:false,id:0}],
+             forms : [{form:'',items:[{toUpdate:false,id:0}]}],
              master : '',
              signature : '',
          }
      },
      created ()  {
+         this.forms = []
          console.log('Created thingy');
          google.script.url.getLocation(
              (l)=>{
@@ -127,21 +147,69 @@
      },
      methods : {
          checkAll () {
-             this.items.forEach((i)=>i.toUpdate=true);
+             this.forms.forEach((f)=>{
+                 f.items.forEach((i)=>i.toUpdate=true);
+             });
+             this.$forceUpdate();
          },
          uncheckAll () {
              console.log('Uncheck all!');
-             this.items.forEach((i)=>i.toUpdate=false)
+             this.forms.forEach((f)=>{
+                 f.items.forEach((i)=>i.toUpdate=false)
+             });
+             this.$forceUpdate();
          },
          sign () {
              console.log('Sign!');
-             toUpdate = this.items.filter((i)=>i.toUpdate);
-             console.log('We should update: %s',toUpdate);
+             this.forms.forEach((f)=>{
+                 var toUpdate = f.items.filter((i)=>i.toUpdate);
+                 console.log('We should update: %s',toUpdate);
+                 this.busy = true;
+                 this.message = 'Signing items...';
+                 google.script.run
+                       .withSuccessHandler((d)=>{
+                           toUpdate.forEach((itm)=>{
+                               var idx = f.items.indexOf(itm);
+                               if (idx!==-1) {
+                                   f.items.splice(idx,1);
+                               }
+                           }
+                           );
+                           this.busy = false;
+                       })
+                       .withFailureHandler((e)=>{
+                           this.message='Error signing: '+e;
+                           this.showCancel=true;
+                       })
+                       .approveItems(
+                           f.form,
+                           toUpdate.map((i)=>i.id),
+                           {'Signature':this.signature}
+                       );
+                 
+             });
+         },
+         isAllDone () {
+             for (var f of this.forms) {
+                 if (f.items.length>0) {
+                     return false
+                 }
+             }
+             return true;
          },
          loadData () {
              this.busy = true;
+             this.message = 'Loading data from form... this may take a while.';
              google.script.run
-                   .withSuccessHandler((d)=>{this.items=d;this.busy=false;})
+                   .withSuccessHandler((d)=>{
+                       this.forms=d;
+                       this.forms.forEach((f)=>{
+                           f.items.forEach((i)=>{
+                               i.toUpdate = false;
+                           });
+                       });;
+                       this.busy = false;
+                   })
                    .withFailureHandler((e)=>{this.error=e;this.busy=false;})
                    .getUnapproved(this.master,this.daysAgo)
          },
