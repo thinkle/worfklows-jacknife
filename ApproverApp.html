@@ -38,8 +38,7 @@
 
 <body>
     <div id="approver" :class="{busy:busy}">
-    <p>This is a test!</p>
-    Error: {{error}},       Master: {{master}}
+    <div v-if="error">Error: {{error}}</div>
     <div>
         <div class="message" v-if="isAllDone()">All done!</div>
         <div class="message" v-if="busy">{{message}}
