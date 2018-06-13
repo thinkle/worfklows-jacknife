@@ -335,6 +335,26 @@ function listTriggers () {
     return masters
 }
 
+function removeTriggers (ss) {
+    if (typeof ss === 'string' || ss instanceof String) {
+	var ssid = ss;
+    }
+    else {
+        ssid = ss.getId();
+    }
+    ScriptApp.getProjectTriggers().forEach(function (t) {
+        var form = t.getTriggerSourceId();
+        var masterConfig = PropertiesService.getUserProperties().getProperty(form);
+        if (masterConfig==ssid) {
+            console.log('Deleting trigger %s: form %s config %s',
+                        t,
+                        form,
+                        masterConfig);
+            ScriptApp.deleteTrigger(t)
+        }
+    });
+}
+
 function setupTriggers (ss) {
     if (typeof ss === 'string' || ss instanceof String) {
 	var ss = SpreadsheetApp.openById(ss);
