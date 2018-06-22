@@ -13,11 +13,6 @@
   <body>
     <!-- Simple Sidebar -->
     <div id="appName">
-      <tabs :labels="['Foo','Bar','Baz']" :intial-active="3">
-        <div slot="1">One slot</div>
-        <div slot="2">Two slot</div>
-        <div slot="3">Three slot</div>
-      </tabs>
       <h1>*DEV BRANCH - Workflows Jacknife - DEV BRANCH*</h1>
       <span class="error" v-if="error">{{error}}</span>
       <tabs :labels="['New','Active Workflows','Inactive/Other Workflows']"
