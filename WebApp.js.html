@@ -561,6 +561,17 @@ Vue.component('master-config',{
 	    google.script.run.sidebarDoAction(self.selectedAction.action,self.selectedForm,self.actionConfig);
 	},
 
+        removeTriggers : function () {
+	    var self=this;
+	    self.error = ''
+	    console.log('Calling removeTriggers %s',this.configSheet);
+	    google.script.run
+		.withFailureHandler(function (e) {self.error = e})
+	        .withSuccessHandler(function (d) {console.log('Removed triggers!');})
+		.removeTriggers(self.configSheet);
+            
+        },
+
 	setupTriggers : function () {
 	    var self=this;
 	    self.error = ''
