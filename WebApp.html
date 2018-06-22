@@ -1,168 +1,183 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-  <base target="_top">
-  <script src="https://unpkg.com/vue/dist/vue.js"></script> <!-- vue -->
-  <script src="https://apis.google.com/js/platform.js"></script> <!-- gapi -->
-  <script><?!=exportGlobals();?></script>
-  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css"> <!-- add-ons styles -->
-  <style><?!=include( 'WebApp.css'); ?></style> <!-- style -->
-</head>
+  <head>
+    <base target="_top">
+    <script src="https://unpkg.com/vue/dist/vue.js"></script> <!-- vue -->
+    <script src="https://apis.google.com/js/platform.js"></script> <!-- gapi -->
+    <script><?!=exportGlobals();?></script>
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css"> <!-- add-ons styles -->
+    <style><?!=include( 'WebApp.css'); ?></style> <!-- style -->
+  </head>
 
-<body>
-  <!-- Simple Sidebar -->
-  <div id="appName">
+  <body>
+    <!-- Simple Sidebar -->
+    <div id="appName">
+      <tabs :labels="['Foo','Bar','Baz']" :intial-active="3">
+        <div slot="1">One slot</div>
+        <div slot="2">Two slot</div>
+        <div slot="3">Three slot</div>
+      </tabs>
+      <h1>*DEV BRANCH - Workflows Jacknife - DEV BRANCH*</h1>
+      <span class="error" v-if="error">{{error}}</span>
+      <tabs :labels="['New','Active Workflows','Inactive/Other Workflows']"
+	    :initial-active="defaultTab"
+            >
 
-    <h1>*DEV BRANCH - Workflows Jacknife - DEV BRANCH*</h1>
-    <span class="error" v-if="error">{{error}}</span>
-    <tabs :labels="['Active Workflows','Inactive/Other Workflows']"
-	  :active="defaultTab">>
-      <div slot="1"> <!-- Installed -->
-    <h2>Installed Workflows (with Triggers)</h2>
-    <collapser show-label="Show workflows w/ triggers set up">
-    <div v-for="formList,master in masters">
-      Master Sheet: <drive-file type="sheet" :id="master"></drive-file>
-      <collapser show-label="Show forms" hide-label="Hide forms">Forms: <li v-for="form in formList"><drive-file type="form" :id="form"></drive-file></li></collapser>
-      <collapser show-label="Show Full Config" hide-label="Hide">
-    Folder: <field-config api-info="apiInfo" type="2"></field-config>
-    <br>Form: <field-config api-info="apiInfo" type="10"></field-config>
-    <br>Sheet: <field-config api-info="apiInfo" type="9"></field-config>
+        <div slot="1"> <!-- New -->
+          <h1>NEW NEW NEW Not yet implemented :(</h1>
+          <p>Oh well...</p>
+          <p>Pick your poison...</p>
+          <button>New Form</button> <button>Select a Form</button>
+        </div>
+        <div slot="2"> <!-- Installed -->
+          <h2>Installed Workflows (with Triggers)</h2>
+          <collapser show-label="Show workflows w/ triggers set up">
+            <div v-for="formList,master in masters">
+              Master Sheet: <drive-file type="sheet" :id="master"></drive-file>
+              <collapser show-label="Show forms" hide-label="Hide forms">Forms: <li v-for="form in formList"><drive-file type="form" :id="form"></drive-file></li></collapser>
+              <collapser show-label="Show Full Config" hide-label="Hide">
+                Folder: <field-config api-info="apiInfo" type="2"></field-config>
+                <br>Form: <field-config api-info="apiInfo" type="10"></field-config>
+                <br>Sheet: <field-config api-info="apiInfo" type="9"></field-config>
 
-	<div>Config Sheet: <picker :api-info="apiInfo" v-model="master"></picker>
-	<master-config :config-sheet="master"
-		       :api-info="apiInfo"
-		       :ref="master">
-	</master-config></div>
-      </collapser>
+	        <div>Config Sheet: <picker :api-info="apiInfo" v-model="master"></picker>
+	          <master-config :config-sheet="master"
+		                 :api-info="apiInfo"
+		                 :ref="master">
+	        </master-config></div>
+              </collapser>
+            </div>
+          </collapser>
+        </div>
+        
+        <div slot="3"> <!-- Not Installed -->
+
+          <h2>Non-Active/New Workflows</h2>
+          <i>Or workflows w/ triggers under another account</i>
+          <collapser>
+            <div>
+	      Config Sheet: <picker type="sheet" :api-info="apiInfo" v-model="configSheet"></picker>
+	      <master-config
+	        :config-sheet="configSheet"
+	        :api-info="apiInfo"
+	        ref="master"
+	        >
+	      </master-config>
+            </div>
+          </collapser>
+        </div> 
+      </tabs> 
     </div>
-    </collapser>
-      </div>
-      <div slot="2"> <!-- Not Installed -->
+  </body>
 
-    <h2>Non-Active/New Workflows</h2>
-    <i>Or workflows w/ triggers under another account</i>
-    <collapser>
-      <div>
-	Config Sheet: <picker type="sheet" :api-info="apiInfo" v-model="configSheet"></picker>
-	  <master-config
-	    :config-sheet="configSheet"
-	    :api-info="apiInfo"
-	    ref="master"
-	    >
-	  </master-config>
-      </div>
-    </collapser>
-      </div> 
-    </tabs> 
-  </div>
-</body>
+  <script type="text/x-template" id="picker-template">
+    <div class="picker">
+      <span v-if="error">{{error}}</span>
+      <span v-if="value">
+        <drive-file  :type="type" :id="value">
+        </drive-file>
+      </span>
+      <span>
+        <span  v-if="!apiInfo.pickerApiLoaded"><span class="loader mini"></span>Loading API...</span>
+        <span  v-if="!apiInfo.authToken"><span class="loader mini"></span>Loading Authorization token...</span>
+        <!-- picker button -->
+        <span v-if="apiInfo.pickerApiLoaded&&apiInfo.authToken">
+	  <button v-if="type=='form'" v-on:click="getForm()">
+	    <span v-if="value">Change</span>
+	    <span v-else>Select</span>
+	    Form
+	  </button>
+	  <button v-else-if="type=='folder'" v-on:click="getFolder()">
+	    <span v-if="value">Change</span>
+	    <span v-else>Select</span>
+	  </button>
+	  <button v-else v-on:click="getSheet()" >
+	    <span v-if="value">Change</span><span v-else>Select</span> Sheet
+	  </button>
+        </span>
+      </span>
+    </div>
+  </script>
 
-<script type="text/x-template" id="picker-template">
-  <div class="picker">
-    <span v-if="error">{{error}}</span>
-    <span v-if="value">
-      <drive-file  :type="type" :id="value">
-      </drive-file>
-    </span>
+
+  <script type="text/x-template" id="drive-file">
     <span>
-      <span  v-if="!apiInfo.pickerApiLoaded"><span class="loader mini"></span>Loading API...</span>
-      <span  v-if="!apiInfo.authToken"><span class="loader mini"></span>Loading Authorization token...</span>
-      <!-- picker button -->
-      <span v-if="apiInfo.pickerApiLoaded&&apiInfo.authToken">
-	<button v-if="type=='form'" v-on:click="getForm()">
-	  <span v-if="value">Change</span>
-	  <span v-else>Select</span>
-	  Form
-	</button>
-	<button v-else-if="type=='folder'" v-on:click="getFolder()">
-	  <span v-if="value">Change</span>
-	  <span v-else>Select</span>
-	</button>
-	<button v-else v-on:click="getSheet()" >
-	  <span v-if="value">Change</span><span v-else>Select</span> Sheet
-	</button>
+      <span v-if="error" class="error">{{error}}</span>
+      <span v-if="id&&!file.id"><span class="loader mini"></span>Loading file data... ({{id}})</span>
+      <span  :class="'file'+' '+type" v-else-if="id">
+        <a :href="file.url" target="_BLANK">{{file.name}}</a>
       </span>
     </span>
-  </div>
-</script>
+  </script>
 
-
-<script type="text/x-template" id="drive-file">
-  <span>
-    <span v-if="error" class="error">{{error}}</span>
-    <span v-if="id&&!file.id"><span class="loader mini"></span>Loading file data... ({{id}})</span>
-    <span  :class="'file'+' '+type" v-else-if="id">
-      <a :href="file.url" target="_BLANK">{{file.name}}</a>
-    </span>
-  </span>
-</script>
-
-<script type="text/x-template" id="popout">
-  <div :class='"block popper "+(show&&" popout"||"")'>
-    <h4 v-on:click="show=!show">{{label||show&&(hideLabel||'Hide')||(showLabel||'Show')}}</h4>
-    <div v-if="show"><slot></slot></div>
-  </div>
-</script>
-
-<script type="text/x-template" id="collapser">
-  <div class="block collapser">
-    <div :class="'collapserLabel '+(show&&'down'||'up')" v-on:click="show=!show">{{label||show&&(hideLabel||'Hide')||(showLabel||'Show')}}</div>
-    <div class="collapserInside" v-if="show">
-      <slot></slot>
+  <script type="text/x-template" id="popout">
+    <div :class='"block popper "+(show&&" popout"||"")'>
+      <h4 v-on:click="show=!show">{{label||show&&(hideLabel||'Hide')||(showLabel||'Show')}}</h4>
+      <div v-if="show"><slot></slot></div>
     </div>
-  </div>
-</script>
+  </script>
 
-<script type="text/x-template" id="tabs">
-  <div class="tabs">
-  <div class="labels" v-if="$slots[2]">
-    <span :class="active==n && 'selected' || 'unselected' " v-for="n in 3" v-on:click="active=n" v-if="$slots[n]">{{labels&&labels[n-1]||n}}</span>
-  </div>
-  <slot v-if="active==1" name="1">  </slot>
-  <slot v-else-if="active==2" name="2"> </slot>
-  <slot v-else-if="active==3" name="3"> </slot>
-  </div>
-</script>
+  <script type="text/x-template" id="collapser">
+    <div class="block collapser">
+      <div :class="'collapserLabel '+(show&&'down'||'up')" v-on:click="show=!show">{{label||show&&(hideLabel||'Hide')||(showLabel||'Show')}}</div>
+      <div class="collapserInside" v-if="show">
+        <slot></slot>
+      </div>
+    </div>
+  </script>
 
-<script type="text/x-template" id="debug">
-  <span class="debug">
-    <span class="debugLabel" v-on:click="show = !show">(d)</span>
-    <span v-if="show">
-      <slot>
-      </slot>
-    </span>
-  </span>
-</script>
+  <script type="text/x-template" id="tabs">
+    <div class="tabs">
+      <div class="labels" v-if="$slots[2]">
+        <span :class="active==n && 'selected' || 'unselected' " v-for="n in 3" :key="n" v-on:click="active=n" v-if="$slots[n]">{{labels&&labels[n-1]||n}}</span>
+      </div>
+      <p>{{active}}, {{initialActive}}</p>
+      <!-- v-if and v-show was causing us nightmares, so we're using vanilla CSS to work around confusing vue issues -->
+      <div :class="active==1 || 'hide'"><slot name="1"></slot></div>
+      <div :class="active==2 || 'hide'"><slot name="2"></slot></div>
+      <div :class="active==3 || 'hide'"><slot name="3"></slot></div>
+    </div>
+  </script>
 
-<script type="text/x-template" id="master-config">
-  <div class="master block">
-    <!-- Master Sheet: -->
-    <div class="error" v-if="error">{{error}}</div>
-    <div class="menu" v-if="master.config">
-      <button class="action" v-on:click="setupTriggers()">Set Up Triggers for Workflow</button>
-      <button class="action" v-on:click="removeTriggers()">Remove Triggers for Workflow</button>
-      <span v-if="!duplicate.config">
-	<span  v-if="!duplicating">
-	  <button class="create" v-on:click="duplicateWorkflow">Make a Copy of Workflow</button>
-	</span>
-	<button class="action" v-on:click="gatherDocs">Gather documents into a folder</button> 
+  <script type="text/x-template" id="debug">
+    <span class="debug">
+      <span class="debugLabel" v-on:click="show = !show">(d)</span>
+      <span v-if="show">
+        <slot>
+        </slot>
       </span>
-    </div>
-    <div v-if="duplicate.config">
-      Duplication results:
-      Config: <drive-file type="sheet" :id="duplicate.config"></drive-file>
-      <br>Folder: <drive-file type="folder" :id="duplicate.folder"></drive-file>
-    </div>
-    <div v-if="folder">
-      Gathered documents in folder: <drive-file type="folder" :id="folder"></drive-file>
-    </div>
+    </span>
+  </script>
 
-    <div v-for="configRow,i in master.config" class="configrow" v-if="i&gt;0">
-      <h3><drive-file type="form" :id="configRow.Form"></drive-file> {{configRow.Action}}</h3>
-      <popout show-label="Show Config" hide-label="Hide Config">
-	<h2><drive-file type="form" :id="configRow.Form"></drive-file> {{configRow.Action}}</h2>
-	  <tabs active="1">
+  <script type="text/x-template" id="master-config">
+    <div class="master block">
+      <!-- Master Sheet: -->
+      <div class="error" v-if="error">{{error}}</div>
+      <div class="menu" v-if="master.config">
+        <button class="action" v-on:click="setupTriggers()">Set Up Triggers for Workflow</button>
+        <button class="action" v-on:click="removeTriggers()">Remove Triggers for Workflow</button>
+        <span v-if="!duplicate.config">
+	  <span  v-if="!duplicating">
+	    <button class="create" v-on:click="duplicateWorkflow">Make a Copy of Workflow</button>
+	  </span>
+	  <button class="action" v-on:click="gatherDocs">Gather documents into a folder</button> 
+        </span>
+      </div>
+      <div v-if="duplicate.config">
+        Duplication results:
+        Config: <drive-file type="sheet" :id="duplicate.config"></drive-file>
+        <br>Folder: <drive-file type="folder" :id="duplicate.folder"></drive-file>
+      </div>
+      <div v-if="folder">
+        Gathered documents in folder: <drive-file type="folder" :id="folder"></drive-file>
+      </div>
+
+      <div v-for="configRow,i in master.config" class="configrow" v-if="i&gt;0">
+        <h3><drive-file type="form" :id="configRow.Form"></drive-file> {{configRow.Action}}</h3>
+        <popout show-label="Show Config" hide-label="Hide Config">
+	  <h2><drive-file type="form" :id="configRow.Form"></drive-file> {{configRow.Action}}</h2>
+	  <tabs initial-active="1">
 	    <config-sheet v-for="n in 3"
 			  :key="n"
 			  :api-info="apiInfo"
@@ -178,203 +193,203 @@
 	    </config-sheet>
 	  </tabs>
 	</popout>
-    </div>
-    
-    <div v-if="master.actions">
-      NEW ACTION?
-      <span v-for="form in master.config"><button v-if="form.Form" type="checkbox" v-on:click="selectedForm=form.Form">Use {{form.Title}}</button></span>
-      <button v-on:click="selectedForm=''">Pick other form:</button>
-      <span v-if="!selectedForm"><picker type="form" :api-info="apiInfo" v-on:picked="setForm"></picker> <span v-if="selectedForm">{{selectedForm}}</span></span>
+      </div>
       
-      <select v-model="selectedAction">
-	<option  v-for="action in master.actions" :value="action">{{action.action}}</option>
-      </select>
-      <button class="action" v-if="selectedForm" v-on:click="getActionDetails">Go</button>
-      <div v-if="actionParameters">
-	<debug>{{actionParameters}}</debug>
+      <div v-if="master.actions">
+        NEW ACTION?
+        <span v-for="form in master.config"><button v-if="form.Form" type="checkbox" v-on:click="selectedForm=form.Form">Use {{form.Title}}</button></span>
+        <button v-on:click="selectedForm=''">Pick other form:</button>
+        <span v-if="!selectedForm"><picker type="form" :api-info="apiInfo" v-on:picked="setForm"></picker> <span v-if="selectedForm">{{selectedForm}}</span></span>
+        
+        <select v-model="selectedAction">
+	  <option  v-for="action in master.actions" :value="action">{{action.action}}</option>
+        </select>
+        <button class="action" v-if="selectedForm" v-on:click="getActionDetails">Go</button>
+        <div v-if="actionParameters">
+	  <debug>{{actionParameters}}</debug>
+	  <table>
+	    <tr v-for="param in actionParameters.params">
+	      <td>{{param.label}}</td>
+	      <td><field-config :api-info="apiInfo" :formfields="param.fields" v-model="actionConfig[param.field]" :type="param.type" ref="fc"></field-config></td>
+	    </tr>
+	  </table>
+	  <button class="create" v-on:click="createAction">Set up action</button>
+        </div>
+      </div>
+    </div>
+  </script>
+
+
+
+  <script type="text/x-template" id="config-sheet">
+    <div class="block">
+      <span v-if="saved">SAVED</span><span v-else>UNSAVED</span> <button class="action" v-on:click="save">Save Changes</button>
+      <!--<button v-on:click="show=!show">Config {{n}}</button>-->
+      <h4>Config {{n}}</h4>
+      <!--<div v-if="show">-->
+      <div>
+        <debug><p>CONFIG SHEET {{sheetId}}</p></debug>
+        <div v-if="error" class="error">{{error}}</div>
+        <debug>CONFIG: {{config}}; RAWCONFIG: {{rawConfig}}</debug>
+        <table v-if="config">
+	  <tr v-for="key in config.fields">
+	    <td>
+	      <span v-if="fieldLookup[key]">{{fieldLookup[key].label}} <debug>{{fieldLookup[key]}}</debug></span>
+	      <span v-else>{{key}}</span>
+	    </td>
+	    <td>
+	      <span v-if="fieldLookup[key]">
+	        <field-config v-model="config.raw[key]"
+			      :type="fieldLookup[key]&&fieldLookup[key].type||key.indexOf('Body')>-1&&5||6"
+			      :formfields="details.formFields"
+			      :formfieldoptions="details.formFieldOptions"
+			      :lookups="config.lookups"
+			      :ref="'fl_'+key"
+			      :form="form"
+			      :api-info="apiInfo"
+			      >
+	        </field-config> <!-- use fields for everything -->
+	      </span>
+	      <span v-else> <!--<input v-model="config.raw[key]">-->
+	        <field-config v-model="config.raw[key]"
+			      :type="key.indexOf('Body')>-1&&5||6"
+			      :formfields="details.formFields"
+			      :formfieldoptions="details.formFieldOptions"
+			      :lookups="config.lookups"
+			      :ref="'fl_'+key"
+			      :form="form"
+			      :api-info="apiInfo"
+			      >
+	        </field-config> <!-- use fields for everything -->
+	      </span>
+	    </td>
+	  </tr>
+        </table>
+        <div  v-else><span class="loader"></span>
+	  Loading data...
+        </div>
+      </div>
+    </div>
+  </script>
+
+  <script type="text/x-template" id="field-config">
+    <span>
+      <debug>VAL: {{value}}</debug>
+      <span v-if="type==1"><!--text-->
+        <input type="text" :value="value" @input="updateVal">
+      </span>
+      <span v-else-if="type==2"> <!--folder-->
+        Folder {{value}} (not yet implemented)
+        <drive-file :id="value" type="folder"></drive-file>
+        <picker :api-info="apiInfo" v-model="value" type="folder"></picker>
+      </span>
+      <span v-else-if="type==10"> <!--form-->
+        Form {{value}}
+        <picker :api-info="apiInfo" v-model="value" type="form"></picker>
+      </span>
+      <span v-else-if="type==9"> <!-- spreadsheet -->
+        Spreadsheet {{value}}
+        <picker :api-info="apiInfo" v-model="value" type="spreadsheet"></picker>
+      </span>
+      <span v-else-if="type==5"> <!-- PARA -->
+        <textarea cols="72" rows="10" :value="value" @input="updateVal">
+        </textarea>
+        <button v-if="!gettingTable" v-on:click="insertFormTable()">Insert Table of Form Values</button><span v-if="gettingTable">Fetching form data...</span>
+</button>
+</span>
+<span v-else-if="type==6"> <!-- FIELD -->
+  <select v-model="mode">
+    <option value="raw" default>Enter value</option>
+    <option value="field">Choose field</option>
+    <option value="lookup">Field lookup</option>
+    <option value="magic">Magic field</option>
+    <option value="function">Function</option>
+  </select>
+  <span v-if="mode=='function'" class="function">
+    FUNCTION: <select v-on:change="resetArgs" v-model="fname">
+      <option value="if" default>if</option>
+      <option value="and">and</option>
+      <option value="or">or</option>
+      <option value="join">join</option>
+    </select>
+    <span v-if="fname=='if'">
+      <br>IF: <field-config api-info="apiInfo" v-model="fargs[0]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields"></field-config>
+      <br>THEN: <field-config api-info="apiInfo" v-model="fargs[1]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form"  :formfields="formfields"></field-config>
+      <br>ELSE: <field-config api-info="apiInfo" v-model="fargs[2]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form"  :formfields="formfields"></field-config>
+    </span>
+    <span v-else>
+      <br>{{fname}}(
+      <span v-for="n in fargs.length"><br><field-config api-info="apiInfo" v-model="fargs[n-1]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields">
+	</field-config>, <button v-if="n>1" v-on:click="fargs.splice(n-1,1)">remove arg</button>
+      </span>
+      <br><button v-on:click="fargs.push('value')">+</button>
+      <br>)
+    </span>
+  </span>
+  <span v-if="mode=='field'">
+    <select v-model="field"> <!-- @input="updateField">-->
+      <option v-for="f in formfields" :value="f">{{f}}</option>
+    </select>
+  </span>
+  <span v-else-if="mode=='lookup'">
+    <select v-model="lookupField">
+      <option v-for="f in formfields" :value="f">{{f}}</option>
+    </select>
+    <select v-model="lookupDict">
+      <option v-for="dict,name in lookups" :value="name">{{name}}</option>
+      <option value="MAKE_NEW">Create New Lookup</option>
+    </select>
+    <span v-on:click="showLookup=!showLookup"><span v-if="showLookup">Hide</span><span v-else>Show</span> Lookup Table</span>
+    <span v-if="lookupDict && showLookup">
+      <span v-if="lookupDict!='MAKE_NEW'">
 	<table>
-	  <tr v-for="param in actionParameters.params">
-	    <td>{{param.label}}</td>
-	    <td><field-config :api-info="apiInfo" :formfields="param.fields" v-model="actionConfig[param.field]" :type="param.type" ref="fc"></field-config></td>
+	  <tr v-for="val,key in lookups[lookupDict]" v-if="key">
+	    <td>{{key}}</td>
+	    <td v-if="formfieldoptions[lookupField]">
+	      <span v-if="formfieldoptions[lookupField].indexOf(key)>-1">
+		In form!
+	      </span>
+	      <span v-else>
+		?
+	      </span>
+	    </td>
+	    <td><input v-model="val"></td>
+	  </tr>
+	  <tr v-if="!lookups[lookupDict].Default"><td>Default</td><td><input v-model="lookups[lookupDict]['Default']"></td>
+	  </tr>
+	  <tr>
+	    <td>
+	      <span v-if="formfieldoptions[lookupField]">
+		<select v-model="newLookupKey">
+		  <option v-for="key in formfieldoptions[lookupField]" v-if="!lookups[lookupDict][key]" :value="key">{{key}}</option>
+		</select>
+	      </span>
+	      <input v-model="newLookupKey">
+	    </td>
+
+
+	    <td><input v-model="newLookupVal"><button v-on:click="addLookupKey()">+</button></td>
 	  </tr>
 	</table>
-	<button class="create" v-on:click="createAction">Set up action</button>
-      </div>
-    </div>
-  </div>
-</script>
-
-
-
-<script type="text/x-template" id="config-sheet">
-  <div class="block">
-    <span v-if="saved">SAVED</span><span v-else>UNSAVED</span> <button class="action" v-on:click="save">Save Changes</button>
-    <!--<button v-on:click="show=!show">Config {{n}}</button>-->
-    <h4>Config {{n}}</h4>
-    <!--<div v-if="show">-->
-    <div>
-      <debug><p>CONFIG SHEET {{sheetId}}</p></debug>
-      <div v-if="error" class="error">{{error}}</div>
-      <debug>CONFIG: {{config}}; RAWCONFIG: {{rawConfig}}</debug>
-      <table v-if="config">
-	<tr v-for="key in config.fields">
-	  <td>
-	    <span v-if="fieldLookup[key]">{{fieldLookup[key].label}} <debug>{{fieldLookup[key]}}</debug></span>
-	    <span v-else>{{key}}</span>
-	  </td>
-	  <td>
-	    <span v-if="fieldLookup[key]">
-	      <field-config v-model="config.raw[key]"
-			    :type="fieldLookup[key]&&fieldLookup[key].type||key.indexOf('Body')>-1&&5||6"
-			    :formfields="details.formFields"
-			    :formfieldoptions="details.formFieldOptions"
-			    :lookups="config.lookups"
-			    :ref="'fl_'+key"
-			    :form="form"
-			    :api-info="apiInfo"
-			    >
-	      </field-config> <!-- use fields for everything -->
-	    </span>
-	    <span v-else> <!--<input v-model="config.raw[key]">-->
-	      <field-config v-model="config.raw[key]"
-			    :type="key.indexOf('Body')>-1&&5||6"
-			    :formfields="details.formFields"
-			    :formfieldoptions="details.formFieldOptions"
-			    :lookups="config.lookups"
-			    :ref="'fl_'+key"
-			    :form="form"
-			    :api-info="apiInfo"
-			    >
-	      </field-config> <!-- use fields for everything -->
-	    </span>
-	  </td>
-	</tr>
-      </table>
-      <div  v-else><span class="loader"></span>
-	Loading data...
-      </div>
-    </div>
-  </div>
-</script>
-
-<script type="text/x-template" id="field-config">
-  <span>
-    <debug>VAL: {{value}}</debug>
-    <span v-if="type==1"><!--text-->
-      <input type="text" :value="value" @input="updateVal">
-    </span>
-    <span v-else-if="type==2"> <!--folder-->
-      Folder {{value}} (not yet implemented)
-      <drive-file :id="value" type="folder"></drive-file>
-      <picker :api-info="apiInfo" v-model="value" type="folder"></picker>
-    </span>
-    <span v-else-if="type==10"> <!--form-->
-      Form {{value}}
-      <picker :api-info="apiInfo" v-model="value" type="form"></picker>
-    </span>
-    <span v-else-if="type==9"> <!-- spreadsheet -->
-      Spreadsheet {{value}}
-      <picker :api-info="apiInfo" v-model="value" type="spreadsheet"></picker>
-    </span>
-    <span v-else-if="type==5"> <!-- PARA -->
-      <textarea cols="72" rows="10" :value="value" @input="updateVal">
-      </textarea>
-      <button v-if="!gettingTable" v-on:click="insertFormTable()">Insert Table of Form Values</button><span v-if="gettingTable">Fetching form data...</span>
-      </button>
-    </span>
-    <span v-else-if="type==6"> <!-- FIELD -->
-      <select v-model="mode">
-	<option value="raw" default>Enter value</option>
-	<option value="field">Choose field</option>
-	<option value="lookup">Field lookup</option>
-	<option value="magic">Magic field</option>
-	<option value="function">Function</option>
-      </select>
-      <span v-if="mode=='function'" class="function">
-	FUNCTION: <select v-on:change="resetArgs" v-model="fname">
-	  <option value="if" default>if</option>
-	  <option value="and">and</option>
-	  <option value="or">or</option>
-	  <option value="join">join</option>
-	</select>
-	<span v-if="fname=='if'">
-	  <br>IF: <field-config api-info="apiInfo" v-model="fargs[0]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields"></field-config>
-	  <br>THEN: <field-config api-info="apiInfo" v-model="fargs[1]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form"  :formfields="formfields"></field-config>
-	  <br>ELSE: <field-config api-info="apiInfo" v-model="fargs[2]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form"  :formfields="formfields"></field-config>
-	</span>
-	<span v-else>
-	  <br>{{fname}}(
-	  <span v-for="n in fargs.length"><br><field-config api-info="apiInfo" v-model="fargs[n-1]" type="6" :formfieldoptions="formfieldoptions" :lookups="lookups" :form="form" :formfields="formfields">
-	    </field-config>, <button v-if="n>1" v-on:click="fargs.splice(n-1,1)">remove arg</button>
-	  </span>
-	  <br><button v-on:click="fargs.push('value')">+</button>
-	  <br>)
-	</span>
       </span>
-      <span v-if="mode=='field'">
-	<select v-model="field"> <!-- @input="updateField">-->
-	  <option v-for="f in formfields" :value="f">{{f}}</option>
-	</select>
-      </span>
-      <span v-else-if="mode=='lookup'">
-	<select v-model="lookupField">
-	  <option v-for="f in formfields" :value="f">{{f}}</option>
-	</select>
-	<select v-model="lookupDict">
-	  <option v-for="dict,name in lookups" :value="name">{{name}}</option>
-	  <option value="MAKE_NEW">Create New Lookup</option>
-	</select>
-	<span v-on:click="showLookup=!showLookup"><span v-if="showLookup">Hide</span><span v-else>Show</span> Lookup Table</span>
-	<span v-if="lookupDict && showLookup">
-	  <span v-if="lookupDict!='MAKE_NEW'">
-	    <table>
-	      <tr v-for="val,key in lookups[lookupDict]" v-if="key">
-		<td>{{key}}</td>
-		<td v-if="formfieldoptions[lookupField]">
-		  <span v-if="formfieldoptions[lookupField].indexOf(key)>-1">
-		    In form!
-		  </span>
-		  <span v-else>
-		    ?
-		  </span>
-		</td>
-		<td><input v-model="val"></td>
-	      </tr>
-	      <tr v-if="!lookups[lookupDict].Default"><td>Default</td><td><input v-model="lookups[lookupDict]['Default']"></td>
-	      </tr>
-	      <tr>
-		<td>
-		  <span v-if="formfieldoptions[lookupField]">
-		    <select v-model="newLookupKey">
-		      <option v-for="key in formfieldoptions[lookupField]" v-if="!lookups[lookupDict][key]" :value="key">{{key}}</option>
-		    </select>
-		  </span>
-		  <input v-model="newLookupKey">
-		</td>
-
-
-		<td><input v-model="newLookupVal"><button v-on:click="addLookupKey()">+</button></td>
-	      </tr>
-	    </table>
-	  </span>
-	  <span v-else>
-	    Lookup Name: <input v-model="newLookupDictName"> <button v-on:click="makeNewLookupDict()">Create</button>
-	  </span>
-	</span>
-      </span>
-      <span v-else="mode=='raw'">
-	<input type="text" :value="value" @input="updateVal">
+      <span v-else>
+	Lookup Name: <input v-model="newLookupDictName"> <button v-on:click="makeNewLookupDict()">Create</button>
       </span>
     </span>
-    <span v-else-if="type==8">
-      <input type="checkbox" :value="value" @input="updateVal">
-    </span>
-    
   </span>
+  <span v-else="mode=='raw'">
+    <input type="text" :value="value" @input="updateVal">
+  </span>
+</span>
+<span v-else-if="type==8">
+  <input type="checkbox" :value="value" @input="updateVal">
+</span>
+
+</span>
 </script>
 
 
 </html>
 <script>
-<?!=include( 'WebApp.js'); ?>
+  <?!=include( 'WebApp.js'); ?>
 </script>
