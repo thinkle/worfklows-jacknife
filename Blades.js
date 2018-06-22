@@ -37,7 +37,8 @@ function _initZZZBlades () {
 		    {'from':'Timestamp','to':'Request Timestamp','type':FormApp.ItemType.TEXT},
 		    {'from':'*#*FY16-MM-###','to':'PO Number','type':FormApp.ItemType.TEXT},
 	           ],},
-	    {field:'approvalHeader.title',label:'Header Title for Approval Form',
+	    {field:'approvalHeader.title',
+             label:'Header Title for Approval Form',
 	     type:TEXT,val:'The above information was filled out by the requester. Use the section below to indicate your approval.'},
 	    {field:'approvalHeader.helpText',
 	     'label':'Approval Form Help Text',
@@ -50,7 +51,8 @@ function _initZZZBlades () {
 	    {field:'emailInformBody', label:'Body of email to requester.',
 	     type:PARA,
 	     val:'Your request has been submitted for approval to <<Approver>>. You have been issued an initial PO number <<PO Number>>, to be active upon approval.\n\nHere are the details of your request:'},
-	    {field:'emailRequestBody',label:'Body of email to approver.',
+	    {field:'emailRequestBody',
+             label:'Body of email to approver.',
 	     type:PARA,
 	     val:'We have received a request and need your approval. <a href="<<link>>">Click here</a> to approve.'},
         ], // end params
@@ -175,12 +177,18 @@ function _initZZZBlades () {
 	    return createCalEventTrigger(form, params);
         },
         params : [
-	    {field:'CalendarID',label:'Calendar ID',val:'',type:TEXT,},
-	    {field:'Title',label:'Title',val:'',type:FIELD,mode:'field'},
-	    {field:'Date',label:'Date',val:'',type:FIELD,mode:'field'},
-	    {field:'Location',label:'Location',val:'',type:FIELD,mode:'field'},
-	    {field:'Description',label:'Description',val:'',type:PARA,mode:'field'},
-	    {field:'onlyAddIf',label:'Only Add If Value is True (not No or False or Empty):',val:'',type:FIELD,mode:'field'},
+	    {field:'CalendarID',
+             label:'Calendar ID',val:'',type:TEXT,},
+	    {field:'Title',
+             label:'Title',val:'',type:FIELD,mode:'field'},
+	    {field:'Date',
+             label:'Date',val:'',type:FIELD,mode:'field'},
+	    {field:'Location',
+             label:'Location',val:'',type:FIELD,mode:'field'},
+	    {field:'Description',
+             label:'Description',val:'',type:PARA,mode:'field'},
+	    {field:'onlyAddIf',
+             label:'Only Add If Value is True (not No or False or Empty):',val:'',type:FIELD,mode:'field'},
         ],
         trigger:function (event, masterSheet, actionRow, actionResults) {
 	    responses = getResponseItems(event.response);
@@ -208,8 +216,10 @@ function _initZZZBlades () {
         }, // end email callback
         params :[{field:'Subject',val:'Form Received','type':FIELD,'label':'Subject',mode:'value'},
 	         {field:'Body',val:'Your request has been responded to by <<FormUser>>.','type':PARA,'label':'Body'},
-	         {field:'To',val:'',type:FIELD,label:'To',mode:'field'},
-	         {field:'onlyEmailIf',val:'',type:FIELD,label:'Only Email If Value is True (not No or False or empty)',mode:'field'}
+	         {field:'To',val:'',type:FIELD,
+                  label:'To',mode:'field'},
+	         {field:'onlyEmailIf',val:'',type:FIELD,
+                  label:'Only Email If Value is True (not No or False or empty)',mode:'field'}
 	        ],
         trigger : function (event, masterSheet, actionRow, actionResults) {
 	    Logger.log('!!! EMAIL TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
@@ -242,8 +252,10 @@ function _initZZZBlades () {
 	       createDriveFormAndConfig(params.folders,form)
            },
            params:[
-	       {field:'Username',label:'Username',val:'%Username',type:FIELD},
-	       {field:'folders',label:'Folder List',type:FOLDERLIST},
+	       {field:'Username',
+                label:'Username',val:'%Username',type:FIELD},
+	       {field:'folders',
+                label:'Folder List',type:FOLDERLIST},
 	       {field:'EmailSubject',val:defaultDriveSubjectTemplate,type:PARA},
 	       {field:'EmailBody',val:defaultDriveBodyTemplate,type:PARA},
 	       {field:'InformFormUser',val:1,type:BOOL},
@@ -256,10 +268,13 @@ function _initZZZBlades () {
         shortname:'Group',
         name:'Add to groups',
         params : [
-	    {field:'username',label:'User to be added to group',type:FIELD,val:'%Username'},
+	    {field:'username',
+             label:'User to be added to group',type:FIELD,val:'%Username'},
 	    {field:'groups','label':'Groups to add user to','type':FIELD,val:'%Add to Google Groups'},
-	    {field:'NeedsAuthorization',label:'Needs Authorization',type:BOOL,val:true},
-	    {field:'Authorize',label:'Authorize Users',type:FIELD,val:'@FormUser>>AuthorizedUser'},
+	    {field:'NeedsAuthorization',
+             label:'Needs Authorization',type:BOOL,val:true},
+	    {field:'Authorize',
+             label:'Authorize Users',type:FIELD,val:'@FormUser>>AuthorizedUser'},
         ],
         trigger:function (event, masterSheet, actionRow) {
 	    Logger.log('!!! GROUP TRIGGER !!!! => '+event+'-'+masterSheet+'-'+actionRow);
@@ -275,8 +290,10 @@ function _initZZZBlades () {
     Blade({
         shortname:'Log',
         name:'Log to File',
-        params : [{field:'SheetId',type:TEXT,label:'ID of Spreadsheet Tab',help:'0 for main one'},
-	          {field:'SpreadsheetId',type:SPREADSHEET,label:'ID of Spreadsheet'},
+        params : [{field:'SheetId',type:TEXT,
+                   label:'ID of Spreadsheet Tab',help:'0 for main one'},
+	          {field:'SpreadsheetId',type:SPREADSHEET,
+                   label:'ID of Spreadsheet'},
 	         ],
         trigger:function (event, masterSheet, actionRow, actionResults) {
 	    checkParam(actionRow.Config1,'SpreadsheetId',SPREADSHEETID);
@@ -286,7 +303,25 @@ function _initZZZBlades () {
 
     Blade({
         shortname: 'NewUser',
-        params : [],
+        params : [
+	    {field:'first',type:TEXT,
+             label:'First Name',help:''},
+            {field:'last',type:TEXT,
+             label:'Last Name',help:''},
+            {field:'informList',type:TEXT,
+             label:'List of users to email with new account info.',help:''},
+            {field:'username',type:TEXT,
+             label:'Username for new account (must include @DOMAIN)',help:''},
+            {field:'emailSubject',type:TEXT,
+             label:'Subject Line of Emails that go out to inform of new account',help:''},
+            {field:'emailTemplate',type:TEXT,
+             label:'Template for email that goes out to inform of new account',help:''},
+            {field:'requirePasswordReset',type:TEXT,
+             label:'Require Password Reset',help:'Whether to make the user reset password after first login.'},
+            AUTHFIELD,
+            AUTHKEYS,
+            AUTHVALS,
+        ],
         trigger : function (event, masterSheet, actionRow) {
 	    var responses = getResponseItems(event.response);
  	    var usernameSettings = actionRow['Config1'].table;
@@ -303,4 +338,36 @@ function _initZZZBlades () {
  	    );
         },
     })
+
+    Blade({
+        shortname : 'SuspendUser',
+        params : [
+            {field:'username',type:TEXT,
+             label:'Username of account',help:'Username'},
+            {field:'daysDelayed',type:INT,
+             label:'Number of days we wait before suspending account.',help:'Set to 0 to suspend immediately.'},
+            {field:'emailTemplate',type:TEXT,
+             label:'Template for email that goes out to inform user of account suspension.',help:''},
+            AUTHFIELD,
+            AUTHKEYS,
+            AUTHVALS,
+        ],
+        trigger : function (event, masterSheet, actionRow) {
+            console.log('Not yet implemented: suspend user');
+            // FIX ME
+        }
+    })
+
+}
+
+var AUTHFIELD = {
+    field:'Authorize','type':FIELD,val:'@FormUser>>AuthorizedUser'
+};
+var AUTHKEYS={
+    field:'AuthorizedUserKeys',
+    val:['authorizedUsername@foo.bar','secondAuthorizedUser@gmail.com','Default'],
+}
+var AUTHVALS={
+    field:'AuthorizedUserVals',
+    val:[1,1,0]
 }
