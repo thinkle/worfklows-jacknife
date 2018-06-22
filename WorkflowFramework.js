@@ -1,20 +1,21 @@
-var triggerActions, TEXT, FOLDER, FIELDCONVERSION, FIELDLIST, PARA, FIELD, FOLDERLIST, BOOL, SPREADSHEET, FORM;
+var triggerActions, TEXT, FOLDER, FIELDCONVERSION, FIELDLIST, PARA, FIELD, FOLDERLIST, BOOL, SPREADSHEET, FORM, INT;
 
 function _initWorkflowFramework () {
- triggerActions = {
-} // registry of triggers by name, with functions
- TEXT = 1
- FOLDER = 2
- FIELDCONVERSION = 3
- FIELDLIST = 4
- PARA = 5
- FIELD = 6
- FOLDERLIST = 7
- BOOL = 8
- SPREADSHEET = 9;
- FORM = 10;
-  console.log('Loaded globals and triggerActions');
-  Logger.log('Ran load()');
+    triggerActions = {
+    } // registry of triggers by name, with functions
+    TEXT = 1;
+    FOLDER = 2;
+    FIELDCONVERSION = 3;
+    FIELDLIST = 4;
+    PARA = 5;
+    FIELD = 6;
+    FOLDERLIST = 7;
+    BOOL = 8;
+    SPREADSHEET = 9;
+    FORM = 10;
+    INT = 11;
+    console.log('Loaded globals and triggerActions');
+    Logger.log('Ran load()');
 };
 
 function exportGlobals () {
