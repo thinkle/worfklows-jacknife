@@ -1,4 +1,13 @@
-Logger.log('Load code');
+/**
+* @file Code.js
+* Core methods for google apps script
+**/
+
+/**
+* @function
+* @desc Call all init functions in alphabetical order. 
+* Makes sure all our global variables are initialized in the right order.
+**/
 function callAllInits_() {
   Logger.log('callAllInits!');
   var keys = Object.keys(this);
@@ -12,6 +21,10 @@ function callAllInits_() {
   }
 }
 
+/** 
+* @function
+* Load ApproverApp or WebApp depending on parameter
+**/
 function doGet(e) {
   console.log('param info %s: %s',e,e.parameter)
     if (e.parameter.approve) {
@@ -26,7 +39,10 @@ function doGet(e) {
 	return html.evaluate().setSandboxMode(HtmlService.SandboxMode.IFRAME);
     }
 }
-
+/**
+* @function
+* Load addOnMenu in google sheets
+**/
 function onOpen (e) {
     SpreadsheetApp.getUi().createAddonMenu()  
 	.addItem('Open Workflows','openWebApp')
@@ -71,6 +87,10 @@ function showAnchor(name,url) {
     SpreadsheetApp.getUi().showModelessDialog(ui,"Open");
 }
 
+/**
+* @function
+* @desc Load sidebar UI
+**/
 function showSidebar () {
     var ui = HtmlService.createTemplateFromFile('Sidebar')
 	.evaluate()

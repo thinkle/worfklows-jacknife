@@ -40,31 +40,32 @@ function getSheetById (ss, id) {
  * 
  * 
  * Usage: 
- * 
+ * <pre>
  *     var t = Table(range)
  *     t[1].Name -> Return value of column "Name" in second row
  *     t[1].Name = 'New Name' // supports assignment (writes to spreadsheet)
  *     t.forEach(function (row) { 
  *         // do something with row.Name, etc...
  *     }
- * 
+ * </pre>
  * _WARNING_: you cannot simply push to the table array.
  * To add new content, use:
- * 
+ * <pre>
  * t.pushRow(ROW) to add content either via object or array.
- * 
+ * </pre>
  * OR, with IDs, we can be a bit fancier...
  * 
  * Imagine we have a range of a spreadsheet referring to nutritional info
  * indexed by a column "Food"
- * 
+ * <pre>
  *     t = Table(range,'Food') /??? Does this actually work this way
  *     t.Apple.Calories = 80 // write to row w/ Food "Apple" in column "Calories"
  *     t.Apple.Fiber = 40 // write to row w/ Food "Apple" column "Fiber"
- *
+ *</pre>
  * Or...
+ * <pre>
  * row = t.update({Food:'Banana',calories:100,fiber:10})
- * 
+ * </pre>
  * 
  * @constructor
  * @param range {Range} - the range we are reprsenting.
@@ -160,6 +161,7 @@ function Table (range, idHeader) {
     }
 
     /** @method Table.pushRow 
+    * @inner
     * @desc 
     * Add a row to our table.
     * 

@@ -19,6 +19,7 @@
 	    :initial-active="defaultTab"
             >
 
+
         <div slot="1"> <!-- New -->
           <h1>NEW NEW NEW Not yet implemented :(</h1>
           <p>Oh well...</p>
@@ -39,7 +40,6 @@
                 Folder: <field-config api-info="apiInfo" type="2"></field-config>
                 <br>Form: <field-config api-info="apiInfo" type="10"></field-config>
                 <br>Sheet: <field-config api-info="apiInfo" type="9"></field-config>
-
 	        <div>Config Sheet: <picker :api-info="apiInfo" v-model="master"></picker>
 	          <master-config :config-sheet="master"
 		                 :api-info="apiInfo"
@@ -149,6 +149,7 @@
     </span>
   </script>
 
+<<<<<<< HEAD
   <script type="text/x-template" id="master-config">
     <div class="master block">
       <!-- Master Sheet: -->
@@ -171,6 +172,29 @@
       <div v-if="folder">
         Gathered documents in folder: <drive-file type="folder" :id="folder"></drive-file>
       </div>
+=======
+<script type="text/x-template" id="master-config">
+  <div class="master block">
+    <!-- Master Sheet: -->
+    <div class="error" v-if="error">{{error}}</div>
+    <div class="menu" v-if="master.config">
+      <button class="action" v-on:click="setupTriggers()">Set Up Triggers for Workflow</button>
+      <span v-if="!duplicate.config">
+	<span  v-if="!duplicating">
+	  <button class="create" v-on:click="duplicateWorkflow">Make a Copy of Workflow</button>
+	</span>
+	<button class="action" v-on:click="gatherDocs">Gather documents into a folder</button> 
+      </span>
+    </div>
+    <div v-if="duplicate.config">
+      Duplication results:
+      Config: <drive-file type="sheet" :id="duplicate.config"></drive-file>
+      <br>Folder: <drive-file type="folder" :id="duplicate.folder"></drive-file>
+    </div>
+    <div v-if="folder">
+      Gathered documents in folder: <drive-file type="folder" :id="folder"></drive-file>
+    </div>
+>>>>>>> origin/master
 
       <div v-for="configRow,i in master.config" class="configrow" v-if="i&gt;0">
         <h3><drive-file type="form" :id="configRow.Form"></drive-file> {{configRow.Action}}</h3>

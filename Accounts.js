@@ -1,4 +1,7 @@
-// Code for creating new accounts
+/**
+* @file Accounts.js
+* Code for creating new accounts
+**/
 var defaultCreateAccountSubject, defaultCreateAccountTemplate
 
 function _initAccounts () {

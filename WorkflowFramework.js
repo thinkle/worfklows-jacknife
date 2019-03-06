@@ -1,6 +1,13 @@
 var triggerActions, TEXT, FOLDER, FIELDCONVERSION, FIELDLIST, PARA, FIELD, FOLDERLIST, BOOL, SPREADSHEET, FORM, INT;
 
+/** 
+@function _initWorkflowFramework
+@desc Initialize globals for workflow framework
+**/
 function _initWorkflowFramework () {
+    /**
+       @desc Map of {@link Blade} objects we have defined.
+    **/
     triggerActions = {
     } // registry of triggers by name, with functions
     TEXT = 1;
@@ -18,6 +25,13 @@ function _initWorkflowFramework () {
     Logger.log('Ran load()');
 };
 
+/**
+* @function exportGlobals
+* @desc
+* Return a JSON representation of global constants
+* That should be the same between the google-apps-script and 
+* web-facing sides of our code.
+**/
 function exportGlobals () {
     return "globals="+JSON.stringify({
 	TEXT:TEXT,
@@ -55,7 +69,38 @@ function exportGlobals () {
 //     
 // })
 
+/** 
+* @constructor Blade
+* @param {Object} data
+* @param {string} data.shortname - Short name of this blade.
+* @param {string} data.name - Descriptive user-facing name of this blade.
+* @param {function} [data.create] - Function to run when initializing blade. Gets a formUrl and arguments.
+* @param {Array} data.params - List of parameters handed to Blade.
+Each parameter has the signature <pre>{field:fieldname, type:field-type,label:user-facing-label,help:user-help}</pre>
+* @param {function} [data.trigger] - Function called when action is triggered by a form.
+* @desc 
+* Creates a "Blade" of our "Jacknife" -- i.e. one tool in our toolbelt.
+* Each "tool" can be triggered by a form action.
+* 
+* Example usage:
+<pre>
+    Blade({
+        shortname:'Log',
+        name:'Log to File',
+        params : [{field:'SheetId',type:TEXT,label:'ID of Spreadsheet Tab',help:'0 for main one'},
+	          {field:'SpreadsheetId',type:SPREADSHEET,label:'ID of Spreadsheet'},
+	         ],
+        trigger:function (event, masterSheet, actionRow, actionResults) {
+	    checkParam(actionRow.Config1,'SpreadsheetId',SPREADSHEETID);
+	    checkParam(actionRow.Config1,'SheetId');
+	    return logEvent(actionRow['Config1'].table,event,actionResults);
+        }})
 
+
+</pre>
+* 
+* 
+**/
 function Blade (data) {
   
     // register trigger
@@ -100,6 +145,11 @@ function Blade (data) {
 } // end workflow
 
 
+/**
+* @function gatherFiles
+* @param controlss
+* @return Return list of all the files referred to by control spreadsheet controlss in one drive folder.
+**/
 function gatherFiles (controlss) {
     var fileList = [DriveApp.getFileById(controlss.getId())];
     var configTabs = [];
@@ -150,6 +200,11 @@ function gatherFiles (controlss) {
     return fileList;
 }
 
+/**
+* @function gatherWorkflow
+* @param ssid - Control spreadsheet
+* @param foldername - Name of folder for workflow (folder is created or existing folder is renamed)
+**/
 function gatherWorkflow (ssid, foldername) {
     //Gather a workflow associated with a spreadsheet into a folder, then return the ID of the folder that contains it;
     logNormal('Gather workflow at %s into folder named %s',ssid,foldername)
@@ -180,7 +235,11 @@ function gatherWorkflow (ssid, foldername) {
     return gatherWorkflowInFolder(controlss, folder).getId()
 }
 
-// Gather
+/* @function gatherWorkflowInFolder
+* @param controlss - Control spreadsheet
+* @param folder - Folder object
+* @desc Gather all files from workflow described in controlss into folder
+*/
 function gatherWorkflowInFolder (controlss, folder) {
     var files = gatherFiles(controlss)
     logNormal('Gathering files: %s',files);
@@ -207,8 +266,9 @@ function testEndOfGather () {
 function copyWorkflow (ssid) {
     // to copy a workflow, we duplicate all the sheets involved...
     // we do not set up the triggers by default
+    console.log('Copy workflow : %s',ssid);
     if (ssid) {
-	var ss = SpreadsheetApp.openById(ssid);
+      var ss = SpreadsheetApp.openById(ssid);
     }
     else {
 	var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -234,8 +294,9 @@ function copyWorkflow (ssid) {
     config.forEach(function (masterRow) {
 	var formId = masterRow.FormID
 	masterRow.FormID = duplicate(formId).getId();
-	masterRow.Form = copied[formId].getUrl();
+	masterRow.Form = copied[formId].getUrl();    
 	[1,2,3].forEach(function (n) {
+    console.log('Update configs... %s',n);
 	    var configId = masterRow['Config '+n+' ID'];
 	    if (configId && configId!='NOT_FOUND') {
 		var cs = getConfigurationSheetById (newSS.getId(), configId)
@@ -265,6 +326,14 @@ var SPREADSHEETID = 2
 var FORMID = 3
 var IS_DEFINED = 4
 
+/**
+* @function checkParam
+* Throw error if parameter is not defined propertly for sheet.
+* @param config - configuration sheet
+* @param {string} param - parameter we are checking.
+* @param type - type of parameter (from constants).
+* @param {boolean} require - whether this parameter must be defined
+**/
 function checkParam (config, param, type, require) {
     if (!config.table.hasOwnProperty(param)) {
 	console.log('Warning: %s not defined in config %s',param,config.getSheetLink());
@@ -297,7 +366,11 @@ function checkParam (config, param, type, require) {
     }
 }
 
-
+/**
+* @function assertError
+* @param f {function}
+* @desc Throw an error if function does not throw an error.
+**/
 function assertError (f) {
     try {
 	f()
@@ -310,7 +383,7 @@ function assertError (f) {
     throw {error:'Should have thrown error but did not','f':f}
 }
 
-checkParamTest = Test({
+var checkParamTest = Test({
     metadata : {name: 'Config - test check params'},
     setup : function (p) {
       Logger.log('Set up!');

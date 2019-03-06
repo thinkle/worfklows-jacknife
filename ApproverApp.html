@@ -31,15 +31,14 @@
    #ui {position: fixed; top: 0px; width: 100%; background-color: #B3E5FC; box-shadow: 0px 3px #01579B;
         font-weight: bold; padding: 20px; height: 30px;}
    .wrapped {width: 700px; margin: auto;}
-   #items {margin-top: 5px;}
+   #items {margin-top: 25px;}
    #formchooser {margin-top:70px}
   </style> <!-- style -->
 </head>
 
 <body>
     <div id="approver" :class="{busy:busy}">
-    <p>This is a test!</p>
-    Error: {{error}},       Master: {{master}}
+    <div v-if="error">Error: {{error}}</div>
     <div>
         <div class="message" v-if="isAllDone()">All done!</div>
         <div class="message" v-if="busy">{{message}}
@@ -129,6 +128,7 @@
          }
      },
      created ()  {
+         this.forms = []
          console.log('Created thingy');
          google.script.url.getLocation(
              (l)=>{

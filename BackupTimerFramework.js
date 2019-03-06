@@ -1,4 +1,7 @@
 /**
+* @file BackupTimerFramework
+* @desc
+<pre>
 Backup Timer Framework
 
 Here's how this WILL work for now (see below for future ideas)
@@ -14,7 +17,7 @@ Here's how the backup should work:
 (3) We re-run triggers in cases where there was a clear error in the process...
 
 The precursor to this was ApprovalOnTimerCleanup and ApprovedApprovalOnTimerCleanup 
-
+</pre>
 **/
 
 function rerunTrigger (form, responseId) {
