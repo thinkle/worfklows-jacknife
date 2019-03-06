@@ -1,3 +1,10 @@
+/** @function resubmitForm
+* @param formId {string} id of form
+* @param i {number} index of response to resubmit
+*
+* Generates a fake event and runs onFormSubmitTrigger
+* as if response i had been submitted from formid.
+**/
 function resubmitForm (formId,i) {
     Logger.log('Resubmit form: %s',formId);
     var form = FormApp.openById(formId);
@@ -9,15 +16,23 @@ function resubmitForm (formId,i) {
     onFormSubmitTrigger(fakeEvent)
 }
 
+/** @function getOldResponse
+* @param formId {string} id of form
+* @param i {number} index of response to resubmit
+* @returns response object.
+**/
 function getOldResponse (formId, i) {
   var form = FormApp.openById(formId);
   var firstResp = form.getResponses()[i];
   return firstResp
 }
 
+
 function getProp () {
     Logger.log(PropertiesService.getUserProperties().getProperty('scratchSS'));//,'1MVfqdE8Y5R_3Ua2fm3L6FHahv4yM8dc6u-pYzTn2nOg'));
 }
+
+
 function addDefaultParams (params) {
     var defaults = {
 	configSS : '1SvKY-4FxRsuJLywL4k4uRxj4MxIV7bPR8lG32jWRtuk',
@@ -56,6 +71,10 @@ function addDefaultParams (params) {
     }
 }
 
+/** @function setupTests
+setup tests for the first time. Creates a global array tests that will hold our tests.
+Singleton pattern.
+**/
 function setupTests () {
   try {
     setup;
@@ -67,6 +86,35 @@ function setupTests () {
   }
 }
 
+/** @constructor Test
+Create a test.
+@param {object} 
+<pre>
+{
+    params : params that are passed to setup/cleanup/test
+    setup : setup function to run before running test
+    metadata : information about test
+    test : test function to run to DO test. Returns result or throws error.
+    cleanup : function to run after test has succeeded or failed.
+}
+</pre>
+@returns {object}
+{
+   metadata : metadata,
+   test : test,
+   result : result of test
+   success : true or false   
+}
+<pre>
+
+In practice, we use this like this:
+Test({
+   test: function (params) {some function we want to test},
+   params : {some:params,we:want,to:hand,to:our,fun:ction},
+   metadata:{name:'Name of test'},
+});
+    
+**/
 function Test (o) { // test, params, metadata) {
   setupTests();
   //Logger.log('Registering test: %s',o);
@@ -117,6 +165,9 @@ Test({
   metadata:{name:'Failing test test'}
 });
 
+/** @function runTestSuite
+* Run all tests defined in our library
+**/
 function runTestSuite () {
     var results = []
     tests.forEach(function (test) {
