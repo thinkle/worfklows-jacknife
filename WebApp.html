@@ -24,6 +24,10 @@
           <p>Oh well...</p>
           <p>Pick your poison...</p>
           <button>New Form</button> <button>Select a Form</button>
+<!--        <select v-model="selectedAction">
+	  <option  v-for="action in master.actions" :value="action">{{action.action}}</option>
+        </select>-->
+          <!--<p>SELECTED: {{selectedAction}}</p>-->
         </div>
         <div slot="2"> <!-- Installed -->
           <h2>Installed Workflows (with Triggers)</h2>
@@ -127,7 +131,7 @@
       <div class="labels" v-if="$slots[2]">
         <span :class="active==n && 'selected' || 'unselected' " v-for="n in 3" :key="n" v-on:click="active=n" v-if="$slots[n]">{{labels&&labels[n-1]||n}}</span>
       </div>
-      <p>{{active}}, {{initialActive}}</p>
+      <!--<p>{{active}}, {{initialActive}}</p> -->
       <!-- v-if and v-show was causing us nightmares, so we're using vanilla CSS to work around confusing vue issues -->
       <div :class="active==1 || 'hide'"><slot name="1"></slot></div>
       <div :class="active==2 || 'hide'"><slot name="2"></slot></div>
