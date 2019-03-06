@@ -161,6 +161,7 @@ function Table (range, idHeader) {
     }
 
     /** @method Table.pushRow 
+    * @inner
     * @desc 
     * Add a row to our table.
     * 
