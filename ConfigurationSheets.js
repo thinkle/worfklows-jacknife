@@ -211,55 +211,58 @@ function formatLKeys (sheet, colnum) {
 * The configuration sheets are a bit of an unusual format. 
 * 
 * The first two columns are for simple key->value pairs
-* 
+* <pre>
 * A     |      B
 * KEY   ->   VAL
 * KEY   ->   VAL
 * KEY   ->   VAL
-* 
+* </pre>
+*
 * Repeated keys are not checked for but are not advised -- the later key
 * will wipe out the earlier one.
 * 
 * Columns 3 on are used for list-values, with the orientation changing as follows:
-* 
+* <pre>
 *     C   |   D   |  E  | ...
 *     KEY |  KEY  | KEY | ...
 *     VAL |  VAL  | VAL | ...
 *     VAL |  VAL  | VAL | ...
 *     VAL |  VAL  | VAL | ...
 *     VAL |  VAL  | VAL | ...
-* 
+*</pre> 
 * 
 * If the column names here contain Key and Value, then we create additional
 * Dictionaries with the name...
-* 
+* <pre>
 *     FooKey | FooVal
 *     KEY    | VAL
 *     KEY    | VAL
-* 
+* </pre>
 * Will produce...
-* 
-*     {FooKey : [KEY, KEY, ...],
-*      FooVal : [VAL, VAL, ...],
-*      FooLookup : {KEY : VAL, KEY : VAL}
+* <pre>
+*     {
+*       FooKey : [KEY, KEY, ...],
+*       FooVal : [VAL, VAL, ...],
+*       FooLookup : {KEY : VAL, KEY : VAL}
 *      }
-* 
+* </pre>
 * The key object here is ConfigurationSheet, used as follows
-* 
+* <pre>
 *     cs = ConfigurationSheet( sheet )
 *     var table = cs.loadConfigurationTable()
 *     // table is a simple lookup containing either the single
 *     // items or the list of items:
 *     
 *     {K:v, k:v, k:v, k:[v,v,v,v], k:[v,v,v,v]}
-* 
+* </pre>
 * Updated values can be written with...
+* <pre>
 *     cs.writeConfigurationTable(table)
-* 
+* </pre>
 * Note: the master spreadsheet contains the following...
-* 
+* <pre>
 * Form 1 - Action - Configuration 1 - Configuration 2 - Configuration 3 - Configuration 4...
-*  
+* </pre>
 **/
 function ConfigurationSheet (sheet, settings) {
   
@@ -328,8 +331,9 @@ function ConfigurationSheet (sheet, settings) {
     overwriteConfiguration(keyValues, listValues);
   }
   
-  function getConfigurationTable () {
-    var keyValues = sheet.getRange(1,1,sheet.getLastRow(),2).getValues()
+    function getConfigurationTable () {
+        var lastRow = sheet.getLastRow(); // this call turns out to be really expensive -- do it JUST ONCE
+    var keyValues = sheet.getRange(1,1,lastRow(),2).getValues()
     logVerbose('working with keyValues='+shortStringify(keyValues));
     var data = {}
     for (var r=0; r<keyValues.length; r++) {
@@ -337,7 +341,7 @@ function ConfigurationSheet (sheet, settings) {
       // warning -- if a value is duplicated, only the second value counts
       data[row[0]] = row[1]
     }
-    var listValues = sheet.getRange(1,3,sheet.getLastRow(),sheet.getLastColumn()).getValues();
+    var listValues = sheet.getRange(1,3,lastRow(),sheet.getLastColumn()).getValues();
 		var valueListHeaders = []
     for (var c=0; c<(sheet.getLastColumn()-2); c++) {
       // each column is a list of values w/ a header on top
@@ -345,7 +349,7 @@ function ConfigurationSheet (sheet, settings) {
 			valueListHeaders.push(header)
       if (header) {
         var valueList = []
-        for (var r=1; r<sheet.getLastRow(); r++) {
+        for (var r=1; r<lastRow(); r++) {
           var value = listValues[r][c]
           //if (value) {
           valueList.push(value);
