@@ -141,7 +141,6 @@
     <div class="error" v-if="error">{{error}}</div>
     <div class="menu" v-if="master.config">
       <button class="action" v-on:click="setupTriggers()">Set Up Triggers for Workflow</button>
-      <button class="action" v-on:click="removeTriggers()">Remove Triggers for Workflow</button>
       <span v-if="!duplicate.config">
 	<span  v-if="!duplicating">
 	  <button class="create" v-on:click="duplicateWorkflow">Make a Copy of Workflow</button>
