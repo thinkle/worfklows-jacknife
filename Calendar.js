@@ -1,3 +1,7 @@
+/**
+* @file Calendar.js
+* Calendar Sharing code.
+**/
 var defaultCalendarBodyTemplate,defaultCalendarSubjectTemplate
 
 function _initCalendar () {
@@ -7,12 +11,12 @@ function _initCalendar () {
 
 
 /** @function
-/ * Create a calendar form and configuration file for a set of calendars.
-/ * 
-/ * Return {form : formObject, configTable: ConfigTableObject}
-/ *
-/ * @param {array} calendarIds - a list of calendar IDs to make form for.
-/ * @param {form} form - a pre-existing form that needs configuration.
+* Create a calendar form and configuration file for a set of calendars.
+* 
+* Return {form : formObject, configTable: ConfigTableObject}
+*
+* @param {array} calendarIds - a list of calendar IDs to make form for.
+* @param {form} form - a pre-existing form that needs configuration.
 */
 function createCalendarFormAndConfig (calendarIDs, form) {
     var ret = {}

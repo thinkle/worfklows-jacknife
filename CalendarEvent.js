@@ -1,3 +1,8 @@
+/**
+* @file CalendarEvents
+* @desc
+* Code for CalendarEvent blade: for creating calendar events.
+**/
 function toDate (timeString) {
   timeString = timeString.replace(/-/g,"/");
   var d = new Date(timeString);

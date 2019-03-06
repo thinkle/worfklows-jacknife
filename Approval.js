@@ -1,3 +1,7 @@
+/**
+* @file Approval.js
+* @desc Code for approval blade.
+**/
 /////////////////////////////////
 // Form2Form Stuff for Approval Forms
 ///////////////////////////////////

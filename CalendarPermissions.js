@@ -1,3 +1,9 @@
+/**
+* @file CalendarPermissions.js
+* @desc 
+* Code for Calendar Blade: for sharing calendars.
+* 
+**/
 var defaultCalendarBodyTemplate, defaultCalendarSubjectTemplate
 
 function _initCalendarPermissions () {

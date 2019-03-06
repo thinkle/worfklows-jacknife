@@ -1,7 +1,28 @@
-// An alphabetical index of "blades" that can be used by our "jacknife" tool
-// Each item is a step that can be triggered by a form as part of a workflow.
+/**
+* @file Blades.js
+* @overview 
+* An alphabetical index of "blades" that can be used by our "jacknife" tool
+* Each item is a step that can be triggered by a form as part of a workflow.
+**/
 function _initZZZBlades () {
     Blade({
+    /** 
+        * @name triggerActions.Approval Blade
+        * @inner
+        * {@link Blade}
+        * @desc
+        * Approval Blade allows us to set up an approval workflow. Approval workflows involve
+        * creating two forms: a "request" form and then a nearly identical "approval" form.
+        * The request form triggers our workflow to fill out the approval form automatically
+        * and then send an email to the approver asking for them to "approve" it by filling in
+        * the final approval fields.
+        * @para
+        * We then can trigger actions from the approval form.
+        * @para
+        * By combining approvals with other tools, you can turn any process into an approval
+        * workflow. So, for example, an approval form could trigger a user to be created or
+        * an event to be added to a calendar, etc.
+        **/
         shortname:'Approval',
         name : "Create Approval Form",
         create : createApprovalFormFromUrl,
@@ -145,7 +166,12 @@ function _initZZZBlades () {
 	    );
 	    return config;
         }});
-
+    /** 
+        * @name Calendar Blade
+        * @desc
+        * {@link Blade}
+        * Calendar Blade shares a calendar.
+        **/
     Blade({
         shortname:'Calendar',
         name:'Share Calendar',
@@ -165,6 +191,13 @@ function _initZZZBlades () {
 	    Logger.log('Added calendars: '+JSON.stringify(calendarsAdded));
 	    return calendarsAdded
         }})
+
+    /** 
+        * @name CalendarEvent Blade
+        * @desc
+        * {@link Blade}
+        * CalendarEvent Blade creates an event on a calendar.
+        **/
 
     Blade({
         shortname:'CalendarEvent',
@@ -198,6 +231,13 @@ function _initZZZBlades () {
         }
     })
 
+    /** 
+        * @name Email Blade
+        * @desc
+        * {@link Blade}
+        * Email Blade sends a form email from a template.
+        **/
+
     Blade({
         shortname:'Email',
         name:'Send Email',
@@ -226,7 +266,12 @@ function _initZZZBlades () {
 	    );
         }}) // end Email
 
-
+    /** 
+        * @name Folder Blade
+        * @desc
+        * {@link Blade}
+        * Folder Blade shares a Drive folder.
+        **/
     Blade({shortname:'Folder',
            name:'Share Folder',
            trigger:function (event, masterSheet, actionRow) {
@@ -251,7 +296,12 @@ function _initZZZBlades () {
           }) // end Folder
 
 
-
+    /** 
+        * @name Group Blade
+        * @desc
+        * {@link Blade}
+        * Group Blade adds a user to groups.
+        **/
     Blade({
         shortname:'Group',
         name:'Add to groups',
@@ -271,7 +321,12 @@ function _initZZZBlades () {
         }
     })
 
-
+    /** 
+        * @name Log Blade
+        * @desc
+        * {@link Blade}
+        * Log Blade logs form data to a spreadsheet
+        **/
     Blade({
         shortname:'Log',
         name:'Log to File',
@@ -284,6 +339,12 @@ function _initZZZBlades () {
 	    return logEvent(actionRow['Config1'].table,event,actionResults);
         }})
 
+    /** 
+        * @name NewUser Blade
+        * @desc
+        * {@link Blade}
+        * NewUser Blade creates a new user.
+        **/
     Blade({
         shortname: 'NewUser',
         params : [],
