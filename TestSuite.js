@@ -1,7 +1,8 @@
+
 /** @function resubmitForm
 * @param formId {string} id of form
 * @param i {number} index of response to resubmit
-*
+* @desc
 * Generates a fake event and runs onFormSubmitTrigger
 * as if response i had been submitted from formid.
 **/
@@ -72,8 +73,9 @@ function addDefaultParams (params) {
 }
 
 /** @function setupTests
-setup tests for the first time. Creates a global array tests that will hold our tests.
-Singleton pattern.
+* @desc
+* setup tests for the first time. Creates a global array tests that will hold our tests.
+* Singleton pattern.
 **/
 function setupTests () {
   try {
@@ -86,34 +88,42 @@ function setupTests () {
   }
 }
 
-/** @constructor Test
-Create a test.
-@param {object} 
-<pre>
-{
-    params : params that are passed to setup/cleanup/test
-    setup : setup function to run before running test
-    metadata : information about test
-    test : test function to run to DO test. Returns result or throws error.
-    cleanup : function to run after test has succeeded or failed.
-}
-</pre>
-@returns {object}
-{
-   metadata : metadata,
-   test : test,
-   result : result of test
-   success : true or false   
-}
-<pre>
-
-In practice, we use this like this:
-Test({
-   test: function (params) {some function we want to test},
-   params : {some:params,we:want,to:hand,to:our,fun:ction},
-   metadata:{name:'Name of test'},
-});
-    
+/** @class Test
+* @desc
+* Create a test object.
+*
+* Note: Our house style constructor does not require the *new* keyword.
+* @param {object} 
+* <pre>
+* {
+*     params : params that are passed to setup/cleanup/test
+*     setup : setup function to run before running test
+*     metadata : information about test
+*     test : test function to run to DO test. Returns result or throws error.
+*     cleanup : function to run after test has succeeded or failed.
+* }
+* </pre>
+* @returns {object}
+* <pre>
+* {
+*    metadata : metadata,
+*    test : test,
+*    result : result of test
+*    success : true or false   
+* }
+* </pre>
+* @desc
+* <pre>
+* In practice, we use a Test this like this:
+* Test({
+*    test: function (params) {some function we want to test},
+*    params : {some:params,we:want,to:hand,to:our,fun:ction},
+*    metadata:{name:'Name of test'},
+* });
+* 
+* You can create tests anywhere in your code and then use runTestSuite
+* to run all of them at once.
+* </pre>    
 **/
 function Test (o) { // test, params, metadata) {
   setupTests();
@@ -166,7 +176,7 @@ Test({
 });
 
 /** @function runTestSuite
-* Run all tests defined in our library
+* @desc Run all tests defined in our library
 **/
 function runTestSuite () {
     var results = []
