@@ -115,6 +115,7 @@ function preFillApprovalForm (params) {
         params.targetForm.setCollectEmail(false)
     }
     submittedFormResponse = formResponse.submit()  
+    //edit_url = submittedFormResponse.getEditResponseUrl();
     var resp = params.targetForm.getResponse(submittedFormResponse.getId())
     var edit_url = resp.getEditResponseUrl();
     if (switchEmailBackOn) {
