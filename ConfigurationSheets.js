@@ -119,14 +119,14 @@ function _initZZZTestsConfigSheets () {
 	        console.log('Test failed, not deleting sheet. Investigate @ %s',r.link);
 	    }
         },
-        metadata : {name:'Config Sheet Test',
+        metadata : {name:'Config Sheet Test',file:'ConfigurationSheets.js'
 	           }
     }
 
     Test(baseTest);
 
     var modTest = Test({
-        metadata : {name: 'Config - Modify Sheet'},
+        metadata : {name: 'Config - Modify Sheet',file:'ConfigurationSheets.js'},
         setup : baseTest.test,
         test : function (p) {
 	    var config = p.setupResult.config
@@ -145,8 +145,6 @@ function _initZZZTestsConfigSheets () {
         },
         cleanup : baseTest.cleanup,
     })
-
-    Test(modTest);
 
 }
 
@@ -371,7 +369,8 @@ function ConfigurationSheet (sheet, settings) {
     
     function getConfigurationTable () {
         var lastRow = sheet.getLastRow(); // this call turns out to be really expensive -- do it JUST ONCE
-        var keyValues = sheet.getRange(1,1,lastRow(),2).getValues()
+        var lastCol = sheet.getLastColumn()
+        var keyValues = sheet.getRange(1,1,lastRow,2).getValues()
         logVerbose('working with keyValues='+shortStringify(keyValues));
         var data = {}
         for (var r=0; r<keyValues.length; r++) {
@@ -379,15 +378,15 @@ function ConfigurationSheet (sheet, settings) {
             // warning -- if a value is duplicated, only the second value counts
             data[row[0]] = row[1]
         }
-        var listValues = sheet.getRange(1,3,lastRow(),sheet.getLastColumn()).getValues();
+        var listValues = sheet.getRange(1,3,lastRow,lastCol).getValues();
 	var valueListHeaders = []
-        for (var c=0; c<(sheet.getLastColumn()-2); c++) {
+        for (var c=0; c<(lastCol-2); c++) {
             // each column is a list of values w/ a header on top
             var header = listValues[0][c]
 	    valueListHeaders.push(header)
             if (header) {
                 var valueList = []
-                for (var r=1; r<lastRow(); r++) {
+                for (var r=1; r<lastRow; r++) {
                     var value = listValues[r][c]
                     //if (value) {
                     valueList.push(value);
@@ -531,6 +530,13 @@ function initializeMasterConfig (ss) {
     return getMasterConfig(ss);
 }
 
+/**
+* @function
+* @description
+* get Master Config in Spreadsheet.
+* OR create master if it does not exist.
+* Master MUST live in first tab of sheet by design (sorry world).
+**/
 function getMasterConfig (ss) {
     // Our master sheet is the first sheet (0)
     var sheet = getSheetById(ss,0)
