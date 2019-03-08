@@ -18,17 +18,11 @@
       <tabs :labels="['New','Active Workflows','Inactive/Other Workflows']"
 	    :initial-active="defaultTab"
             >
-
-
         <div slot="1"> <!-- New -->
           <h1>NEW NEW NEW Not yet implemented :(</h1>
           <p>Oh well...</p>
-          <p>Pick your poison...</p>
-          <button>New Form</button> <button>Select a Form</button>
-<!--        <select v-model="selectedAction">
-	  <option  v-for="action in master.actions" :value="action">{{action.action}}</option>
-        </select>-->
-          <!--<p>SELECTED: {{selectedAction}}</p>-->
+          <new-config :api--info="apiInfo">
+          </new-config>
         </div>
         <div slot="2"> <!-- Installed -->
           <h2>Installed Workflows (with Triggers)</h2>
@@ -37,9 +31,9 @@
               Master Sheet: <drive-file type="sheet" :id="master"></drive-file>
               <collapser show-label="Show forms" hide-label="Hide forms">Forms: <li v-for="form in formList"><drive-file type="form" :id="form"></drive-file></li></collapser>
               <collapser show-label="Show Full Config" hide-label="Hide">
-                Folder: <field-config api-info="apiInfo" type="2"></field-config>
-                <br>Form: <field-config api-info="apiInfo" type="10"></field-config>
-                <br>Sheet: <field-config api-info="apiInfo" type="9"></field-config>
+                Folder: <field-config :api-info="apiInfo" type="2"></field-config>
+                <br>Form: <field-config :api-info="apiInfo" type="10"></field-config>
+                <br>Sheet: <field-config :api-info="apiInfo" type="9"></field-config>
 	        <div>Config Sheet: <picker :api-info="apiInfo" v-model="master"></picker>
 	          <master-config :config-sheet="master"
 		                 :api-info="apiInfo"
@@ -51,7 +45,6 @@
         </div>
         
         <div slot="3"> <!-- Not Installed -->
-
           <h2>Non-Active/New Workflows</h2>
           <i>Or workflows w/ triggers under another account</i>
           <collapser>
@@ -149,7 +142,35 @@
     </span>
   </script>
 
-<<<<<<< HEAD
+
+  <script type="text/x-template" id="new-config">
+    <div class="block new">
+      <div v-if="busy">
+        Creating new config sheet...
+      </div>
+      <div v-else>
+        <div v-if="error">
+          {{error}}
+        </div>
+        <div v-if="!ssid">
+          <label>Workflow Name: <input v-model="title"></label>
+          <br><button @click="makeNewConfig">Make New Config!</button>
+        </div>
+        <div v-else>
+          <h2>New Config</h2>
+          <p>In the future you can access this under "Non-Active/New Workflows"</p>
+          {{ssid}}
+          <master-config
+            :config-sheet="ssid"
+            :api-info="apiInfo"
+            :ref="newConfig"
+            >
+          </master-config>
+        </div>
+      </div>
+    </div>
+  </script>
+
   <script type="text/x-template" id="master-config">
     <div class="master block">
       <!-- Master Sheet: -->
@@ -172,29 +193,6 @@
       <div v-if="folder">
         Gathered documents in folder: <drive-file type="folder" :id="folder"></drive-file>
       </div>
-=======
-<script type="text/x-template" id="master-config">
-  <div class="master block">
-    <!-- Master Sheet: -->
-    <div class="error" v-if="error">{{error}}</div>
-    <div class="menu" v-if="master.config">
-      <button class="action" v-on:click="setupTriggers()">Set Up Triggers for Workflow</button>
-      <span v-if="!duplicate.config">
-	<span  v-if="!duplicating">
-	  <button class="create" v-on:click="duplicateWorkflow">Make a Copy of Workflow</button>
-	</span>
-	<button class="action" v-on:click="gatherDocs">Gather documents into a folder</button> 
-      </span>
-    </div>
-    <div v-if="duplicate.config">
-      Duplication results:
-      Config: <drive-file type="sheet" :id="duplicate.config"></drive-file>
-      <br>Folder: <drive-file type="folder" :id="duplicate.folder"></drive-file>
-    </div>
-    <div v-if="folder">
-      Gathered documents in folder: <drive-file type="folder" :id="folder"></drive-file>
-    </div>
->>>>>>> origin/master
 
       <div v-for="configRow,i in master.config" class="configrow" v-if="i&gt;0">
         <h3><drive-file type="form" :id="configRow.Form"></drive-file> {{configRow.Action}}</h3>
