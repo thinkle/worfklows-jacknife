@@ -60,6 +60,12 @@ function openWebApp (){
   showAnchor('Open Workflows Jacknife Web App',baseUrl+'?doc='+SpreadsheetApp.getActiveSpreadsheet().getId());
 }
 
+function doCreateConfig (name) {
+    var ss = SpreadsheetApp.create(name)
+    getMasterConfig(ss);
+    return ss.getId();
+}
+
 function doGatherIntoFolder () {
     var foldername = SpreadsheetApp.getUi().prompt('Folder name?');
     gatherWorkflow(SpreadsheetApp.getActiveSpreadsheet().getId(),foldername);
