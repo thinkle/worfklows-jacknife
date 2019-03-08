@@ -3,15 +3,25 @@ function escapeRegExp(str) {
 }
 
 function sendEmail (email, subject, htmlBody) {
-  Logger.log('Result of sendmail=>%s, %s, %s',email,subject,htmlBody);
-  Logger.log(shortStringify(
-    MailApp.sendEmail(
-      {to:email,
-       htmlBody:htmlBody,
-       subject:subject}
-    )
-  )
-            )
+    if (Array.isArray(email)) {
+        email = email.join(',');
+    }
+    try {
+        MailApp.sendEmail(
+            {to:email,
+             htmlBody:htmlBody,
+             subject:subject}
+        
+        )
+    }
+    catch (err) {
+        console.error('sendEmail hit error: %s',err);
+        console.error('Values were: %s',JSON.stringify(
+            {to:email,
+             htmlBody:htmlBody,
+             subject:subject}));
+        throw err;
+    }
 }
 
 function checkForSelfApproval (settings) {
@@ -137,7 +147,7 @@ function sendEmailFromTemplate (email, subj, template, fields, fixWhiteSpace) {
     msg += '</pre>';
 		emailError(msg, 'No real error :)', {'subject':'Email Debug Info: '+applyTemplate(subj,fields)});
 	}
-  sendEmail(email, applyTemplate(subj, fields), applyTemplate(template, fields, fixWhiteSpace));
+    sendEmail(email, applyTemplate(subj, fields), applyTemplate(template, fields, fixWhiteSpace));
 }
 
 function getTemplateFields (config, results) {
