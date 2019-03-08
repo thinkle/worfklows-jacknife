@@ -760,7 +760,7 @@ var convertTest;
 function initZZZTestFormSetup () {
 
     convertTest = Test({
-        metadata : {name:'Test field conversion'},
+        metadata : {name:'Test field conversion',file:'FormSetup.js'},
         test : function (p) {
             console.log('Run conversion test');
             var f = DriveApp.getFileById(p.fileForm).makeCopy();
