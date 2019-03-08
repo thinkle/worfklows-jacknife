@@ -6,12 +6,12 @@ var fileRegistry = {
 
 Vue.component('tabs', {
     name:'tabs',
-    props : ['labels','active'],
-    //data : function () {return {active:1}},
+    props : ['labels','initialActive'],
+    data : function () {return {active:this.initialActive||1}},
     template : '#tabs',
-    created : function () {
-	if (!this.active) {this.active = 1}
-    }
+    //created : function () {
+	//if (!this.active) {this.active = 1}
+    //}
 });
 
 Vue.component('field-config',{
@@ -584,6 +584,33 @@ Vue.component('master-config',{
     } // end methods
 }); // end master 
 
+Vue.component('new-config',{
+    template : '#new-config',
+    props : ['apiInfo'],
+    data : function () {
+        return {
+            ssid : undefined,
+            error : undefined,
+            title : '',
+            busy : false,
+        }
+    },
+    methods : {
+        makeNewConfig () {
+            this.busy = true;
+            google.script.run
+                .withSuccessHandler(
+                    (id)=>{this.busy = false; this.ssid=id;}
+                )
+                .withFailureHandler(
+                    (err)=>{this.busy = true; this.error=err}
+                )
+                .doCreateConfig(this.title||'New Workflows Jacknife Master Config');
+        },
+    }
+    
+});
+
 JacknifeApp = new Vue({
     el : '#appName',
     data : {
@@ -595,6 +622,7 @@ JacknifeApp = new Vue({
 	apiInfo: {pickerApiLoaded:false,authToken:undefined},
 	masters: {'':[]},
 	defaultTab : 1,
+        
     },
     created : function () {
 	console.log("Let's set up our apiinfo reference on the window!");
