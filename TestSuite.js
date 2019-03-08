@@ -82,18 +82,27 @@ function setupTests () {
     setup;
   }
   catch (err) {
-    //Logger.log('Do setup!');
-    tests = [] // global
+      //Logger.log('Do setup!');
+      /** global **/
+      tests = [] // global
     setup = true; // global
   }
 }
 
 /** @class Test
 * @desc
-* Create a test object.
+* @param {object} params
+* @param {object} params.params - Parameters passed to figure. We provide bunch of standard defaults
+* for convenience: 
+* <pre>{configSS, fileForm, masterSS, getScratchForm, getScratchSS}</pre>
+* @param {function} params.setup - function to run before running test (gets passed params.params)
+* @param {function} params.test - function to run test (this function gets passed params.params)
+* @param {function} params.cleanup - function to run after test (gets passed params.params)
 *
+* @desc
+* Create a test object.
 * Note: Our house style constructor does not require the *new* keyword.
-* @param {object} 
+*
 * <pre>
 * {
 *     params : params that are passed to setup/cleanup/test
@@ -123,6 +132,12 @@ function setupTests () {
 * 
 * You can create tests anywhere in your code and then use runTestSuite
 * to run all of them at once.
+*
+* Each function gets handed params, so if your test needs a value
+* created by your setup function, setup can just modify the object
+* it is handed. Similary, your test can store values needed by
+* cleanup in the same params object -- the same object is handed
+* from setup to test to cleanup.
 * </pre>    
 **/
 function Test (o) { // test, params, metadata) {
@@ -167,12 +182,12 @@ function Test (o) { // test, params, metadata) {
 Test({
   test:function (a) {Logger.log('This one works every time: %s',a.a);},
   params:{a:'test param'},
-  metadata:{name:'Successful test test',extra:'Arbitrary metadata allowed'}
+    metadata:{name:'Successful test test',extra:'Arbitrary metadata allowed',file:'TestSuite.js'}
 });
 Test({
   test:function (a) {Logger.log('This one fails every time: %s',a.a);a=duck;},
   params:{a:'test param'},
-  metadata:{name:'Failing test test'}
+    metadata:{name:'Failing test test intentionally',file:'TestSuite.js'}
 });
 
 /** @function runTestSuite
@@ -180,18 +195,28 @@ Test({
 **/
 function runTestSuite () {
     var results = []
+    console.log('TestSuite: Running Test Suite');
+    console.log('Running %s tests',tests.length);
+    var i = 1;
     tests.forEach(function (test) {
+        console.log('Running test %s of %s: %s',i,tests.length,test.metadata.name);
+        i+=1;
 	results.push(test.run())
     })
+    console.log('TestSuite RESULTS...');
+    successful = 0;
     results.forEach(function (r) {
       if (r.success) {
-          console.log(r.metadata.name,'Success',r)
+          console.log('TestSuite SUCCESS: ',r.metadata.name,'Success',r)
           Logger.log('SUCCESS: %s, result: %s',r.metadata.name,r.result)
+          successful += 1;
       }
       else {
-          console.error(r.metadata.name,r)
+          console.error('TestSuite FAILURE: ',r.metadata.name,r.metadata.file||'',r)
           Logger.log('FAILURE: %s',r)
       }
     });
+    console.log('TestSuite finished: %s of %s tests succeeded; %s failures',
+                successful, tests.length, tests.length - successful
+               );
 }
-    
