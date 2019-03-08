@@ -218,10 +218,11 @@ function gatherWorkflow (ssid, foldername) {
 	}
     }
     else {
+        // Our top level folder is a USER property, but the script-level folder is a SCRIPT property
 	var topId = PropertiesService.getUserProperties().getProperty("Toplevel Folder");
 	if (!topId) {
 	    var top = DriveApp.createFolder("Workflows Jacknife Workflows")
-	    PropertiesService.getScriptProperties().setProperty("Toplevel Folder",top.getId())
+	    PropertiesService.getUserProperties().setProperty("Toplevel Folder",top.getId())
 	}
 	else {
 	    var top = DriveApp.getFolderById(topId)
@@ -384,7 +385,7 @@ function assertError (f) {
 }
 
 var checkParamTest = Test({
-    metadata : {name: 'Config - test check params'},
+    metadata : {name: 'Config - test check params',file:'WorkflowFramework.js'},
     setup : function (p) {
       Logger.log('Set up!');
 	var ss = p.getScratchSS();
@@ -429,7 +430,7 @@ var testCopy
 
 function _initZZZTestWorkflowFramework () {
      testCopy = Test({
-        metadata : {name:'Copy Workflow Test'},
+         metadata : {name:'Copy Workflow Test',file:'WorkflowFramework.js'},
         test : function (p) {
 	    return copyWorkflow(p.masterSS)
         }
