@@ -355,7 +355,7 @@ function _initZZZTestTableReader () {
     })
 
     updateTest=  Test( {
-        metadata : {name :'Test Table pushRow and updateRow'},
+        metadata : {name :'Test Table pushRow and updateRow',file:'TableReader.js'},
         setup : function (p) {
 	    p.ss = p.getScratchSS();
 	    [['ID','Name','Number','Foo','Bar'],
