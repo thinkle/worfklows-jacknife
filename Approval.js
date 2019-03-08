@@ -16,14 +16,15 @@ function _initApproval () {
 }
 
 function _initZZTestsApproval () {
-    approvalTest = Test({
-        metadata : {name : 'Test Approval Request'},
-        test : function () {resubmitForm('1WGKg3jEmRI4oGZIh1TfAEW4H8AlzNtttAEbWfEo989s',1)}     // this will be live soon -- change before we go to production FIXME
-    })
-    approvalApprovedTest = Test({
-        metadata : {name : 'Test Approved Approval'},
-        test : function () {resubmitForm('1lVauucfWhU57sU_PVUY0j2oFcmBAbUTHnJVDLuyT0Tk',1)} // this will be live soon - change before we go into production
-    });
+    // Need to rewrite these tests to create forms and then test them -- not just use hard-coded values :(
+    // approvalTest = Test({
+    //     metadata : {name : 'Test Approval Request',file:'Approval.js'},
+    //     test : function () {resubmitForm('1WGKg3jEmRI4oGZIh1TfAEW4H8AlzNtttAEbWfEo989s',1)}     // this will be live soon -- change before we go to production FIXME
+    // })
+    // approvalApprovedTest = Test({
+    //     metadata : {name : 'Test Approved Approval',file:'Approval.js'},
+    //     test : function () {resubmitForm('1lVauucfWhU57sU_PVUY0j2oFcmBAbUTHnJVDLuyT0Tk',1)} // this will be live soon - change before we go into production
+    // });
 }
 
 
