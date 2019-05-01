@@ -371,7 +371,7 @@ function ConfigurationSheet (sheet, settings) {
     
     function getConfigurationTable () {
         var lastRow = sheet.getLastRow(); // this call turns out to be really expensive -- do it JUST ONCE
-        var keyValues = sheet.getRange(1,1,lastRow(),2).getValues()
+        var keyValues = sheet.getRange(1,1,lastRow,2).getValues()
         logVerbose('working with keyValues='+shortStringify(keyValues));
         var data = {}
         for (var r=0; r<keyValues.length; r++) {
@@ -379,7 +379,7 @@ function ConfigurationSheet (sheet, settings) {
             // warning -- if a value is duplicated, only the second value counts
             data[row[0]] = row[1]
         }
-        var listValues = sheet.getRange(1,3,lastRow(),sheet.getLastColumn()).getValues();
+        var listValues = sheet.getRange(1,3,lastRow,sheet.getLastColumn()).getValues();
 	var valueListHeaders = []
         for (var c=0; c<(sheet.getLastColumn()-2); c++) {
             // each column is a list of values w/ a header on top
@@ -387,7 +387,7 @@ function ConfigurationSheet (sheet, settings) {
 	    valueListHeaders.push(header)
             if (header) {
                 var valueList = []
-                for (var r=1; r<lastRow(); r++) {
+                for (var r=1; r<lastRow; r++) {
                     var value = listValues[r][c]
                     //if (value) {
                     valueList.push(value);
