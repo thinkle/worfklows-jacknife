@@ -185,11 +185,11 @@ function runTestSuite () {
     })
     results.forEach(function (r) {
       if (r.success) {
-          console.log(r.metadata.name,'Success',r)
+          console.log('Test %s was a success: %s',r.metadata.name,r)
           Logger.log('SUCCESS: %s, result: %s',r.metadata.name,r.result)
       }
       else {
-          console.error(r.metadata.name,r)
+          console.error('Test %s had an error: %s',r.metadata.name,r)
           Logger.log('FAILURE: %s',r)
       }
     });
