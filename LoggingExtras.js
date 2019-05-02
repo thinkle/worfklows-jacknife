@@ -16,6 +16,7 @@ function doLog (verbosity) {
 		args = args.map(tidyLog)
     //console.log.apply(console,args);
     Logger.log.apply(Logger,args)
+    console.log(args[0],args[1])
   }
 }
 
@@ -28,14 +29,17 @@ logVerbose = function () {
 logNormal = function () {
 	args = [1]
     args.push.apply(args,arguments)
-    console.info.apply(console,args)
+    //console.info.apply(console,args)
+    //console.log(args[0],args[1])
+    //console.log('foo %s',2);
+    //console.log.apply(console,args)
     doLog.apply(doLog,args)
     
 }
 logAlways = function () {
 	args = [-1]
 	args.push.apply(args,arguments)
-    console.log.apply(console,args)
+    //console.log.apply(console,args)
 	doLog.apply(doLog,args)
 }
 
