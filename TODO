@@ -1,11 +1,12 @@
 **** LATEST ***
 - Migrate new user form over to current script (DONE)
 - Make two copies so we can have a "WORKING" and a "DEV" version of this baby. (DONE)
+- Send warning email when field name in email template does not exist. (____)
 - Finish parameter checking testing 
 - Set up tests for all blades
 - Come up with reliable backup for form trigger failures...
   > Presumably we should LOG every form action and then allow re-running it or not.
-- Migrate/Rewrite mass approval tool :(
+- Migrate/Rewrite mass approval tool :( (X)
 
 *UI*
 **Create interface for managing triggers** (x)
