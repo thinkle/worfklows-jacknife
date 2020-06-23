@@ -19,8 +19,7 @@
 	    :initial-active="defaultTab"
             >
         <div slot="1"> <!-- New -->
-          <h1>NEW NEW NEW Not yet implemented :(</h1>
-          <p>Oh well...</p>
+          <h2>New Workflow</h2>
           <new-config :api--info="apiInfo">
           </new-config>
         </div>
@@ -146,20 +145,20 @@
   <script type="text/x-template" id="new-config">
     <div class="block new">
       <div v-if="busy">
-        Creating new config sheet...
+        Creating new config sheet... <span class="loader mini"></span>
       </div>
       <div v-else>
-        <div v-if="error">
-          {{error}}
+        <div class="error" v-if="error">
+          Error: {{error}}
         </div>
-        <div v-if="!ssid">
+        <div class="block" v-if="!ssid">
           <label>Workflow Name: <input v-model="title"></label>
           <br><button @click="makeNewConfig">Make New Config!</button>
         </div>
         <div v-else>
-          <h2>New Config</h2>
+          <h2>Newly Created Config</h2>
           <p>In the future you can access this under "Non-Active/New Workflows"</p>
-          {{ssid}}
+          <button @click="ssid=''">Reset: Start New</button>
           <master-config
             :config-sheet="ssid"
             :api-info="apiInfo"
