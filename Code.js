@@ -3,23 +3,6 @@
 * Core methods for google apps script
 **/
 
-/**
-* @function
-* @desc Call all init functions in alphabetical order. 
-* Makes sure all our global variables are initialized in the right order.
-**/
-function callAllInits_() {
-  Logger.log('callAllInits!');
-  var keys = Object.keys(this);
-  keys.sort();
-  for (var i = 0; i < keys.length; i++) {
-    var funcName = keys[i];
-    if (funcName.indexOf("_init") == 0) {
-      Logger.log('Call %s',funcName);
-      this[funcName].call(this);
-    }
-  }
-}
 
 /** 
 * @function
@@ -134,6 +117,7 @@ function getFileInfo (id) {
 	      var f = DriveApp.getFileById(FormApp.openByUrl(id).getId());
 	  }
 	  catch (e) {
+        console.log('Invalid file ID',id,'maybe it is a URL?');
 	      var f = DriveApp.getFileById(SpreadsheetApp.openByUrl(id).getId());
 	  }
       }

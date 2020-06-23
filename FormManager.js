@@ -493,7 +493,16 @@ function onFormSubmitTrigger (event) {
 	}
 	catch (err) {
 	    actionResults[action] = FAILURE;
-	    emailError('Error on action '+action, err);
+	    emailError('Error on action '+action+
+                       '\n event:'+
+                       event+
+                       '\nmasterSheet: '+
+                       masterSheet+
+                       '\nactionRow: '+
+                       actionRow+
+                       '\nactionResults (thus far):'+actionResults, err);
+            console.error('Error runnin action from event %s, masterSheet %s',event,masterSheet);
+            console.error('row and results were: actionRow %s, actionResults %s',actionRow,actionResults);
 	    console.error('Ran into error on action %s: %s\nSTACK:%s',action,err.name,err.stack);
 	}
 	console.timeEnd('Action')

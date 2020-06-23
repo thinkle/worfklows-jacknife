@@ -56,9 +56,28 @@ Group Sharing - this allows you to use a form to trigger the addition of the use
 Logger.log('Load About');
 // For reasons that don't make sense to me, this file is now "first" - ugh.
 
+
+/**
+* @function
+* @desc Call all init functions in alphabetical order. 
+* Makes sure all our global variables are initialized in the right order.
+**/
+function callAllInits_() {
+  Logger.log('callAllInits!');
+  var keys = Object.keys(this);
+  keys.sort();
+  for (var i = 0; i < keys.length; i++) {
+    var funcName = keys[i];
+    if (funcName.indexOf("_init") == 0) {
+      Logger.log('Call %s',funcName);
+      this[funcName].call(this);
+    }
+  }
+}
+
 (function() {
-    console.log('Call All Inits!');
-  callAllInits_();
+   console.log('Call All Inits!');
+    callAllInits_();
 })();
 
 function hello () {
