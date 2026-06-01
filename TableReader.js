@@ -282,6 +282,9 @@ function spreadsheetify (value) {
     if (Array.isArray(value)) {
 	return value.map(function (o) {return spreadsheetify(o)}).join(", ");
     }
+    if (value instanceof Date) {
+		return value;
+	}
     if (typeof value == 'object') {
 	return JSON.stringify(value)
     }
