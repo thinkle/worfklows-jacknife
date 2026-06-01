@@ -209,6 +209,7 @@ function lookupMagic (config, responses, form) {
 	if (typeof val === 'string') {
 	    if (val.indexOf('*#*')===0) {
 		// PO-MAGIC!
+    console.log('Got magic field',val);
 		val = val.substr(3); // cut off magic stuff... we'll handle the magic now!
 		d = new Date()
 		// Start search at...
@@ -305,6 +306,27 @@ function getResponse (itemResp) {
     }
 }
 
+function getResponseNumber (resp) {
+  var props = PropertiesService.getScriptProperties();
+  var existing = props.getProperty(resp.getId());
+  if (existing) {
+    return existing;
+  } else {
+    var lock = LockService.getScriptLock()
+    lock.tryLock(10000)
+    var top = props.getProperty('top');
+    if (!top) {
+      top = 0;
+    } else {
+      top = Number(top);
+    }
+    var next = top + 1;
+    props.setProperty('top',""+next);
+    props.setProperty(resp.getId(),next);
+    return next;
+  }
+}
+
 function getResponseItems (resp, actionResults) {
     var responseItems = {}
     // attach action results so we can act on those as well :)
@@ -314,6 +336,8 @@ function getResponseItems (resp, actionResults) {
     }) // end forEach itemResp
     responseItems['Timestamp'] = resp.getTimestamp();
     responseItems['FormUser'] = resp.getRespondentEmail();
+    responseItems['ResponseId'] = resp.getId();
+    responseItems['ResponseNum'] = getResponseNumber(resp);
     logNormal('ResponseItems: >>>'+JSON.stringify(responseItems)+'<<<');
     logNormal('ResponseItems FormUser: >>>'+responseItems.FormUser);
     return responseItems;
