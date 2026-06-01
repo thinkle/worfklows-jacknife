@@ -17,6 +17,20 @@ function resubmitForm (formId,i) {
     onFormSubmitTrigger(fakeEvent)
 }
 
+function testFood () {
+  resubmitForm('1i2bx-eKrSrJN7S6DPyFxpvWqg0F4k5wAFA_2eUThgSQ',1)
+}
+
+function fixOnboarding () {
+  var ob = '1s-jsFphG0dMysJivN4YUY7yBZLFY97eplYvXbbimysE';
+  resubmitForm(ob,
+  216); // 0-indexed (response #217 - kknapp)
+  resubmitForm(ob,
+  214); // 0-indexed (response #215 - martin
+   resubmitForm(ob,
+  218); // 0-indexed (response #219 - csaranich
+}
+
 /** @function getOldResponse
 * @param formId {string} id of form
 * @param i {number} index of response to resubmit
