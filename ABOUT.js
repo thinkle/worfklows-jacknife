@@ -1,4 +1,14 @@
 /**
+ * TO DO
+ * Fix bug in ConfigurationTable library that makes it so having a duplicate value
+ * in one of the lists will cause a total failure. We should *either* throw a usable error
+ * at that point (currently the result is silent failure and then failure later when we try
+ * to use a configuration table) OR just take the first or second value as the truth and allow
+ * overwriting
+ * of values
+ */
+
+/**
 @file About.js
 <pre>
 DESIGN NOTES
